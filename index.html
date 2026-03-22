@@ -402,6 +402,92 @@
     transition: background 0.25s;
   }
   .freq-banner strong { color: var(--blue); }
+
+  /* CHECKBOX & PROGRESS */
+  .cb-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+  }
+  .ex-checkbox {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 22px;
+    height: 22px;
+    border: 2px solid var(--border);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.18s;
+    background: var(--surface2);
+    flex-shrink: 0;
+    position: relative;
+  }
+  .ex-checkbox:checked {
+    background: #3dba6e;
+    border-color: #3dba6e;
+  }
+  .ex-checkbox:checked::after {
+    content: '✓';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .exercise-card.done, .physio-card.done {
+    opacity: 0.55;
+  }
+  .exercise-card.done .exercise-name,
+  .physio-card.done .exercise-name {
+    text-decoration: line-through;
+    text-decoration-color: #3dba6e;
+  }
+
+  .progress-bar-wrap {
+    padding: 0 16px 2px;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  .progress-track {
+    height: 4px;
+    background: var(--surface2);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 6px;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #3dba6e, #5dd98a);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+    width: 0%;
+  }
+  .progress-label {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .progress-label .done-count { color: #3dba6e; font-weight: 600; }
+  .reset-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 20px;
+    padding: 3px 12px;
+    font-size: 11px;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.2s;
+  }
+  .reset-btn:hover { border-color: #e05555; color: #e05555; }
 </style>
 </head>
 <body>
@@ -420,6 +506,14 @@
   <button class="tab-btn" onclick="showTab('physio')" id="physio-tab">🏥 Fysioterapia</button>
   <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn" title="Vaihda teema">🌙</button>
 </nav>
+
+<div class="progress-bar-wrap" id="progressWrap">
+  <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+  <div class="progress-label">
+    <span><span class="done-count" id="progressDone">0</span> / <span id="progressTotal">0</span> tehty</span>
+    <button class="reset-btn" onclick="resetProgress()">Nollaa</button>
+  </div>
+</div>
 
 <!-- WARMUP PAGE -->
 <div id="warmup" class="page active">
@@ -1690,20 +1784,21 @@
 </div>
 
 <script>
-  // Restore saved theme
+  /* ── THEME ── */
   const saved = localStorage.getItem('theme');
-  if (saved === 'light') {
+  const isLight = saved === null ? true : saved === 'light';
+  if (isLight) {
     document.documentElement.classList.add('light');
     document.getElementById('themeBtn').textContent = '☀️';
   }
-
   function toggleTheme() {
-    const isLight = document.documentElement.classList.toggle('light');
-    const btn = document.getElementById('themeBtn');
-    btn.textContent = isLight ? '☀️' : '🌙';
-    localStorage.setItem('theme', isLight ? 'light' : 'dark');
+    const nowLight = document.documentElement.classList.toggle('light');
+    document.getElementById('themeBtn').textContent = nowLight ? '☀️' : '🌙';
+    localStorage.setItem('theme', nowLight ? 'light' : 'dark');
   }
 
+  /* ── TABS ── */
+  let currentTab = 'warmup';
   function showTab(id) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(b => {
@@ -1714,12 +1809,94 @@
     });
     document.getElementById(id).classList.add('active');
     event.target.classList.add('active');
+    currentTab = id;
+    updateProgress();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
+  /* ── CARDS ── */
   function toggleCard(card) {
+    // Don't expand if checkbox was clicked
+    if (event.target.classList.contains('ex-checkbox')) return;
     card.classList.toggle('open');
   }
+
+  /* ── CHECKBOXES ── */
+  // Inject a checkbox into every exercise/physio card
+  function initCheckboxes() {
+    const allCards = document.querySelectorAll('.exercise-card, .physio-card');
+    allCards.forEach((card, idx) => {
+      const page = card.closest('.page');
+      const tabId = page ? page.id : 'unknown';
+      const nameEl = card.querySelector('.exercise-name');
+      const name = nameEl ? nameEl.textContent.trim() : 'ex' + idx;
+      const key = 'done::' + tabId + '::' + name;
+
+      // Create checkbox wrapper
+      const wrap = document.createElement('div');
+      wrap.className = 'cb-wrap';
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.className = 'ex-checkbox';
+      cb.checked = localStorage.getItem(key) === '1';
+      cb.addEventListener('change', (e) => {
+        e.stopPropagation();
+        localStorage.setItem(key, cb.checked ? '1' : '0');
+        card.classList.toggle('done', cb.checked);
+        updateProgress();
+      });
+      wrap.appendChild(cb);
+
+      // Insert before chevron
+      const header = card.querySelector('.card-header');
+      header.appendChild(wrap);
+
+      // Restore done state
+      if (cb.checked) card.classList.add('done');
+    });
+  }
+
+  /* ── PROGRESS ── */
+  function updateProgress() {
+    const page = document.getElementById(currentTab);
+    if (!page) return;
+    const all = page.querySelectorAll('.ex-checkbox');
+    const done = page.querySelectorAll('.ex-checkbox:checked');
+    const total = all.length;
+    const doneCount = done.length;
+    const pct = total > 0 ? Math.round((doneCount / total) * 100) : 0;
+
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressDone').textContent = doneCount;
+    document.getElementById('progressTotal').textContent = total;
+
+    // Hide progress bar on warmup (no checkboxes)
+    document.getElementById('progressWrap').style.display =
+      total === 0 ? 'none' : 'block';
+  }
+
+  /* ── RESET ── */
+  function resetProgress() {
+    const page = document.getElementById(currentTab);
+    if (!page) return;
+    const cbs = page.querySelectorAll('.ex-checkbox');
+    cbs.forEach(cb => {
+      cb.checked = false;
+      const card = cb.closest('.exercise-card, .physio-card');
+      if (card) card.classList.remove('done');
+      const nameEl = cb.closest('.exercise-card, .physio-card')?.querySelector('.exercise-name');
+      const name = nameEl ? nameEl.textContent.trim() : '';
+      const key = 'done::' + currentTab + '::' + name;
+      localStorage.removeItem(key);
+    });
+    updateProgress();
+  }
+
+  /* ── INIT ── */
+  document.addEventListener('DOMContentLoaded', () => {
+    initCheckboxes();
+    updateProgress();
+  });
 </script>
 </body>
 </html>

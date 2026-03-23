@@ -488,13 +488,227 @@
     transition: all 0.2s;
   }
   .reset-btn:hover { border-color: #e05555; color: #e05555; }
+
+  /* ── CALENDAR ── */
+  .cal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+  }
+  .cal-month-label {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 2px;
+    color: var(--text);
+  }
+  .cal-nav {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    width: 34px; height: 34px;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+  .cal-nav:hover { border-color: var(--gold); color: var(--gold); }
+  .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    margin-bottom: 20px;
+  }
+  .cal-day-name {
+    text-align: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    letter-spacing: 1px;
+    padding: 4px 0 8px;
+    text-transform: uppercase;
+  }
+  .cal-day {
+    aspect-ratio: 1;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+    gap: 2px;
+    user-select: none;
+  }
+  .cal-day:hover:not(.cal-empty) { border-color: var(--gold); }
+  .cal-day.cal-empty { background: transparent; border-color: transparent; cursor: default; }
+  .cal-day.cal-today { border-color: var(--gold); color: var(--gold); font-weight: 700; }
+  .cal-day.has-session { background: #3dba6e; border-color: #3dba6e; color: #fff; }
+  .cal-day.has-session:hover { background: #35a860; }
+  .cal-day .cal-dots {
+    display: flex; gap: 2px; flex-wrap: wrap; justify-content: center;
+    max-width: 90%;
+  }
+  .cal-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.7);
+    flex-shrink: 0;
+  }
+  html:not(.light) .cal-day.has-session .cal-dot { background: rgba(255,255,255,0.8); }
+  html.light .cal-day.has-session .cal-dot { background: rgba(255,255,255,0.9); }
+
+  .cal-legend {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  .cal-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .cal-legend-dot {
+    width: 10px; height: 10px;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+
+  .log-session-area {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+    margin-bottom: 20px;
+  }
+  .log-session-area h3 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 16px;
+    letter-spacing: 2px;
+    color: var(--gold);
+    margin-bottom: 14px;
+  }
+  .log-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+  }
+  .log-type-btn {
+    flex: 1;
+    min-width: 100px;
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+  }
+  .log-type-btn.selected { background: var(--gold); border-color: var(--gold); color: #fff; font-weight: 600; }
+  .log-type-btn:hover:not(.selected) { border-color: var(--gold); color: var(--gold); }
+  .log-save-btn {
+    width: 100%;
+    background: #3dba6e;
+    border: none;
+    border-radius: 10px;
+    padding: 12px;
+    color: #fff;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-top: 4px;
+  }
+  .log-save-btn:hover { background: #35a860; }
+  .log-save-btn:disabled { background: var(--border); color: var(--muted); cursor: default; }
+
+  .sessions-list { }
+  .sessions-list h3 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 16px;
+    letter-spacing: 2px;
+    color: var(--text);
+    margin-bottom: 12px;
+  }
+  .session-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+  }
+  .session-icon { font-size: 20px; flex-shrink: 0; }
+  .session-info { flex: 1; }
+  .session-date { font-size: 12px; color: var(--muted); }
+  .session-type { font-size: 14px; font-weight: 600; color: var(--text); }
+  .session-del {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+  .session-del:hover { border-color: #e05555; color: #e05555; }
+  .no-sessions {
+    text-align: center;
+    color: var(--muted);
+    font-size: 14px;
+    padding: 24px 0;
+  }
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .stat-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 10px;
+    text-align: center;
+  }
+  .stat-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    color: var(--gold);
+    line-height: 1;
+  }
+  .stat-label {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+    margin-top: 4px;
+  }
 </style>
 </head>
 <body>
 
 <header>
-  <div class="header-label">Personal Training</div>
-  <h1>LAURI<span>'S</span><br>TREENIT</h1>
+  <h1>PERSONAL<br><span>TRAINING</span></h1>
   <div class="header-sub">3 ohjelmaa · Liikkuvuus · Venyttely</div>
 </header>
 
@@ -504,6 +718,7 @@
   <button class="tab-btn" onclick="showTab('prog2')">Ohjelma 2</button>
   <button class="tab-btn" onclick="showTab('prog3')">Ohjelma 3</button>
   <button class="tab-btn" onclick="showTab('physio')" id="physio-tab">🏥 Fysioterapia</button>
+  <button class="tab-btn" onclick="showTab('calendar')">📅 Kalenteri</button>
   <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn" title="Vaihda teema">🌙</button>
 </nav>
 
@@ -922,6 +1137,56 @@
       </ul>
     </div>
   </div>
+</div>
+
+<!-- CALENDAR PAGE -->
+<div id="calendar" class="page">
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-box">
+      <div class="stat-num" id="statTotal">0</div>
+      <div class="stat-label">Yhteensä</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num" id="statMonth">0</div>
+      <div class="stat-label">Tässä kuussa</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num" id="statStreak">0</div>
+      <div class="stat-label">Putki (pv)</div>
+    </div>
+  </div>
+
+  <!-- Log session -->
+  <div class="log-session-area">
+    <h3>📝 Merkitse treeni</h3>
+    <div class="log-row" id="logTypeRow">
+      <button class="log-type-btn selected" data-type="Ohjelma 1" onclick="selectType(this)">💪 Ohjelma 1</button>
+      <button class="log-type-btn" data-type="Ohjelma 2" onclick="selectType(this)">🏋️ Ohjelma 2</button>
+      <button class="log-type-btn" data-type="Ohjelma 3" onclick="selectType(this)">🔥 Ohjelma 3</button>
+      <button class="log-type-btn" data-type="Fysioterapia" onclick="selectType(this)">🏥 Fysio</button>
+      <button class="log-type-btn" data-type="Muu" onclick="selectType(this)">⚡ Muu</button>
+    </div>
+    <button class="log-save-btn" onclick="logSession()">✅ Tallenna tänään</button>
+  </div>
+
+  <!-- Calendar -->
+  <div class="cal-header">
+    <button class="cal-nav" onclick="calNav(-1)">‹</button>
+    <div class="cal-month-label" id="calMonthLabel"></div>
+    <button class="cal-nav" onclick="calNav(1)">›</button>
+  </div>
+
+  <div class="cal-legend" id="calLegend"></div>
+  <div class="cal-grid" id="calGrid"></div>
+
+  <!-- Session log -->
+  <div class="sessions-list">
+    <h3>Treenihistoria</h3>
+    <div id="sessionsList"></div>
+  </div>
+
 </div>
 
 <footer>Lauri · Treeniohjelmat</footer>
@@ -1783,11 +2048,31 @@
 
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  /* ── THEME ── */
+  /* ══════════════════════════════════════
+     SUPABASE CONFIG
+  ══════════════════════════════════════ */
+  const SUPA_URL = 'https://azgraotogacudqpuahrz.supabase.co';
+  const SUPA_KEY = 'sb_publishable_RoeDClj0q0LC6T4A3AGkmQ_rWjYtvDk';
+  const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+  function getUserId() {
+    let uid = localStorage.getItem('pt_user_id');
+    if (!uid) {
+      uid = 'u_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+      localStorage.setItem('pt_user_id', uid);
+    }
+    return uid;
+  }
+  const USER_ID = getUserId();
+
+  /* ══════════════════════════════════════
+     THEME
+  ══════════════════════════════════════ */
   const saved = localStorage.getItem('theme');
-  const isLight = saved === null ? true : saved === 'light';
-  if (isLight) {
+  const isLightInit = saved === null ? true : saved === 'light';
+  if (isLightInit) {
     document.documentElement.classList.add('light');
     document.getElementById('themeBtn').textContent = '☀️';
   }
@@ -1797,7 +2082,9 @@
     localStorage.setItem('theme', nowLight ? 'light' : 'dark');
   }
 
-  /* ── TABS ── */
+  /* ══════════════════════════════════════
+     TABS
+  ══════════════════════════════════════ */
   let currentTab = 'warmup';
   function showTab(id) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -1810,19 +2097,22 @@
     document.getElementById(id).classList.add('active');
     event.target.classList.add('active');
     currentTab = id;
-    updateProgress();
+    if (id === 'calendar') loadAndRenderCalendar();
+    else updateProgress();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  /* ── CARDS ── */
+  /* ══════════════════════════════════════
+     CARDS
+  ══════════════════════════════════════ */
   function toggleCard(card) {
-    // Don't expand if checkbox was clicked
     if (event.target.classList.contains('ex-checkbox')) return;
     card.classList.toggle('open');
   }
 
-  /* ── CHECKBOXES ── */
-  // Inject a checkbox into every exercise/physio card
+  /* ══════════════════════════════════════
+     CHECKBOXES
+  ══════════════════════════════════════ */
   function initCheckboxes() {
     const allCards = document.querySelectorAll('.exercise-card, .physio-card');
     allCards.forEach((card, idx) => {
@@ -1830,69 +2120,252 @@
       const tabId = page ? page.id : 'unknown';
       const nameEl = card.querySelector('.exercise-name');
       const name = nameEl ? nameEl.textContent.trim() : 'ex' + idx;
-      const key = 'done::' + tabId + '::' + name;
+      const localKey = 'done::' + tabId + '::' + name;
 
-      // Create checkbox wrapper
       const wrap = document.createElement('div');
       wrap.className = 'cb-wrap';
       const cb = document.createElement('input');
       cb.type = 'checkbox';
       cb.className = 'ex-checkbox';
-      cb.checked = localStorage.getItem(key) === '1';
-      cb.addEventListener('change', (e) => {
+      cb.checked = localStorage.getItem(localKey) === '1';
+
+      cb.addEventListener('change', async (e) => {
         e.stopPropagation();
-        localStorage.setItem(key, cb.checked ? '1' : '0');
-        card.classList.toggle('done', cb.checked);
+        const done = cb.checked;
+        localStorage.setItem(localKey, done ? '1' : '0');
+        card.classList.toggle('done', done);
         updateProgress();
+        await supa.from('exercise_checks').upsert({
+          user_id: USER_ID, tab_id: tabId, exercise_name: name,
+          done: done, updated_at: new Date().toISOString()
+        }, { onConflict: 'user_id,tab_id,exercise_name' });
       });
+
       wrap.appendChild(cb);
-
-      // Insert before chevron
-      const header = card.querySelector('.card-header');
-      header.appendChild(wrap);
-
-      // Restore done state
+      card.querySelector('.card-header').appendChild(wrap);
       if (cb.checked) card.classList.add('done');
     });
+    syncChecksFromCloud();
   }
 
-  /* ── PROGRESS ── */
-  function updateProgress() {
-    const page = document.getElementById(currentTab);
-    if (!page) return;
-    const all = page.querySelectorAll('.ex-checkbox');
-    const done = page.querySelectorAll('.ex-checkbox:checked');
-    const total = all.length;
-    const doneCount = done.length;
-    const pct = total > 0 ? Math.round((doneCount / total) * 100) : 0;
-
-    document.getElementById('progressFill').style.width = pct + '%';
-    document.getElementById('progressDone').textContent = doneCount;
-    document.getElementById('progressTotal').textContent = total;
-
-    // Hide progress bar on warmup (no checkboxes)
-    document.getElementById('progressWrap').style.display =
-      total === 0 ? 'none' : 'block';
-  }
-
-  /* ── RESET ── */
-  function resetProgress() {
-    const page = document.getElementById(currentTab);
-    if (!page) return;
-    const cbs = page.querySelectorAll('.ex-checkbox');
-    cbs.forEach(cb => {
-      cb.checked = false;
-      const card = cb.closest('.exercise-card, .physio-card');
-      if (card) card.classList.remove('done');
-      const nameEl = cb.closest('.exercise-card, .physio-card')?.querySelector('.exercise-name');
-      const name = nameEl ? nameEl.textContent.trim() : '';
-      const key = 'done::' + currentTab + '::' + name;
-      localStorage.removeItem(key);
+  async function syncChecksFromCloud() {
+    const { data, error } = await supa.from('exercise_checks')
+      .select('tab_id, exercise_name, done').eq('user_id', USER_ID);
+    if (error || !data) return;
+    data.forEach(row => {
+      const localKey = 'done::' + row.tab_id + '::' + row.exercise_name;
+      localStorage.setItem(localKey, row.done ? '1' : '0');
+      const page = document.getElementById(row.tab_id);
+      if (!page) return;
+      page.querySelectorAll('.exercise-card, .physio-card').forEach(card => {
+        const nameEl = card.querySelector('.exercise-name');
+        if (nameEl && nameEl.textContent.trim() === row.exercise_name) {
+          const cb = card.querySelector('.ex-checkbox');
+          if (cb) { cb.checked = row.done; card.classList.toggle('done', row.done); }
+        }
+      });
     });
     updateProgress();
   }
 
-  /* ── INIT ── */
+  function updateProgress() {
+    const page = document.getElementById(currentTab);
+    if (!page) return;
+    const all = page.querySelectorAll('.ex-checkbox');
+    const doneEls = page.querySelectorAll('.ex-checkbox:checked');
+    const total = all.length, doneCount = doneEls.length;
+    const pct = total > 0 ? Math.round((doneCount / total) * 100) : 0;
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressDone').textContent = doneCount;
+    document.getElementById('progressTotal').textContent = total;
+    document.getElementById('progressWrap').style.display = total === 0 ? 'none' : 'block';
+  }
+
+  async function resetProgress() {
+    const page = document.getElementById(currentTab);
+    if (!page) return;
+    const names = [];
+    page.querySelectorAll('.ex-checkbox').forEach(cb => {
+      cb.checked = false;
+      const card = cb.closest('.exercise-card, .physio-card');
+      if (card) card.classList.remove('done');
+      const nameEl = card?.querySelector('.exercise-name');
+      const name = nameEl ? nameEl.textContent.trim() : '';
+      localStorage.removeItem('done::' + currentTab + '::' + name);
+      if (name) names.push(name);
+    });
+    updateProgress();
+    if (names.length) {
+      await supa.from('exercise_checks')
+        .update({ done: false, updated_at: new Date().toISOString() })
+        .eq('user_id', USER_ID).eq('tab_id', currentTab).in('exercise_name', names);
+    }
+  }
+
+  /* ══════════════════════════════════════
+     CALENDAR
+  ══════════════════════════════════════ */
+  const TYPE_COLORS = {
+    'Ohjelma 1': '#c8a84b', 'Ohjelma 2': '#e8864a', 'Ohjelma 3': '#9b6fe8',
+    'Fysioterapia': '#4a9eca', 'Muu': '#3dba6e'
+  };
+  const TYPE_ICONS = {
+    'Ohjelma 1': '💪', 'Ohjelma 2': '🏋️', 'Ohjelma 3': '🔥',
+    'Fysioterapia': '🏥', 'Muu': '⚡'
+  };
+  const MONTHS_FI = ['Tammikuu','Helmikuu','Maaliskuu','Huhtikuu','Toukokuu','Kesäkuu',
+                     'Heinäkuu','Elokuu','Syyskuu','Lokakuu','Marraskuu','Joulukuu'];
+
+  let calYear = new Date().getFullYear();
+  let calMonth = new Date().getMonth();
+  let selectedType = 'Ohjelma 1';
+  let cachedSessions = [];
+
+  function todayStr() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+
+  function selectType(btn) {
+    document.querySelectorAll('.log-type-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    selectedType = btn.dataset.type;
+  }
+
+  async function loadAndRenderCalendar() {
+    document.getElementById('calGrid').innerHTML =
+      '<div style="grid-column:1/-1;text-align:center;padding:24px;color:var(--muted);font-size:13px;">Ladataan... ⏳</div>';
+    const { data, error } = await supa.from('sessions')
+      .select('*').eq('user_id', USER_ID).order('ts', { ascending: false });
+    if (!error && data) cachedSessions = data;
+    renderCalendar();
+    renderSessionsList();
+    updateStats();
+  }
+
+  async function logSession() {
+    const today = todayStr();
+    if (cachedSessions.find(s => s.date === today && s.type === selectedType)) {
+      alert('Tämä treeni on jo merkitty tänään!'); return;
+    }
+    const btn = document.querySelector('.log-save-btn');
+    btn.disabled = true; btn.textContent = 'Tallennetaan...';
+    const { data, error } = await supa.from('sessions')
+      .insert({ user_id: USER_ID, date: today, type: selectedType, ts: Date.now() })
+      .select().single();
+    if (error) {
+      alert('Virhe: ' + error.message);
+      btn.disabled = false; btn.textContent = '✅ Tallenna tänään'; return;
+    }
+    cachedSessions.unshift(data);
+    renderCalendar(); renderSessionsList(); updateStats();
+    btn.textContent = '🎉 Tallennettu!';
+    setTimeout(() => { btn.textContent = '✅ Tallenna tänään'; btn.disabled = false; }, 1800);
+  }
+
+  async function deleteSession(ts) {
+    await supa.from('sessions').delete().eq('user_id', USER_ID).eq('ts', ts);
+    cachedSessions = cachedSessions.filter(s => s.ts !== ts);
+    renderCalendar(); renderSessionsList(); updateStats();
+  }
+
+  function calNav(dir) {
+    calMonth += dir;
+    if (calMonth > 11) { calMonth = 0; calYear++; }
+    if (calMonth < 0)  { calMonth = 11; calYear--; }
+    renderCalendar();
+  }
+
+  function renderCalendar() {
+    document.getElementById('calMonthLabel').textContent = MONTHS_FI[calMonth] + ' ' + calYear;
+    const dayMap = {};
+    cachedSessions.forEach(s => {
+      if (!dayMap[s.date]) dayMap[s.date] = [];
+      if (!dayMap[s.date].includes(s.type)) dayMap[s.date].push(s.type);
+    });
+    const today = todayStr();
+    const grid = document.getElementById('calGrid');
+    grid.innerHTML = '';
+    ['Ma','Ti','Ke','To','Pe','La','Su'].forEach(d => {
+      const el = document.createElement('div');
+      el.className = 'cal-day-name'; el.textContent = d; grid.appendChild(el);
+    });
+    let startOffset = new Date(calYear, calMonth, 1).getDay() - 1;
+    if (startOffset < 0) startOffset = 6;
+    for (let i = 0; i < startOffset; i++) {
+      const el = document.createElement('div'); el.className = 'cal-day cal-empty'; grid.appendChild(el);
+    }
+    const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = calYear + '-' + String(calMonth+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+      const el = document.createElement('div');
+      el.className = 'cal-day';
+      if (dateStr === today) el.classList.add('cal-today');
+      const types = dayMap[dateStr] || [];
+      if (types.length > 0) {
+        el.classList.add('has-session');
+        el.style.background = TYPE_COLORS[types[0]] || '#3dba6e';
+        el.style.borderColor = TYPE_COLORS[types[0]] || '#3dba6e';
+      }
+      const numEl = document.createElement('span');
+      numEl.textContent = d; el.appendChild(numEl);
+      if (types.length > 0) {
+        const dots = document.createElement('div'); dots.className = 'cal-dots';
+        types.slice(0,4).forEach(() => {
+          const dot = document.createElement('div'); dot.className = 'cal-dot'; dots.appendChild(dot);
+        });
+        el.appendChild(dots);
+      }
+      grid.appendChild(el);
+    }
+    const legend = document.getElementById('calLegend');
+    legend.innerHTML = '';
+    Object.entries(TYPE_COLORS).forEach(([type, color]) => {
+      const item = document.createElement('div'); item.className = 'cal-legend-item';
+      item.innerHTML = `<div class="cal-legend-dot" style="background:${color}"></div>${TYPE_ICONS[type]} ${type}`;
+      legend.appendChild(item);
+    });
+  }
+
+  function renderSessionsList() {
+    const sessions = [...cachedSessions].sort((a,b) => b.ts - a.ts);
+    const el = document.getElementById('sessionsList');
+    if (!sessions.length) {
+      el.innerHTML = '<div class="no-sessions">Ei treenihistoriaa vielä.<br>Merkitse ensimmäinen treeni! 💪</div>';
+      return;
+    }
+    el.innerHTML = sessions.map(s => {
+      const d = new Date(s.date + 'T12:00:00');
+      const dateLabel = d.toLocaleDateString('fi-FI', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+      return `<div class="session-item">
+        <div class="session-icon">${TYPE_ICONS[s.type]||'⚡'}</div>
+        <div class="session-info">
+          <div class="session-type" style="color:${TYPE_COLORS[s.type]||'#3dba6e'}">${s.type}</div>
+          <div class="session-date">${dateLabel}</div>
+        </div>
+        <button class="session-del" onclick="deleteSession(${s.ts})">Poista</button>
+      </div>`;
+    }).join('');
+  }
+
+  function updateStats() {
+    const now = new Date();
+    const thisMonth = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
+    const monthCount = cachedSessions.filter(s => s.date.startsWith(thisMonth)).length;
+    const uniqueDays = [...new Set(cachedSessions.map(s => s.date))].sort();
+    let streak = 0, d = new Date();
+    while (true) {
+      const ds = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+      if (uniqueDays.includes(ds)) { streak++; d.setDate(d.getDate()-1); } else break;
+    }
+    document.getElementById('statTotal').textContent = cachedSessions.length;
+    document.getElementById('statMonth').textContent = monthCount;
+    document.getElementById('statStreak').textContent = streak;
+  }
+
+  /* ══════════════════════════════════════
+     INIT
+  ══════════════════════════════════════ */
   document.addEventListener('DOMContentLoaded', () => {
     initCheckboxes();
     updateProgress();

@@ -3357,11 +3357,19 @@
 
     eq(col, val) { this._filters.push(`${col}=eq.${encodeURIComponent(val)}`); return this; }
     in(col, vals) { this._filters.push(`${col}=in.(${vals.map(v => encodeURIComponent(v)).join(',')})`); return this; }
-    order(col, { ascending = true } = {}) { 
-      // Remove any existing order filter first
-      this._filters = this._filters.filter(f => !f.startsWith('order='));
-      this._filters.push(`order=${col}.${ascending ? 'asc' : 'desc'}`); 
-      return this; 
+    order(col, { ascending = true } = {}) {
+      // Supabase REST supports multiple order cols as order=col1.asc,col2.asc
+      const existing = this._filters.find(f => f.startsWith('order='));
+      const newCol = `${col}.${ascending ? 'asc' : 'desc'}`;
+      if (existing) {
+        // Append to existing order
+        this._filters = this._filters.map(f =>
+          f.startsWith('order=') ? f + ',' + newCol : f
+        );
+      } else {
+        this._filters.push('order=' + newCol);
+      }
+      return this;
     }
 
     single() { this._single = true; return this; }
@@ -4288,13 +4296,24 @@
 
   async function loadExerciseLibrary() {
     if (exerciseLibrary.length > 0) return; // already loaded
-    log.info('Loading exercise library...');
-    const { data, error } = await supa.from('exercise_library')
-      .select('id, name, category, muscle_group')
-      .order('category').order('name');
-    if (error) { log.error('Failed to load exercise library:', error.message); return; }
-    exerciseLibrary = data || [];
-    log.ok('Exercise library loaded:', exerciseLibrary.length, 'exercises');
+    log.group('loadExerciseLibrary');
+    try {
+      const res = await fetch(
+        `${SUPA_URL}/rest/v1/exercise_library?select=id,name,category,muscle_group&order=category.asc,name.asc`,
+        { headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY } }
+      );
+      const data = await res.json();
+      if (!res.ok) {
+        log.error('Exercise library load failed:', res.status, JSON.stringify(data));
+        log.end();
+        return;
+      }
+      exerciseLibrary = data || [];
+      log.ok('Exercise library loaded:', exerciseLibrary.length, 'exercises');
+    } catch(e) {
+      log.error('Exercise library network error:', e.message);
+    }
+    log.end();
   }
 
   function openExercisePicker(programId) {
@@ -4393,9 +4412,11 @@
   }
 
   async function onPickerSelectExercise(id, name, category, muscleGroup) {
-    if (!currentUser || !pickerActiveDay) { log.warn('No user or no active program'); return; }
-    log.group('addExerciseToProgram');
-    log.info('Exercise:', name, '| program:', pickerActiveDay);
+    log.group('onPickerSelectExercise');
+    log.info('id:', id, '| name:', name, '| program:', pickerActiveDay, '| user:', currentUser?.id);
+
+    if (!currentUser) { log.error('No user logged in'); log.end(); return; }
+    if (!pickerActiveDay) { log.error('No active program — pickerActiveDay is null'); log.end(); return; }
 
     // Check not already added
     if (pickerAddedIds.has(id)) {

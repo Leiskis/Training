@@ -3114,6 +3114,29 @@
       return h;
     },
 
+    async refreshSession() {
+      const refreshToken = localStorage.getItem('pt_refresh');
+      if (!refreshToken) return false;
+      try {
+        const res = await fetch(`${SUPA_URL}/auth/v1/token?grant_type=refresh_token`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'apikey': SUPA_KEY },
+          body: JSON.stringify({ refresh_token: refreshToken })
+        });
+        if (!res.ok) return false;
+        const data = await res.json();
+        this._authToken = data.access_token;
+        localStorage.setItem('pt_token', data.access_token);
+        localStorage.setItem('pt_refresh', data.refresh_token || refreshToken);
+        localStorage.setItem('pt_user', JSON.stringify(data.user));
+        log.ok('Session refreshed for:', data.user?.email);
+        return true;
+      } catch(e) {
+        log.error('Token refresh failed:', e.message);
+        return false;
+      }
+    },
+
     auth: {
       async signUp({ email, password }) {
         log.group('AUTH signUp');
@@ -3241,7 +3264,7 @@
 
     select(cols = '*') { this._selectCols = cols; if (this._method === 'GET') this._method = 'GET'; return this; }
     insert(body) { this._body = body; this._method = 'POST'; return this; }
-    update(body) { this._body = body; this._method = 'PATCH'; return this; }
+    update(body) { this._body = body; this._method = 'PATCH'; this._prefer = 'return=minimal'; return this; }
     upsert(body, opts = {}) {
       this._body = body;
       this._method = 'POST';
@@ -3250,7 +3273,11 @@
       if (conflict) this._onConflict = conflict;
       return this;
     }
-    delete() { this._method = 'DELETE'; return this; }
+    delete() { 
+      this._method = 'DELETE'; 
+      this._prefer = 'return=minimal';
+      return this; 
+    }
 
     eq(col, val) { this._filters.push(`${col}=eq.${encodeURIComponent(val)}`); return this; }
     in(col, vals) { this._filters.push(`${col}=in.(${vals.map(v => encodeURIComponent(v)).join(',')})`); return this; }
@@ -3294,7 +3321,35 @@
       }
 
       let data = null;
-      try { data = JSON.parse(text); } catch { data = null; }
+      if (text && text.length > 0) {
+        try { data = JSON.parse(text); } catch { data = null; }
+      }
+
+      // 204 No Content is success for DELETE
+      if (res.status === 204) return { data: null, error: null };
+
+      // 401 = token expired — try refresh once then retry
+      if (res.status === 401) {
+        log.warn('401 on', this.table, '— attempting token refresh...');
+        const refreshed = await supa.refreshSession();
+        if (refreshed) {
+          // Retry the request with new token
+          opts.headers = supa._headers({ 'Prefer': this._prefer });
+          const res2 = await fetch(url, opts);
+          const text2 = await res2.text();
+          if (res2.status === 204) return { data: null, error: null };
+          let data2 = null;
+          try { data2 = JSON.parse(text2); } catch { data2 = null; }
+          if (!res2.ok) return { data: null, error: { message: (data2 && data2.message) || text2 } };
+          if (this._single && Array.isArray(data2)) data2 = data2[0] || null;
+          return { data: data2, error: null };
+        } else {
+          // Refresh failed — force logout
+          log.error('Token refresh failed — logging out');
+          doLogout();
+          return { data: null, error: { message: 'Session expired. Please log in again.' } };
+        }
+      }
 
       if (!res.ok) {
         log.error(`DB error ${this._method} ${this.table} — status:`, res.status, '| msg:', (data && data.message) || text);
@@ -3354,10 +3409,7 @@
     if (password.length < 6) { showAuthError('Password must be at least 6 characters.'); return; }
     const btn = document.querySelector('#registerForm .auth-submit');
     btn.disabled = true; btn.textContent = 'Creating account...';
-    console.log('Registering:', email);
     const { data, error } = await supa.auth.signUp({ email, password });
-    console.log('Register data:', JSON.stringify(data));
-    console.log('Register error:', JSON.stringify(error));
     btn.disabled = false; btn.textContent = 'Create Account →';
     if (error) { showAuthError(error.message); return; }
     if (data && data.user && data.user.identities && data.user.identities.length === 0) {
@@ -3453,24 +3505,34 @@
     if (!currentUser) return null;
     const sort_order = userPrograms.length;
     log.info('Creating program:', name);
-    const { data, error } = await supa.from('workout_programs')
-      .insert({ user_id: currentUser.id, name, sort_order })
-      .select('id, name, sort_order, created_at')
-      .single();
+    const { error } = await supa.from('workout_programs')
+      .insert({ user_id: currentUser.id, name, sort_order });
     if (error) { log.error('Failed to create program:', error.message); return null; }
-    userPrograms.push(data);
-    log.ok('Program created:', data.name, '| id:', data.id);
-    return data;
+    // Reload to get the created row with its ID
+    await loadUserPrograms();
+    const created = userPrograms.find(p => p.name === name);
+    log.ok('Program created:', created?.name, '| id:', created?.id);
+    return created || null;
   }
 
   async function deleteProgram(id) {
-    if (!currentUser) return;
-    log.info('Deleting program:', id);
+    if (!currentUser) { log.warn('deleteProgram: no user'); return false; }
+    log.group('deleteProgram');
+    log.info('Deleting program id:', id, '| user:', currentUser.id);
     const { error } = await supa.from('workout_programs')
-      .delete().eq('user_id', currentUser.id).eq('id', id);
-    if (error) { log.error('Failed to delete program:', error.message); return; }
+      .delete()
+      .eq('user_id', currentUser.id)
+      .eq('id', id);
+    if (error) {
+      log.error('Failed to delete program:', error.message);
+      log.end();
+      alert('Virhe poistaessa: ' + error.message);
+      return false;
+    }
     userPrograms = userPrograms.filter(p => p.id !== id);
-    log.ok('Program deleted');
+    log.ok('Program deleted successfully, remaining:', userPrograms.length);
+    log.end();
+    return true;
   }
 
   /* ══════════════════════════════════════
@@ -3631,9 +3693,11 @@
     });
     updateProgress();
     if (!currentUser || !names.length) return;
-    await supa.from('exercise_checks')
+    const { error: resetErr } = await supa.from('exercise_checks')
       .update({ done: false, updated_at: new Date().toISOString() })
       .eq('user_id', currentUser.id).eq('tab_id', currentTab).in('exercise_name', names);
+    if (resetErr) log.error('Reset progress failed:', resetErr.message);
+    else log.ok('Progress reset in cloud for tab:', currentTab);
   }
 
   /* ══════════════════════════════════════
@@ -4164,8 +4228,7 @@
         }, 600);
       }
     });
-    // TODO Step 3: save to workout_day_exercises
-    console.log('TODO Step 3 — save:', { id, name, day: pickerActiveDay });
+    // TODO Step 4: save to workout_day_exercises
   }
 
   /* ══════════════════════════════════════

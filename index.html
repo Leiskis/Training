@@ -990,6 +990,200 @@
     color: var(--muted);
     font-size: 14px;
   }
+
+  /* ── MY PROGRAMS ── */
+  .mp-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    gap: 12px;
+  }
+  .mp-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 26px;
+    letter-spacing: 2px;
+    color: var(--text);
+    line-height: 1.1;
+  }
+  .mp-subtitle {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 3px;
+  }
+  .mp-new-btn {
+    flex-shrink: 0;
+    background: var(--gold);
+    border: none;
+    border-radius: 20px;
+    padding: 9px 18px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .mp-new-btn:active { opacity: 0.8; }
+
+  .mp-new-wrap {
+    background: var(--surface);
+    border: 1.5px solid var(--gold);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .mp-new-input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    color: var(--text);
+    outline: none;
+    margin-bottom: 12px;
+    transition: border-color 0.2s;
+  }
+  .mp-new-input:focus { border-color: var(--gold); }
+  .mp-new-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+  }
+  .mp-new-cancel {
+    background: none;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--muted);
+    cursor: pointer;
+  }
+  .mp-new-save {
+    background: var(--gold);
+    border: none;
+    border-radius: 8px;
+    padding: 8px 20px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+    cursor: pointer;
+  }
+
+  .mp-loading {
+    text-align: center;
+    padding: 32px;
+    color: var(--muted);
+    font-size: 14px;
+  }
+  .mp-empty-state {
+    text-align: center;
+    padding: 48px 20px;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .mp-empty-state strong {
+    display: block;
+    font-size: 18px;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+
+  .mp-program-card {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .mp-program-card:active {
+    transform: scale(0.98);
+    border-color: var(--gold);
+  }
+  .mp-program-icon {
+    width: 44px; height: 44px;
+    background: var(--gold-dim);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+  .mp-program-info { flex: 1; }
+  .mp-program-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .mp-program-meta {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .mp-program-arrow {
+    font-size: 18px;
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+  .mp-program-del {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+  .mp-program-del:hover { border-color: #e05555; color: #e05555; }
+
+  /* Detail view */
+  .mp-detail-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .mp-back-btn {
+    background: none;
+    border: 1.5px solid var(--border);
+    border-radius: 20px;
+    padding: 7px 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .mp-back-btn:hover { border-color: var(--gold); color: var(--gold); }
+  .mp-detail-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 2px;
+    color: var(--text);
+  }
+  .mp-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.6;
+  }
   .auth-overlay {
     position: fixed;
     inset: 0;
@@ -1425,6 +1619,7 @@
   <button class="tab-btn" onclick="showTab('prog2')">Ohjelma 2</button>
   <button class="tab-btn" onclick="showTab('prog3')">Ohjelma 3</button>
   <button class="tab-btn" onclick="showTab('physio')" id="physio-tab">🏥 Fysioterapia</button>
+  <button class="tab-btn" onclick="showTab('myprograms')">✏️ Omat</button>
   <button class="tab-btn" onclick="showTab('calendar')">📅 Kalenteri</button>
   <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn" title="Toggle theme">🌙</button>
   <button class="user-pill" id="userPill" onclick="doLogout()" style="display:none" title="Sign out">
@@ -1867,6 +2062,57 @@
       + Lisää liike
     </button>
   </div>
+</div>
+
+<!-- MY PROGRAMS PAGE -->
+<div id="myprograms" class="page">
+
+  <!-- Header row -->
+  <div class="mp-header">
+    <div class="mp-title-wrap">
+      <h2 class="mp-title">Omat ohjelmat</h2>
+      <p class="mp-subtitle">Rakenna omat treeniohjelmat</p>
+    </div>
+    <button class="mp-new-btn" onclick="showNewProgramInput()">+ Uusi</button>
+  </div>
+
+  <!-- New program input (hidden by default) -->
+  <div class="mp-new-wrap" id="mpNewWrap" style="display:none">
+    <input
+      type="text"
+      id="mpNewInput"
+      class="mp-new-input"
+      placeholder="Ohjelman nimi, esim. Push..."
+      maxlength="40"
+      onkeydown="if(event.key==='Enter') saveNewProgram()"
+    />
+    <div class="mp-new-actions">
+      <button class="mp-new-cancel" onclick="hideNewProgramInput()">Peruuta</button>
+      <button class="mp-new-save" onclick="saveNewProgram()">Tallenna</button>
+    </div>
+  </div>
+
+  <!-- Program list -->
+  <div id="mpProgramList">
+    <div class="mp-loading">Ladataan ohjelmia...</div>
+  </div>
+
+  <!-- Program detail view -->
+  <div id="mpDetail" style="display:none">
+    <div class="mp-detail-header">
+      <button class="mp-back-btn" onclick="closeProgramDetail()">← Takaisin</button>
+      <div class="mp-detail-name" id="mpDetailName"></div>
+    </div>
+    <div id="mpDetailExercises">
+      <div class="mp-empty">Ei liikkeitä vielä.<br>Lisää ensimmäinen liike! 💪</div>
+    </div>
+    <div class="add-exercise-btn-wrap">
+      <button class="add-exercise-btn" id="mpAddExBtn" onclick="openExercisePickerForProgram()">
+        + Lisää liike
+      </button>
+    </div>
+  </div>
+
 </div>
 
 <!-- CALENDAR PAGE -->
@@ -3149,6 +3395,82 @@
     document.getElementById('userEmail').textContent = email.split('@')[0];
     document.getElementById('userPill').style.display = 'flex';
     syncChecksFromCloud();
+    ensureDefaultPrograms();
+  }
+
+  /* ══════════════════════════════════════
+     WORKOUT PROGRAMS
+  ══════════════════════════════════════ */
+  let userPrograms = []; // cached list of user's programs
+
+  const DEFAULT_PROGRAMS = [
+    { name: 'Ohjelma A', sort_order: 0 },
+    { name: 'Ohjelma B', sort_order: 1 },
+    { name: 'Ohjelma C', sort_order: 2 },
+  ];
+
+  async function loadUserPrograms() {
+    if (!currentUser) return [];
+    log.group('loadUserPrograms');
+    const { data, error } = await supa.from('workout_programs')
+      .select('id, name, sort_order, created_at')
+      .eq('user_id', currentUser.id)
+      .order('sort_order');
+    if (error) { log.error('Failed to load programs:', error.message); log.end(); return []; }
+    userPrograms = data || [];
+    log.ok('Loaded', userPrograms.length, 'programs:', userPrograms.map(p => p.name).join(', '));
+    log.end();
+    return userPrograms;
+  }
+
+  async function ensureDefaultPrograms() {
+    if (!currentUser) return;
+    log.group('ensureDefaultPrograms');
+    const programs = await loadUserPrograms();
+    if (programs.length > 0) {
+      log.ok('User already has programs, skipping default creation');
+      log.end();
+      return;
+    }
+    log.info('No programs found — creating defaults...');
+    const toInsert = DEFAULT_PROGRAMS.map(p => ({
+      user_id: currentUser.id,
+      name: p.name,
+      sort_order: p.sort_order
+    }));
+    const { error } = await supa.from('workout_programs').insert(toInsert);
+    if (error) {
+      log.error('Failed to create default programs:', error.message);
+      log.end();
+      return;
+    }
+    await loadUserPrograms();
+    log.ok('Default programs created:', userPrograms.map(p => p.name).join(', '));
+    log.end();
+  }
+
+  async function createProgram(name) {
+    if (!currentUser) return null;
+    const sort_order = userPrograms.length;
+    log.info('Creating program:', name);
+    const { data, error } = await supa.from('workout_programs')
+      .insert({ user_id: currentUser.id, name, sort_order })
+      .select('id, name, sort_order, created_at')
+      .single();
+    if (error) { log.error('Failed to create program:', error.message); return null; }
+    userPrograms.push(data);
+    log.ok('Program created:', data.name, '| id:', data.id);
+    return data;
+  }
+
+  async function deleteProgram(id) {
+    if (!currentUser) return;
+    log.info('Deleting program:', id);
+    const { error } = await supa.from('workout_programs')
+      .delete().eq('user_id', currentUser.id).eq('id', id);
+    if (error) { log.error('Failed to delete program:', error.message); return; }
+    userPrograms = userPrograms.filter(p => p.id !== id);
+    log.ok('Program deleted');
   }
 
   /* ══════════════════════════════════════
@@ -3199,6 +3521,7 @@
     event.target.classList.add('active');
     currentTab = id;
     if (id === 'calendar') loadAndRenderCalendar();
+    else if (id === 'myprograms') renderProgramList();
     else updateProgress();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -3598,6 +3921,110 @@
   }
 
   /* ══════════════════════════════════════
+     MY PROGRAMS UI
+  ══════════════════════════════════════ */
+  let activeProgramId = null; // currently open program in detail view
+
+  const PROGRAM_EMOJIS = ['💪','🔥','⚡','🏋️','🦵','🔙','🎯','🏃','⚽','🥊'];
+
+  function getProgramEmoji(index) {
+    return PROGRAM_EMOJIS[index % PROGRAM_EMOJIS.length];
+  }
+
+  async function renderProgramList() {
+    const listEl = document.getElementById('mpProgramList');
+    const detailEl = document.getElementById('mpDetail');
+
+    // Hide detail, show list
+    listEl.style.display = 'block';
+    detailEl.style.display = 'none';
+    hideNewProgramInput();
+
+    if (!currentUser) {
+      listEl.innerHTML = '<div class="mp-loading">Kirjaudu sisään nähdäksesi ohjelmat.</div>';
+      return;
+    }
+
+    listEl.innerHTML = '<div class="mp-loading">Ladataan...</div>';
+    await loadUserPrograms();
+
+    if (userPrograms.length === 0) {
+      listEl.innerHTML = `<div class="mp-empty-state">
+        <strong>Ei ohjelmia vielä</strong>
+        Luo ensimmäinen ohjelmasi painamalla "+ Uusi"
+      </div>`;
+      return;
+    }
+
+    listEl.innerHTML = userPrograms.map((p, i) => `
+      <div class="mp-program-card" onclick="openProgramDetail('${p.id}', '${p.name.replace(/'/g,"\\'")}')">
+        <div class="mp-program-icon">${getProgramEmoji(i)}</div>
+        <div class="mp-program-info">
+          <div class="mp-program-name">${p.name}</div>
+          <div class="mp-program-meta">Napauta muokataksesi</div>
+        </div>
+        <div class="mp-program-arrow">›</div>
+        <button class="mp-program-del" onclick="event.stopPropagation(); confirmDeleteProgram('${p.id}', '${p.name.replace(/'/g,"\\'")}')">Poista</button>
+      </div>
+    `).join('');
+  }
+
+  function openProgramDetail(id, name) {
+    activeProgramId = id;
+    document.getElementById('mpProgramList').style.display = 'none';
+    document.getElementById('mpDetail').style.display = 'block';
+    document.getElementById('mpDetailName').textContent = name;
+    document.getElementById('mpDetailExercises').innerHTML =
+      '<div class="mp-empty">Ei liikkeitä vielä.<br>Lisää ensimmäinen liike! 💪</div>';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Step 4 will load exercises here
+  }
+
+  function closeProgramDetail() {
+    activeProgramId = null;
+    document.getElementById('mpProgramList').style.display = 'block';
+    document.getElementById('mpDetail').style.display = 'none';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function showNewProgramInput() {
+    document.getElementById('mpNewWrap').style.display = 'block';
+    setTimeout(() => document.getElementById('mpNewInput').focus(), 50);
+  }
+
+  function hideNewProgramInput() {
+    document.getElementById('mpNewWrap').style.display = 'none';
+    document.getElementById('mpNewInput').value = '';
+  }
+
+  async function saveNewProgram() {
+    const input = document.getElementById('mpNewInput');
+    const name = input.value.trim();
+    if (!name) { input.focus(); return; }
+    const saveBtn = document.querySelector('.mp-new-save');
+    saveBtn.textContent = 'Tallennetaan...';
+    saveBtn.disabled = true;
+    const program = await createProgram(name);
+    saveBtn.textContent = 'Tallenna';
+    saveBtn.disabled = false;
+    if (program) {
+      hideNewProgramInput();
+      renderProgramList();
+    }
+  }
+
+  async function confirmDeleteProgram(id, name) {
+    if (!confirm(`Poistetaanko ohjelma "${name}"? Tätä ei voi peruuttaa.`)) return;
+    await deleteProgram(id);
+    renderProgramList();
+  }
+
+  function openExercisePickerForProgram() {
+    if (!activeProgramId) return;
+    openExercisePicker(activeProgramId);
+  }
+
+  /* ══════════════════════════════════════
      EXERCISE PICKER
   ══════════════════════════════════════ */
   let exerciseLibrary = [];       // all exercises from Supabase
@@ -3627,8 +4054,8 @@
     log.ok('Exercise library loaded:', exerciseLibrary.length, 'exercises');
   }
 
-  function openExercisePicker(dayId) {
-    pickerActiveDay = dayId;
+  function openExercisePicker(programId) {
+    pickerActiveDay = programId; // reuse same variable, now holds program UUID or prog1/2/3
     pickerActiveCategory = 'Kaikki';
     document.getElementById('pickerSearch').value = '';
 

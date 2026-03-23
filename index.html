@@ -692,6 +692,121 @@
     margin-bottom: 14px;
   }
   .sheet-type-btn { flex: 1; min-width: 80px; }
+
+  .sheet-section-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 14px 0 8px;
+  }
+  .feeling-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 4px;
+  }
+  .feeling-btn {
+    flex: 1;
+    min-width: 70px;
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: 20px;
+    padding: 7px 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .feeling-btn.selected {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: #fff;
+    font-weight: 600;
+  }
+  .feeling-btn:active { transform: scale(0.94); }
+
+  .sheet-note {
+    width: 100%;
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    outline: none;
+    resize: none;
+    height: 64px;
+    margin-bottom: 14px;
+    transition: border-color 0.2s;
+  }
+  .sheet-note:focus { border-color: var(--gold); }
+  .sheet-note::placeholder { color: var(--muted); }
+
+  /* Insights */
+  .insights-section { margin-top: 24px; }
+  .insights-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    letter-spacing: 2px;
+    color: var(--text);
+    margin-bottom: 12px;
+  }
+  .insight-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-bottom: 10px;
+  }
+  .insight-card-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 10px;
+  }
+  .insight-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+    font-size: 13px;
+  }
+  .insight-bar-label { width: 90px; flex-shrink: 0; color: var(--text); }
+  .insight-bar-track {
+    flex: 1;
+    height: 8px;
+    background: var(--surface2);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .insight-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.4s ease;
+  }
+  .insight-bar-count {
+    font-size: 11px;
+    color: var(--muted);
+    width: 24px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .insight-trend {
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.5;
+    padding: 4px 0;
+  }
+  .insight-trend span { font-weight: 600; }
   .auth-overlay {
     position: fixed;
     inset: 0;
@@ -1026,6 +1141,21 @@
     flex-shrink: 0;
   }
   .session-del:hover { border-color: #e05555; color: #e05555; }
+  .session-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
+  .session-chip {
+    font-size: 11px;
+    background: var(--surface2);
+    border-radius: 10px;
+    padding: 2px 8px;
+    color: var(--muted);
+    border: 1px solid var(--border);
+  }
+  .session-note {
+    font-size: 11px;
+    color: var(--muted);
+    font-style: italic;
+    margin-top: 3px;
+  }
   .no-sessions {
     text-align: center;
     color: var(--muted);
@@ -1062,7 +1192,7 @@
 <body>
 
 <!-- AUTH OVERLAY -->
-<div class="auth-overlay" id="authOverlay">
+<div class="auth-overlay" id="authOverlay" style="display:none">
   <div class="auth-box">
     <div class="auth-logo">PERSONAL <span>TRAINING</span></div>
     <div class="auth-sub">Sign in to sync across all devices</div>
@@ -1557,19 +1687,6 @@
     </div>
   </div>
 
-  <!-- Log session -->
-  <div class="log-session-area">
-    <h3>📝 Merkitse treeni</h3>
-    <div class="log-row" id="logTypeRow">
-      <button class="log-type-btn selected" data-type="Ohjelma 1" onclick="selectType(this)">💪 Ohjelma 1</button>
-      <button class="log-type-btn" data-type="Ohjelma 2" onclick="selectType(this)">🏋️ Ohjelma 2</button>
-      <button class="log-type-btn" data-type="Ohjelma 3" onclick="selectType(this)">🔥 Ohjelma 3</button>
-      <button class="log-type-btn" data-type="Fysioterapia" onclick="selectType(this)">🏥 Fysio</button>
-      <button class="log-type-btn" data-type="Muu" onclick="selectType(this)">⚡ Muu</button>
-    </div>
-    <button class="log-save-btn" onclick="logSession()">✅ Log Workout</button>
-  </div>
-
   <!-- Calendar -->
   <div class="cal-header">
     <button class="cal-nav" onclick="calNav(-1)">‹</button>
@@ -1586,6 +1703,12 @@
     <div id="sessionsList"></div>
   </div>
 
+  <!-- Insights -->
+  <div class="insights-section" id="insightsSection" style="display:none">
+    <h3 class="insights-title">📊 Oivallukset</h3>
+    <div id="insightsList"></div>
+  </div>
+
 </div>
 
 <!-- DAY LOG BOTTOM SHEET -->
@@ -1594,6 +1717,8 @@
   <div class="sheet-handle"></div>
   <div class="sheet-title" id="sheetTitle">Merkitse treeni</div>
   <div class="sheet-existing" id="sheetExisting"></div>
+
+  <div class="sheet-section-label">Treeni</div>
   <div class="sheet-type-row">
     <button class="log-type-btn sheet-type-btn selected" data-type="Ohjelma 1" onclick="selectSheetType(this)">💪 Ohjelma 1</button>
     <button class="log-type-btn sheet-type-btn" data-type="Ohjelma 2" onclick="selectSheetType(this)">🏋️ Ohjelma 2</button>
@@ -1601,6 +1726,27 @@
     <button class="log-type-btn sheet-type-btn" data-type="Fysioterapia" onclick="selectSheetType(this)">🏥 Fysio</button>
     <button class="log-type-btn sheet-type-btn" data-type="Muu" onclick="selectSheetType(this)">⚡ Muu</button>
   </div>
+
+  <div class="sheet-section-label">Kuinka raskas treeni oli?</div>
+  <div class="feeling-row" id="effortRow">
+    <button class="feeling-btn selected" data-value="easy" onclick="selectFeeling('effort', this)">😌 Helppo</button>
+    <button class="feeling-btn" data-value="good" onclick="selectFeeling('effort', this)">💪 Hyvä</button>
+    <button class="feeling-btn" data-value="hard" onclick="selectFeeling('effort', this)">😤 Raskas</button>
+    <button class="feeling-btn" data-value="exhausting" onclick="selectFeeling('effort', this)">🥵 Uuvuttava</button>
+  </div>
+
+  <div class="sheet-section-label">Fiilis treenin jälkeen?</div>
+  <div class="feeling-row" id="moodRow">
+    <button class="feeling-btn selected" data-value="great" onclick="selectFeeling('mood', this)">🌟 Mahtava</button>
+    <button class="feeling-btn" data-value="energized" onclick="selectFeeling('mood', this)">⚡ Energinen</button>
+    <button class="feeling-btn" data-value="neutral" onclick="selectFeeling('mood', this)">😐 Neutraali</button>
+    <button class="feeling-btn" data-value="tired" onclick="selectFeeling('mood', this)">😴 Väsynyt</button>
+    <button class="feeling-btn" data-value="stressed" onclick="selectFeeling('mood', this)">😰 Stressaantunut</button>
+  </div>
+
+  <div class="sheet-section-label">Muistiinpano <span style="font-weight:400;text-transform:none;letter-spacing:0">(valinnainen)</span></div>
+  <textarea class="sheet-note" id="sheetNote" placeholder="Esim. selkä kipeä, uni huono..." maxlength="200"></textarea>
+
   <button class="log-save-btn" id="sheetSaveBtn" onclick="saveSheetSession()">✅ Tallenna</button>
 </div>
 
@@ -2962,11 +3108,12 @@
       '<div style="grid-column:1/-1;text-align:center;padding:24px;color:var(--muted);font-size:13px;">Loading... ⏳</div>';
     // Order by created_at instead of ts for reliability
     const { data, error } = await supa.from('sessions')
-      .select('id,date,type,ts,created_at').eq('user_id', currentUser.id).order('created_at', { ascending: false });
+      .select('id,date,type,ts,created_at,effort_feeling,post_workout_mood,note')
+      .eq('user_id', currentUser.id).order('created_at', { ascending: false });
     if (error) { log.error('Failed to load sessions:', error.message); }
     else { cachedSessions = data || []; log.ok('Loaded', cachedSessions.length, 'sessions'); }
     log.end();
-    renderCalendar(); renderSessionsList(); updateStats();
+    renderCalendar(); renderSessionsList(); updateStats(); renderInsights();
   }
 
   async function logSession() {
@@ -2993,7 +3140,8 @@
     }
     log.ok('Session inserted, reloading from cloud...');
     const { data: reloaded, error: reloadErr } = await supa.from('sessions')
-      .select('id,date,type,ts,created_at').eq('user_id', currentUser.id).order('created_at', { ascending: false });
+      .select('id,date,type,ts,created_at,effort_feeling,post_workout_mood,note')
+      .eq('user_id', currentUser.id).order('created_at', { ascending: false });
     if (!reloadErr && reloaded) {
       cachedSessions = reloaded;
       log.ok('Reloaded', cachedSessions.length, 'sessions from cloud');
@@ -3078,26 +3226,117 @@
   }
 
   function renderSessionsList() {
-    const sessions = [...cachedSessions].sort((a,b) => {
-      return new Date(b.created_at || 0) - new Date(a.created_at || 0);
-    });
+    const EFFORT_LABELS = { easy:'😌 Helppo', good:'💪 Hyvä', hard:'😤 Raskas', exhausting:'🥵 Uuvuttava' };
+    const MOOD_LABELS = { great:'🌟 Mahtava', energized:'⚡ Energinen', neutral:'😐 Neutraali', tired:'😴 Väsynyt', stressed:'😰 Stressaantunut' };
+    const sessions = [...cachedSessions].sort((a,b) => new Date(b.created_at||0) - new Date(a.created_at||0));
     const el = document.getElementById('sessionsList');
     if (!sessions.length) {
-      el.innerHTML = '<div class="no-sessions">No workout history yet.<br>Log your first session! 💪</div>';
+      el.innerHTML = '<div class="no-sessions">Ei treenihistoriaa vielä.<br>Napauta kalenterista päivää! 💪</div>';
       return;
     }
     el.innerHTML = sessions.map(s => {
       const d = new Date(s.date + 'T12:00:00');
       const dateLabel = d.toLocaleDateString('fi-FI', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+      const feelings = [
+        s.effort_feeling ? `<span class="session-chip">${EFFORT_LABELS[s.effort_feeling]}</span>` : '',
+        s.post_workout_mood ? `<span class="session-chip">${MOOD_LABELS[s.post_workout_mood]}</span>` : ''
+      ].filter(Boolean).join('');
       return `<div class="session-item">
         <div class="session-icon">${TYPE_ICONS[s.type]||'⚡'}</div>
         <div class="session-info">
           <div class="session-type" style="color:${TYPE_COLORS[s.type]||'#3dba6e'}">${s.type}</div>
           <div class="session-date">${dateLabel}</div>
+          ${feelings ? `<div class="session-chips">${feelings}</div>` : ''}
+          ${s.note ? `<div class="session-note">"${s.note}"</div>` : ''}
         </div>
-        <button class="session-del" onclick="deleteSession('${s.id}')">Delete</button>
+        <button class="session-del" onclick="deleteSession('${s.id}')">Poista</button>
       </div>`;
     }).join('');
+  }
+
+  function renderInsights() {
+    const section = document.getElementById('insightsSection');
+    const list = document.getElementById('insightsList');
+    const sessions = cachedSessions.filter(s => s.effort_feeling || s.post_workout_mood);
+    if (sessions.length < 3) { section.style.display = 'none'; return; }
+    section.style.display = 'block';
+
+    const EFFORT_ORDER = ['easy','good','hard','exhausting'];
+    const EFFORT_LABELS = { easy:'😌 Helppo', good:'💪 Hyvä', hard:'😤 Raskas', exhausting:'🥵 Uuvuttava' };
+    const EFFORT_COLORS = { easy:'#3dba6e', good:'#4a9eca', hard:'#e8864a', exhausting:'#e05555' };
+    const MOOD_LABELS = { great:'🌟 Mahtava', energized:'⚡ Energinen', neutral:'😐 Neutraali', tired:'😴 Väsynyt', stressed:'😰 Stressaantunut' };
+    const MOOD_COLORS = { great:'#c8a84b', energized:'#3dba6e', neutral:'#888', tired:'#e8864a', stressed:'#e05555' };
+
+    // Effort distribution
+    const effortCounts = {};
+    sessions.filter(s => s.effort_feeling).forEach(s => effortCounts[s.effort_feeling] = (effortCounts[s.effort_feeling]||0)+1);
+    const effortTotal = Object.values(effortCounts).reduce((a,b) => a+b, 0);
+
+    // Mood distribution
+    const moodCounts = {};
+    sessions.filter(s => s.post_workout_mood).forEach(s => moodCounts[s.post_workout_mood] = (moodCounts[s.post_workout_mood]||0)+1);
+    const moodTotal = Object.values(moodCounts).reduce((a,b) => a+b, 0);
+
+    // Trend: last 5 vs first 5 effort score
+    const withEffort = [...sessions].filter(s=>s.effort_feeling).sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
+    let trendHtml = '';
+    if (withEffort.length >= 6) {
+      const score = s => EFFORT_ORDER.indexOf(s.effort_feeling);
+      const first5 = withEffort.slice(0,5).reduce((a,s)=>a+score(s),0)/5;
+      const last5  = withEffort.slice(-5).reduce((a,s)=>a+score(s),0)/5;
+      const diff = last5 - first5;
+      let trendMsg = '';
+      if (diff < -0.3) trendMsg = `<span style="color:#3dba6e">📈 Treenit tuntuvat helpommilta ajan myötä!</span>`;
+      else if (diff > 0.3) trendMsg = `<span style="color:#e8864a">📉 Treenit tuntuvat raskaammilta — harkitse palautusta.</span>`;
+      else trendMsg = `<span style="color:var(--muted)">➡️ Kuormitustaso on pysynyt tasaisena.</span>`;
+      trendHtml = `<div class="insight-card">
+        <div class="insight-card-title">Rasitustaso-trendi</div>
+        <div class="insight-trend">${trendMsg}</div>
+      </div>`;
+    }
+
+    // Most tiring workout type
+    const tirednessMap = {};
+    sessions.filter(s => s.post_workout_mood && s.type).forEach(s => {
+      if (!tirednessMap[s.type]) tirednessMap[s.type] = { tired: 0, total: 0 };
+      tirednessMap[s.type].total++;
+      if (s.post_workout_mood === 'tired' || s.post_workout_mood === 'stressed') tirednessMap[s.type].tired++;
+    });
+    let tiredTypeHtml = '';
+    const types = Object.keys(tirednessMap).filter(t => tirednessMap[t].total >= 2);
+    if (types.length > 0) {
+      const worstType = types.sort((a,b) => (tirednessMap[b].tired/tirednessMap[b].total) - (tirednessMap[a].tired/tirednessMap[a].total))[0];
+      const pct = Math.round(tirednessMap[worstType].tired / tirednessMap[worstType].total * 100);
+      if (pct >= 40) {
+        tiredTypeHtml = `<div class="insight-card">
+          <div class="insight-card-title">Palautuminen</div>
+          <div class="insight-trend">😴 <span>${worstType}</span> jälkeen tunnet itsesi väsyneeksi ${pct}% ajasta — muista palautuminen!</div>
+        </div>`;
+      }
+    }
+
+    list.innerHTML = `
+      <div class="insight-card">
+        <div class="insight-card-title">Rasitustaso</div>
+        ${EFFORT_ORDER.filter(k=>effortCounts[k]).map(k => `
+          <div class="insight-bar-row">
+            <div class="insight-bar-label">${EFFORT_LABELS[k]}</div>
+            <div class="insight-bar-track"><div class="insight-bar-fill" style="width:${Math.round(effortCounts[k]/effortTotal*100)}%;background:${EFFORT_COLORS[k]}"></div></div>
+            <div class="insight-bar-count">${effortCounts[k]}</div>
+          </div>`).join('')}
+      </div>
+      <div class="insight-card">
+        <div class="insight-card-title">Fiilis treenin jälkeen</div>
+        ${Object.keys(moodCounts).sort((a,b)=>moodCounts[b]-moodCounts[a]).map(k => `
+          <div class="insight-bar-row">
+            <div class="insight-bar-label">${MOOD_LABELS[k]}</div>
+            <div class="insight-bar-track"><div class="insight-bar-fill" style="width:${Math.round(moodCounts[k]/moodTotal*100)}%;background:${MOOD_COLORS[k]}"></div></div>
+            <div class="insight-bar-count">${moodCounts[k]}</div>
+          </div>`).join('')}
+      </div>
+      ${trendHtml}
+      ${tiredTypeHtml}
+    `;
   }
 
   function updateStats() {
@@ -3120,10 +3359,28 @@
   ══════════════════════════════════════ */
   let sheetDate = null;
   let sheetSelectedType = 'Ohjelma 1';
+  let sheetEffort = 'easy';
+  let sheetMood = 'great';
+
+  function selectSheetType(btn) {
+    document.querySelectorAll('.sheet-type-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    sheetSelectedType = btn.getAttribute('data-type');
+  }
+
+  function selectFeeling(kind, btn) {
+    const rowId = kind === 'effort' ? 'effortRow' : 'moodRow';
+    document.querySelectorAll('#' + rowId + ' .feeling-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    if (kind === 'effort') sheetEffort = btn.getAttribute('data-value');
+    else sheetMood = btn.getAttribute('data-value');
+  }
 
   function openSheet(dateStr) {
     sheetDate = dateStr;
     sheetSelectedType = 'Ohjelma 1';
+    sheetEffort = 'easy';
+    sheetMood = 'great';
 
     // Set title
     const d = new Date(dateStr + 'T12:00:00');
@@ -3137,12 +3394,19 @@
     const existing = cachedSessions.filter(s => s.date === dateStr);
     const existingEl = document.getElementById('sheetExisting');
     if (existing.length > 0) {
-      existingEl.innerHTML = existing.map(s =>
-        `<div class="sheet-existing-item">
-          <span class="sheet-existing-type" style="color:${TYPE_COLORS[s.type]||'#3dba6e'}">${TYPE_ICONS[s.type]||'⚡'} ${s.type}</span>
+      existingEl.innerHTML = existing.map(s => {
+        const effortMap = { easy:'😌 Helppo', good:'💪 Hyvä', hard:'😤 Raskas', exhausting:'🥵 Uuvuttava' };
+        const moodMap = { great:'🌟 Mahtava', energized:'⚡ Energinen', neutral:'😐 Neutraali', tired:'😴 Väsynyt', stressed:'😰 Stressaantunut' };
+        const feelings = [s.effort_feeling ? effortMap[s.effort_feeling] : null, s.post_workout_mood ? moodMap[s.post_workout_mood] : null].filter(Boolean).join(' · ');
+        return `<div class="sheet-existing-item">
+          <div>
+            <span class="sheet-existing-type" style="color:${TYPE_COLORS[s.type]||'#3dba6e'}">${TYPE_ICONS[s.type]||'⚡'} ${s.type}</span>
+            ${feelings ? `<div style="font-size:11px;color:var(--muted);margin-top:2px">${feelings}</div>` : ''}
+            ${s.note ? `<div style="font-size:11px;color:var(--muted);margin-top:2px;font-style:italic">"${s.note}"</div>` : ''}
+          </div>
           <button class="sheet-existing-del" onclick="deleteSheetSession('${s.id}')">Poista</button>
-        </div>`
-      ).join('');
+        </div>`;
+      }).join('');
     } else {
       existingEl.innerHTML = '';
     }
@@ -3151,6 +3415,15 @@
     document.querySelectorAll('.sheet-type-btn').forEach(b => {
       b.classList.toggle('selected', b.getAttribute('data-type') === 'Ohjelma 1');
     });
+    // Reset feeling buttons
+    document.querySelectorAll('#effortRow .feeling-btn').forEach(b => {
+      b.classList.toggle('selected', b.getAttribute('data-value') === 'easy');
+    });
+    document.querySelectorAll('#moodRow .feeling-btn').forEach(b => {
+      b.classList.toggle('selected', b.getAttribute('data-value') === 'great');
+    });
+    // Clear note
+    document.getElementById('sheetNote').value = '';
 
     document.getElementById('sheetBackdrop').classList.add('active');
     document.getElementById('bottomSheet').classList.add('active');
@@ -3164,34 +3437,36 @@
     sheetDate = null;
   }
 
-  function selectSheetType(btn) {
-    document.querySelectorAll('.sheet-type-btn').forEach(b => b.classList.remove('selected'));
-    btn.classList.add('selected');
-    sheetSelectedType = btn.getAttribute('data-type');
-  }
-
   async function saveSheetSession() {
     if (!currentUser || !sheetDate) return;
     if (cachedSessions.find(s => s.date === sheetDate && s.type === sheetSelectedType)) {
       alert('This workout type is already logged for this day!'); return;
     }
+    const note = document.getElementById('sheetNote').value.trim() || null;
     const btn = document.getElementById('sheetSaveBtn');
     btn.disabled = true; btn.textContent = 'Saving...';
-    const { error } = await supa.from('sessions')
-      .insert({ user_id: currentUser.id, date: sheetDate, type: sheetSelectedType, ts: Date.now() });
+    const { error } = await supa.from('sessions').insert({
+      user_id: currentUser.id,
+      date: sheetDate,
+      type: sheetSelectedType,
+      ts: Date.now(),
+      effort_feeling: sheetEffort,
+      post_workout_mood: sheetMood,
+      note: note
+    });
     if (error) {
       alert('Error: ' + error.message);
       btn.disabled = false; btn.textContent = '✅ Tallenna'; return;
     }
-    // Reload sessions
     const { data: reloaded } = await supa.from('sessions')
-      .select('id,date,type,ts,created_at').eq('user_id', currentUser.id).order('created_at', { ascending: false });
+      .select('id,date,type,ts,created_at,effort_feeling,post_workout_mood,note')
+      .eq('user_id', currentUser.id).order('created_at', { ascending: false });
     if (reloaded) cachedSessions = reloaded;
     btn.textContent = '🎉 Tallennettu!';
     setTimeout(() => {
       btn.disabled = false; btn.textContent = '✅ Tallenna';
       closeSheet();
-      renderCalendar(); renderSessionsList(); updateStats();
+      renderCalendar(); renderSessionsList(); updateStats(); renderInsights();
     }, 800);
   }
 
@@ -3226,6 +3501,8 @@
       onSignedIn(session.user);
     } else {
       log.info('No saved session — showing login screen');
+      // TESTING: comment out next line to skip login
+      // document.getElementById('authOverlay').style.display = 'flex';
     }
     log.end();
   });

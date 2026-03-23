@@ -2276,13 +2276,17 @@
           body: JSON.stringify({ email, password })
         });
         const data = await res.json();
-        console.log('SignUp response status:', res.status);
-        console.log('SignUp response data:', JSON.stringify(data));
-        if (data.error || data.msg) return { data: null, error: { message: data.error_description || data.msg || 'Sign up failed' } };
+        console.log('SignUp status:', res.status, 'data:', JSON.stringify(data));
+        // Supabase returns error in different fields
+        if (!res.ok) {
+          return { data: null, error: { message: data.error_description || data.message || data.msg || 'Sign up failed ('+res.status+')' } };
+        }
+        // Success — data contains user + access_token if email confirm is off
         if (data.access_token) {
           supa._authToken = data.access_token;
           localStorage.setItem('pt_token', data.access_token);
           localStorage.setItem('pt_refresh', data.refresh_token || '');
+          localStorage.setItem('pt_user', JSON.stringify(data.user));
         }
         return { data: { user: data.user || data, session: data.access_token ? data : null }, error: null };
       },
@@ -2294,7 +2298,10 @@
           body: JSON.stringify({ email, password })
         });
         const data = await res.json();
-        if (data.error || data.error_code) return { data: null, error: { message: data.error_description || data.message || 'Login failed' } };
+        console.log('Login status:', res.status, 'data:', JSON.stringify(data));
+        if (!res.ok) {
+          return { data: null, error: { message: data.error_description || data.message || 'Invalid email or password' } };
+        }
         supa._authToken = data.access_token;
         localStorage.setItem('pt_token', data.access_token);
         localStorage.setItem('pt_refresh', data.refresh_token || '');
@@ -2361,14 +2368,22 @@
     single() { this._single = true; return this; }
 
     async _run() {
-      let url = this._url + '?select=' + this._selectCols;
-      if (this._filters.length) url += '&' + this._filters.join('&');
+      let url = this._url;
+      const isRead = this._method === 'GET';
+
+      if (isRead) {
+        const params = ['select=' + this._selectCols, ...this._filters];
+        url += '?' + params.join('&');
+      } else {
+        // For write ops, filters go in URL as query params (no select)
+        if (this._filters.length) url += '?' + this._filters.join('&');
+      }
 
       const opts = {
         method: this._method,
         headers: supa._headers({ 'Prefer': this._prefer })
       };
-      if (this._body) opts.body = JSON.stringify(this._body);
+      if (this._body && !isRead) opts.body = JSON.stringify(this._body);
 
       const res = await fetch(url, opts);
       const text = await res.text();

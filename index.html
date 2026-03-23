@@ -2243,14 +2243,20 @@
 
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
   /* ══════════════════════════════════════
      SUPABASE + AUTH
   ══════════════════════════════════════ */
   const SUPA_URL = 'https://azgraotogacudqpuahrz.supabase.co';
   const SUPA_KEY = 'sb_publishable_RoeDClj0q0LC6T4A3AGkmQ_rWjYtvDk';
-  const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+  if (!window.supabase) {
+    document.body.innerHTML = '<div style="padding:40px;text-align:center;font-family:sans-serif"><h2>⚠️ Loading error</h2><p>Could not load Supabase library. Check your internet connection and reload.</p><button onclick="location.reload()" style="margin-top:16px;padding:12px 24px;font-size:16px;cursor:pointer">Reload</button></div>';
+    throw new Error('Supabase not loaded');
+  }
+
+  const supa = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
   let currentUser = null;
 
@@ -2302,8 +2308,15 @@
     if (data.user && data.user.identities && data.user.identities.length === 0) {
       showAuthError('An account with this email already exists.'); return;
     }
-    showAuthSuccess('✅ Account created! Check your email to confirm, then sign in.');
+    // If user is immediately active (email confirm off), sign them in directly
+    if (data.session) {
+      onSignedIn(data.user);
+      return;
+    }
+    showAuthSuccess('✅ Account created! You can now sign in.');
+    // Switch to login tab and prefill email
     switchAuthTab('login');
+    document.getElementById('loginEmail').value = email;
   }
 
   async function doLogout() {
@@ -2333,12 +2346,12 @@
   /* ══════════════════════════════════════
      THEME
   ══════════════════════════════════════ */
-  const saved = localStorage.getItem('theme');
-  const isLightInit = saved === null ? true : saved === 'light';
-  if (isLightInit) {
-    document.documentElement.classList.add('light');
-    document.getElementById('themeBtn').textContent = '☀️';
-  }
+  (function() {
+    const saved = localStorage.getItem('theme');
+    const isLight = saved === null ? true : saved === 'light';
+    if (isLight) document.documentElement.classList.add('light');
+  })();
+
   function toggleTheme() {
     const nowLight = document.documentElement.classList.toggle('light');
     document.getElementById('themeBtn').textContent = nowLight ? '☀️' : '🌙';
@@ -2629,6 +2642,10 @@
      INIT
   ══════════════════════════════════════ */
   document.addEventListener('DOMContentLoaded', async () => {
+    // Set theme button icon
+    const isLight = document.documentElement.classList.contains('light');
+    document.getElementById('themeBtn').textContent = isLight ? '☀️' : '🌙';
+
     initCheckboxes();
     updateProgress();
 

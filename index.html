@@ -489,6 +489,156 @@
   }
   .reset-btn:hover { border-color: #e05555; color: #e05555; }
 
+  /* ── AUTH OVERLAY ── */
+  .auth-overlay {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .auth-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 36px 28px;
+    width: 100%;
+    max-width: 380px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+  }
+  .auth-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 32px;
+    letter-spacing: 3px;
+    color: var(--text);
+    text-align: center;
+    margin-bottom: 4px;
+  }
+  .auth-logo span { color: var(--gold); }
+  .auth-sub {
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+    margin-bottom: 28px;
+  }
+  .auth-tabs {
+    display: flex;
+    background: var(--surface2);
+    border-radius: 10px;
+    padding: 3px;
+    margin-bottom: 22px;
+  }
+  .auth-tab {
+    flex: 1;
+    background: none;
+    border: none;
+    border-radius: 8px;
+    padding: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .auth-tab.active {
+    background: var(--surface);
+    color: var(--text);
+    font-weight: 600;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  }
+  .auth-field { margin-bottom: 14px; }
+  .auth-field label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .auth-field input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 11px 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .auth-field input:focus { border-color: var(--gold); }
+  .auth-submit {
+    width: 100%;
+    background: var(--gold);
+    border: none;
+    border-radius: 12px;
+    padding: 13px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+    cursor: pointer;
+    margin-top: 6px;
+    transition: opacity 0.2s;
+  }
+  .auth-submit:hover { opacity: 0.88; }
+  .auth-submit:disabled { opacity: 0.5; cursor: default; }
+  .auth-error {
+    background: rgba(224,85,85,0.12);
+    border: 1px solid rgba(224,85,85,0.3);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: #e05555;
+    margin-bottom: 14px;
+    display: none;
+  }
+  .auth-success {
+    background: rgba(61,186,110,0.12);
+    border: 1px solid rgba(61,186,110,0.3);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: #3dba6e;
+    margin-bottom: 14px;
+    display: none;
+    text-align: center;
+  }
+  .user-pill {
+    margin-left: auto;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 50px;
+    padding: 5px 12px 5px 8px;
+    font-size: 12px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .user-pill:hover { border-color: #e05555; color: #e05555; }
+  .user-avatar {
+    width: 22px; height: 22px;
+    background: var(--gold);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+  }
+
   /* ── CALENDAR ── */
   .cal-header {
     display: flex;
@@ -707,6 +857,46 @@
 </head>
 <body>
 
+<!-- AUTH OVERLAY -->
+<div class="auth-overlay" id="authOverlay">
+  <div class="auth-box">
+    <div class="auth-logo">PERSONAL <span>TRAINING</span></div>
+    <div class="auth-sub">Sign in to sync across all devices</div>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchAuthTab('login')">Sign In</button>
+      <button class="auth-tab" onclick="switchAuthTab('register')">Register</button>
+    </div>
+
+    <div id="authError" class="auth-error"></div>
+    <div id="authSuccess" class="auth-success"></div>
+
+    <div id="loginForm">
+      <div class="auth-field">
+        <label>Email</label>
+        <input type="email" id="loginEmail" placeholder="your@email.com" />
+      </div>
+      <div class="auth-field">
+        <label>Password</label>
+        <input type="password" id="loginPassword" placeholder="••••••••" />
+      </div>
+      <button class="auth-submit" onclick="doLogin()">Sign In →</button>
+    </div>
+
+    <div id="registerForm" style="display:none">
+      <div class="auth-field">
+        <label>Email</label>
+        <input type="email" id="regEmail" placeholder="your@email.com" />
+      </div>
+      <div class="auth-field">
+        <label>Password</label>
+        <input type="password" id="regPassword" placeholder="Min. 6 characters" />
+      </div>
+      <button class="auth-submit" onclick="doRegister()">Create Account →</button>
+    </div>
+  </div>
+</div>
+
 <header>
   <h1>PERSONAL<br><span>TRAINING</span></h1>
   <div class="header-sub">3 ohjelmaa · Liikkuvuus · Venyttely</div>
@@ -719,7 +909,12 @@
   <button class="tab-btn" onclick="showTab('prog3')">Ohjelma 3</button>
   <button class="tab-btn" onclick="showTab('physio')" id="physio-tab">🏥 Fysioterapia</button>
   <button class="tab-btn" onclick="showTab('calendar')">📅 Kalenteri</button>
-  <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn" title="Vaihda teema">🌙</button>
+  <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn" title="Toggle theme">🌙</button>
+  <button class="user-pill" id="userPill" onclick="doLogout()" style="display:none" title="Sign out">
+    <div class="user-avatar" id="userAvatar">?</div>
+    <span id="userEmail">...</span>
+    · Sign out
+  </button>
 </nav>
 
 <div class="progress-bar-wrap" id="progressWrap">
@@ -2051,21 +2246,89 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
   /* ══════════════════════════════════════
-     SUPABASE CONFIG
+     SUPABASE + AUTH
   ══════════════════════════════════════ */
   const SUPA_URL = 'https://azgraotogacudqpuahrz.supabase.co';
   const SUPA_KEY = 'sb_publishable_RoeDClj0q0LC6T4A3AGkmQ_rWjYtvDk';
   const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
 
-  function getUserId() {
-    let uid = localStorage.getItem('pt_user_id');
-    if (!uid) {
-      uid = 'u_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
-      localStorage.setItem('pt_user_id', uid);
-    }
-    return uid;
+  let currentUser = null;
+
+  /* ── AUTH UI ── */
+  function switchAuthTab(tab) {
+    document.getElementById('loginForm').style.display = tab === 'login' ? 'block' : 'none';
+    document.getElementById('registerForm').style.display = tab === 'register' ? 'block' : 'none';
+    document.querySelectorAll('.auth-tab').forEach((b,i) => b.classList.toggle('active', (i===0) === (tab==='login')));
+    clearAuthMessages();
   }
-  const USER_ID = getUserId();
+
+  function showAuthError(msg) {
+    const el = document.getElementById('authError');
+    el.textContent = msg; el.style.display = 'block';
+    document.getElementById('authSuccess').style.display = 'none';
+  }
+  function showAuthSuccess(msg) {
+    const el = document.getElementById('authSuccess');
+    el.textContent = msg; el.style.display = 'block';
+    document.getElementById('authError').style.display = 'none';
+  }
+  function clearAuthMessages() {
+    document.getElementById('authError').style.display = 'none';
+    document.getElementById('authSuccess').style.display = 'none';
+  }
+
+  async function doLogin() {
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    if (!email || !password) { showAuthError('Please enter email and password.'); return; }
+    const btn = document.querySelector('#loginForm .auth-submit');
+    btn.disabled = true; btn.textContent = 'Signing in...';
+    const { data, error } = await supa.auth.signInWithPassword({ email, password });
+    btn.disabled = false; btn.textContent = 'Sign In →';
+    if (error) { showAuthError(error.message); return; }
+    onSignedIn(data.user);
+  }
+
+  async function doRegister() {
+    const email = document.getElementById('regEmail').value.trim();
+    const password = document.getElementById('regPassword').value;
+    if (!email || !password) { showAuthError('Please enter email and password.'); return; }
+    if (password.length < 6) { showAuthError('Password must be at least 6 characters.'); return; }
+    const btn = document.querySelector('#registerForm .auth-submit');
+    btn.disabled = true; btn.textContent = 'Creating account...';
+    const { data, error } = await supa.auth.signUp({ email, password });
+    btn.disabled = false; btn.textContent = 'Create Account →';
+    if (error) { showAuthError(error.message); return; }
+    if (data.user && data.user.identities && data.user.identities.length === 0) {
+      showAuthError('An account with this email already exists.'); return;
+    }
+    showAuthSuccess('✅ Account created! Check your email to confirm, then sign in.');
+    switchAuthTab('login');
+  }
+
+  async function doLogout() {
+    await supa.auth.signOut();
+    currentUser = null;
+    document.getElementById('authOverlay').style.display = 'flex';
+    document.getElementById('userPill').style.display = 'none';
+    // Reset checkboxes visually
+    document.querySelectorAll('.ex-checkbox').forEach(cb => {
+      cb.checked = false;
+      cb.closest('.exercise-card, .physio-card')?.classList.remove('done');
+    });
+    updateProgress();
+  }
+
+  function onSignedIn(user) {
+    currentUser = user;
+    document.getElementById('authOverlay').style.display = 'none';
+    const email = user.email || '';
+    const initial = email.charAt(0).toUpperCase();
+    document.getElementById('userAvatar').textContent = initial;
+    document.getElementById('userEmail').textContent = email.split('@')[0];
+    document.getElementById('userPill').style.display = 'flex';
+    syncChecksFromCloud();
+  }
 
   /* ══════════════════════════════════════
      THEME
@@ -2120,41 +2383,42 @@
       const tabId = page ? page.id : 'unknown';
       const nameEl = card.querySelector('.exercise-name');
       const name = nameEl ? nameEl.textContent.trim() : 'ex' + idx;
-      const localKey = 'done::' + tabId + '::' + name;
 
       const wrap = document.createElement('div');
       wrap.className = 'cb-wrap';
       const cb = document.createElement('input');
       cb.type = 'checkbox';
       cb.className = 'ex-checkbox';
-      cb.checked = localStorage.getItem(localKey) === '1';
+      cb.checked = false;
 
       cb.addEventListener('change', async (e) => {
         e.stopPropagation();
         const done = cb.checked;
-        localStorage.setItem(localKey, done ? '1' : '0');
         card.classList.toggle('done', done);
         updateProgress();
+        if (!currentUser) return;
         await supa.from('exercise_checks').upsert({
-          user_id: USER_ID, tab_id: tabId, exercise_name: name,
+          user_id: currentUser.id, tab_id: tabId, exercise_name: name,
           done: done, updated_at: new Date().toISOString()
         }, { onConflict: 'user_id,tab_id,exercise_name' });
       });
 
       wrap.appendChild(cb);
       card.querySelector('.card-header').appendChild(wrap);
-      if (cb.checked) card.classList.add('done');
     });
-    syncChecksFromCloud();
   }
 
   async function syncChecksFromCloud() {
+    if (!currentUser) return;
     const { data, error } = await supa.from('exercise_checks')
-      .select('tab_id, exercise_name, done').eq('user_id', USER_ID);
+      .select('tab_id, exercise_name, done').eq('user_id', currentUser.id);
     if (error || !data) return;
+    // Reset all first
+    document.querySelectorAll('.ex-checkbox').forEach(cb => {
+      cb.checked = false;
+      cb.closest('.exercise-card, .physio-card')?.classList.remove('done');
+    });
     data.forEach(row => {
-      const localKey = 'done::' + row.tab_id + '::' + row.exercise_name;
-      localStorage.setItem(localKey, row.done ? '1' : '0');
       const page = document.getElementById(row.tab_id);
       if (!page) return;
       page.querySelectorAll('.exercise-card, .physio-card').forEach(card => {
@@ -2191,15 +2455,13 @@
       if (card) card.classList.remove('done');
       const nameEl = card?.querySelector('.exercise-name');
       const name = nameEl ? nameEl.textContent.trim() : '';
-      localStorage.removeItem('done::' + currentTab + '::' + name);
       if (name) names.push(name);
     });
     updateProgress();
-    if (names.length) {
-      await supa.from('exercise_checks')
-        .update({ done: false, updated_at: new Date().toISOString() })
-        .eq('user_id', USER_ID).eq('tab_id', currentTab).in('exercise_name', names);
-    }
+    if (!currentUser || !names.length) return;
+    await supa.from('exercise_checks')
+      .update({ done: false, updated_at: new Date().toISOString() })
+      .eq('user_id', currentUser.id).eq('tab_id', currentTab).in('exercise_name', names);
   }
 
   /* ══════════════════════════════════════
@@ -2234,37 +2496,38 @@
 
   async function loadAndRenderCalendar() {
     document.getElementById('calGrid').innerHTML =
-      '<div style="grid-column:1/-1;text-align:center;padding:24px;color:var(--muted);font-size:13px;">Ladataan... ⏳</div>';
+      '<div style="grid-column:1/-1;text-align:center;padding:24px;color:var(--muted);font-size:13px;">Loading... ⏳</div>';
+    if (!currentUser) return;
     const { data, error } = await supa.from('sessions')
-      .select('*').eq('user_id', USER_ID).order('ts', { ascending: false });
+      .select('*').eq('user_id', currentUser.id).order('ts', { ascending: false });
     if (!error && data) cachedSessions = data;
-    renderCalendar();
-    renderSessionsList();
-    updateStats();
+    renderCalendar(); renderSessionsList(); updateStats();
   }
 
   async function logSession() {
+    if (!currentUser) return;
     const today = todayStr();
     if (cachedSessions.find(s => s.date === today && s.type === selectedType)) {
-      alert('Tämä treeni on jo merkitty tänään!'); return;
+      alert('This workout is already logged for today!'); return;
     }
     const btn = document.querySelector('.log-save-btn');
-    btn.disabled = true; btn.textContent = 'Tallennetaan...';
+    btn.disabled = true; btn.textContent = 'Saving...';
     const { data, error } = await supa.from('sessions')
-      .insert({ user_id: USER_ID, date: today, type: selectedType, ts: Date.now() })
+      .insert({ user_id: currentUser.id, date: today, type: selectedType, ts: Date.now() })
       .select().single();
     if (error) {
-      alert('Virhe: ' + error.message);
-      btn.disabled = false; btn.textContent = '✅ Tallenna tänään'; return;
+      alert('Error: ' + error.message);
+      btn.disabled = false; btn.textContent = '✅ Log Today's Workout'; return;
     }
     cachedSessions.unshift(data);
     renderCalendar(); renderSessionsList(); updateStats();
-    btn.textContent = '🎉 Tallennettu!';
-    setTimeout(() => { btn.textContent = '✅ Tallenna tänään'; btn.disabled = false; }, 1800);
+    btn.textContent = '🎉 Saved!';
+    setTimeout(() => { btn.textContent = '✅ Log Today's Workout'; btn.disabled = false; }, 1800);
   }
 
   async function deleteSession(ts) {
-    await supa.from('sessions').delete().eq('user_id', USER_ID).eq('ts', ts);
+    if (!currentUser) return;
+    await supa.from('sessions').delete().eq('user_id', currentUser.id).eq('ts', ts);
     cachedSessions = cachedSessions.filter(s => s.ts !== ts);
     renderCalendar(); renderSessionsList(); updateStats();
   }
@@ -2298,8 +2561,7 @@
     const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
     for (let d = 1; d <= daysInMonth; d++) {
       const dateStr = calYear + '-' + String(calMonth+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
-      const el = document.createElement('div');
-      el.className = 'cal-day';
+      const el = document.createElement('div'); el.className = 'cal-day';
       if (dateStr === today) el.classList.add('cal-today');
       const types = dayMap[dateStr] || [];
       if (types.length > 0) {
@@ -2331,7 +2593,7 @@
     const sessions = [...cachedSessions].sort((a,b) => b.ts - a.ts);
     const el = document.getElementById('sessionsList');
     if (!sessions.length) {
-      el.innerHTML = '<div class="no-sessions">Ei treenihistoriaa vielä.<br>Merkitse ensimmäinen treeni! 💪</div>';
+      el.innerHTML = '<div class="no-sessions">No workout history yet.<br>Log your first session! 💪</div>';
       return;
     }
     el.innerHTML = sessions.map(s => {
@@ -2343,7 +2605,7 @@
           <div class="session-type" style="color:${TYPE_COLORS[s.type]||'#3dba6e'}">${s.type}</div>
           <div class="session-date">${dateLabel}</div>
         </div>
-        <button class="session-del" onclick="deleteSession(${s.ts})">Poista</button>
+        <button class="session-del" onclick="deleteSession(${s.ts})">Delete</button>
       </div>`;
     }).join('');
   }
@@ -2366,9 +2628,25 @@
   /* ══════════════════════════════════════
      INIT
   ══════════════════════════════════════ */
-  document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('DOMContentLoaded', async () => {
     initCheckboxes();
     updateProgress();
+
+    // Check if already logged in (persisted session)
+    const { data: { session } } = await supa.auth.getSession();
+    if (session?.user) {
+      onSignedIn(session.user);
+    }
+
+    // Listen for auth changes
+    supa.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session?.user) onSignedIn(session.user);
+      if (event === 'SIGNED_OUT') {
+        currentUser = null;
+        document.getElementById('authOverlay').style.display = 'flex';
+        document.getElementById('userPill').style.display = 'none';
+      }
+    });
   });
 </script>
 </body>

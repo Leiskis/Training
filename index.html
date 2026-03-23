@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Laurin Treeniohjelmat</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-<script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
   /* ── DARK MODE (default) ── */
   :root {
@@ -2246,17 +2245,141 @@
 
 <script>
   /* ══════════════════════════════════════
-     SUPABASE + AUTH
+     SUPABASE REST CLIENT (no CDN needed)
   ══════════════════════════════════════ */
   const SUPA_URL = 'https://azgraotogacudqpuahrz.supabase.co';
   const SUPA_KEY = 'sb_publishable_RoeDClj0q0LC6T4A3AGkmQ_rWjYtvDk';
 
-  if (!window.supabase) {
-    document.body.innerHTML = '<div style="padding:40px;text-align:center;font-family:sans-serif"><h2>⚠️ Loading error</h2><p>Could not load Supabase library. Check your internet connection and reload.</p><button onclick="location.reload()" style="margin-top:16px;padding:12px 24px;font-size:16px;cursor:pointer">Reload</button></div>';
-    throw new Error('Supabase not loaded');
-  }
+  // Minimal Supabase REST + Auth wrapper using plain fetch
+  const supa = {
+    _authToken: null,
 
-  const supa = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+    _headers(extra = {}) {
+      const h = {
+        'Content-Type': 'application/json',
+        'apikey': SUPA_KEY,
+        'Prefer': 'return=representation',
+        ...extra
+      };
+      if (this._authToken) h['Authorization'] = 'Bearer ' + this._authToken;
+      else h['Authorization'] = 'Bearer ' + SUPA_KEY;
+      return h;
+    },
+
+    auth: {
+      _parent: null,
+
+      async signUp({ email, password }) {
+        const res = await fetch(`${SUPA_URL}/auth/v1/signup`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'apikey': SUPA_KEY },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+        if (data.error || data.msg) return { data: null, error: { message: data.error_description || data.msg || 'Sign up failed' } };
+        if (data.access_token) {
+          supa._authToken = data.access_token;
+          localStorage.setItem('pt_token', data.access_token);
+          localStorage.setItem('pt_refresh', data.refresh_token || '');
+        }
+        return { data: { user: data.user || data, session: data.access_token ? data : null }, error: null };
+      },
+
+      async signInWithPassword({ email, password }) {
+        const res = await fetch(`${SUPA_URL}/auth/v1/token?grant_type=password`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'apikey': SUPA_KEY },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+        if (data.error || data.error_code) return { data: null, error: { message: data.error_description || data.message || 'Login failed' } };
+        supa._authToken = data.access_token;
+        localStorage.setItem('pt_token', data.access_token);
+        localStorage.setItem('pt_refresh', data.refresh_token || '');
+        localStorage.setItem('pt_user', JSON.stringify(data.user));
+        return { data: { user: data.user, session: data }, error: null };
+      },
+
+      async signOut() {
+        await fetch(`${SUPA_URL}/auth/v1/logout`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + supa._authToken }
+        });
+        supa._authToken = null;
+        localStorage.removeItem('pt_token');
+        localStorage.removeItem('pt_refresh');
+        localStorage.removeItem('pt_user');
+      },
+
+      async getSession() {
+        const token = localStorage.getItem('pt_token');
+        const userStr = localStorage.getItem('pt_user');
+        if (!token || !userStr) return { data: { session: null } };
+        supa._authToken = token;
+        try {
+          const user = JSON.parse(userStr);
+          return { data: { session: { user, access_token: token } } };
+        } catch { return { data: { session: null } }; }
+      },
+
+      onAuthStateChange(cb) { /* handled manually */ }
+    },
+
+    from(table) {
+      return new SupaTable(table);
+    }
+  };
+
+  class SupaTable {
+    constructor(table) {
+      this.table = table;
+      this._url = `${SUPA_URL}/rest/v1/${table}`;
+      this._filters = [];
+      this._selectCols = '*';
+      this._body = null;
+      this._method = 'GET';
+      this._prefer = 'return=representation';
+    }
+
+    select(cols = '*') { this._selectCols = cols; this._method = 'GET'; return this; }
+    insert(body) { this._body = body; this._method = 'POST'; return this; }
+    update(body) { this._body = body; this._method = 'PATCH'; return this; }
+    upsert(body, opts = {}) {
+      this._body = body;
+      this._method = 'POST';
+      this._prefer = 'resolution=merge-duplicates,return=representation';
+      return this;
+    }
+    delete() { this._method = 'DELETE'; return this; }
+
+    eq(col, val) { this._filters.push(`${col}=eq.${encodeURIComponent(val)}`); return this; }
+    in(col, vals) { this._filters.push(`${col}=in.(${vals.map(v => encodeURIComponent(v)).join(',')})`); return this; }
+    order(col, { ascending = true } = {}) { this._filters.push(`order=${col}.${ascending ? 'asc' : 'desc'}`); return this; }
+
+    single() { this._single = true; return this; }
+
+    async _run() {
+      let url = this._url + '?select=' + this._selectCols;
+      if (this._filters.length) url += '&' + this._filters.join('&');
+
+      const opts = {
+        method: this._method,
+        headers: supa._headers({ 'Prefer': this._prefer })
+      };
+      if (this._body) opts.body = JSON.stringify(this._body);
+
+      const res = await fetch(url, opts);
+      const text = await res.text();
+      let data = null;
+      try { data = JSON.parse(text); } catch { data = null; }
+
+      if (!res.ok) return { data: null, error: { message: (data && data.message) || text } };
+      if (this._single && Array.isArray(data)) data = data[0] || null;
+      return { data, error: null };
+    }
+
+    then(resolve, reject) { return this._run().then(resolve, reject); }
+  }
 
   let currentUser = null;
 
@@ -2530,12 +2653,12 @@
       .select().single();
     if (error) {
       alert('Error: ' + error.message);
-      btn.disabled = false; btn.textContent = '✅ Log Today's Workout'; return;
+      btn.disabled = false; btn.textContent = '✅ Log Workout'; return;
     }
     cachedSessions.unshift(data);
     renderCalendar(); renderSessionsList(); updateStats();
     btn.textContent = '🎉 Saved!';
-    setTimeout(() => { btn.textContent = '✅ Log Today's Workout'; btn.disabled = false; }, 1800);
+    setTimeout(() => { btn.textContent = '✅ Log Workout'; btn.disabled = false; }, 1800);
   }
 
   async function deleteSession(ts) {
@@ -2654,16 +2777,6 @@
     if (session?.user) {
       onSignedIn(session.user);
     }
-
-    // Listen for auth changes
-    supa.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' && session?.user) onSignedIn(session.user);
-      if (event === 'SIGNED_OUT') {
-        currentUser = null;
-        document.getElementById('authOverlay').style.display = 'flex';
-        document.getElementById('userPill').style.display = 'none';
-      }
-    });
   });
 </script>
 </body>

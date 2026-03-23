@@ -771,6 +771,41 @@
   }
   .log-type-btn.selected { background: var(--gold); border-color: var(--gold); color: #fff; font-weight: 600; }
   .log-type-btn:hover:not(.selected) { border-color: var(--gold); color: var(--gold); }
+
+  .date-picker-row {
+    margin-bottom: 10px;
+  }
+  .date-picker-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .date-picker-input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 11px 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s;
+    cursor: pointer;
+  }
+  .date-picker-input:focus { border-color: var(--gold); }
+  .date-picker-input::-webkit-calendar-picker-indicator {
+    opacity: 0.6;
+    cursor: pointer;
+    filter: var(--cal-icon-filter, none);
+  }
+  html.light .date-picker-input::-webkit-calendar-picker-indicator {
+    filter: none;
+  }
   .log-save-btn {
     width: 100%;
     background: #3dba6e;
@@ -1363,7 +1398,11 @@
       <button class="log-type-btn" data-type="Fysioterapia" onclick="selectType(this)">🏥 Fysio</button>
       <button class="log-type-btn" data-type="Muu" onclick="selectType(this)">⚡ Muu</button>
     </div>
-    <button class="log-save-btn" onclick="logSession()">✅ Tallenna tänään</button>
+    <div class="date-picker-row">
+      <label class="date-picker-label">📅 Päivämäärä</label>
+      <input type="date" id="sessionDatePicker" class="date-picker-input" />
+    </div>
+    <button class="log-save-btn" onclick="logSession()">✅ Tallenna treeni</button>
   </div>
 
   <!-- Calendar -->
@@ -2746,34 +2785,36 @@
     if (error) { log.error('Failed to load sessions:', error.message); }
     else { cachedSessions = data || []; log.ok('Loaded', cachedSessions.length, 'sessions'); }
     log.end();
+    // Set date picker to today by default
+    const picker = document.getElementById('sessionDatePicker');
+    if (picker) picker.value = todayStr();
     renderCalendar(); renderSessionsList(); updateStats();
   }
 
   async function logSession() {
     if (!currentUser) { log.warn('logSession: no user'); return; }
-    // Always read type fresh from DOM
     const selectedBtn = document.querySelector('.log-type-btn.selected');
     const typeToLog = selectedBtn ? selectedBtn.getAttribute('data-type') : selectedType;
+    const picker = document.getElementById('sessionDatePicker');
+    const dateToLog = picker && picker.value ? picker.value : todayStr();
     log.group('logSession');
-    log.info('Type:', typeToLog, '| Date:', todayStr());
-    const today = todayStr();
-    if (cachedSessions.find(s => s.date === today && s.type === typeToLog)) {
-      log.warn('Already logged today for type:', typeToLog);
+    log.info('Type:', typeToLog, '| Date:', dateToLog);
+    if (cachedSessions.find(s => s.date === dateToLog && s.type === typeToLog)) {
+      log.warn('Already logged for type:', typeToLog, 'on', dateToLog);
       log.end();
-      alert('This workout is already logged for today!'); return;
+      alert('This workout type is already logged for this date!'); return;
     }
     const btn = document.querySelector('.log-save-btn');
     btn.disabled = true; btn.textContent = 'Saving...';
     const { error } = await supa.from('sessions')
-      .insert({ user_id: currentUser.id, date: today, type: typeToLog, ts: Date.now() });
+      .insert({ user_id: currentUser.id, date: dateToLog, type: typeToLog, ts: Date.now() });
     if (error) {
       log.error('logSession failed:', error.message);
       log.end();
       alert('Error: ' + error.message);
-      btn.disabled = false; btn.textContent = '✅ Log Workout'; return;
+      btn.disabled = false; btn.textContent = '✅ Tallenna treeni'; return;
     }
     log.ok('Session inserted, reloading from cloud...');
-    // Always reload from cloud after insert to get fresh data with correct IDs
     const { data: reloaded, error: reloadErr } = await supa.from('sessions')
       .select('id,date,type,ts,created_at').eq('user_id', currentUser.id).order('created_at', { ascending: false });
     if (!reloadErr && reloaded) {
@@ -2781,9 +2822,13 @@
       log.ok('Reloaded', cachedSessions.length, 'sessions from cloud');
     }
     log.end();
+    // Navigate calendar to the month of the logged date
+    const loggedDate = new Date(dateToLog + 'T12:00:00');
+    calYear = loggedDate.getFullYear();
+    calMonth = loggedDate.getMonth();
     renderCalendar(); renderSessionsList(); updateStats();
-    btn.textContent = '🎉 Saved!';
-    setTimeout(() => { btn.textContent = '✅ Log Workout'; btn.disabled = false; }, 1800);
+    btn.textContent = '\uD83C\uDF89 Saved!';
+    setTimeout(() => { btn.textContent = '\u2705 Tallenna treeni'; btn.disabled = false; }, 1800);
   }
 
   async function deleteSession(id) {

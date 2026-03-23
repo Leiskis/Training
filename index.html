@@ -2645,7 +2645,8 @@
   function selectType(btn) {
     document.querySelectorAll('.log-type-btn').forEach(b => b.classList.remove('selected'));
     btn.classList.add('selected');
-    selectedType = btn.dataset.type;
+    selectedType = btn.getAttribute('data-type');
+    console.log('Selected type:', selectedType);
   }
 
   async function loadAndRenderCalendar() {
@@ -2660,6 +2661,10 @@
 
   async function logSession() {
     if (!currentUser) return;
+    // Read selected type directly from DOM as source of truth
+    const selectedBtn = document.querySelector('.log-type-btn.selected');
+    if (selectedBtn) selectedType = selectedBtn.getAttribute('data-type');
+    console.log('Logging session with type:', selectedType);
     const today = todayStr();
     if (cachedSessions.find(s => s.date === today && s.type === selectedType)) {
       alert('This workout is already logged for today!'); return;

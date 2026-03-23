@@ -2401,7 +2401,7 @@
       this._prefer = 'return=representation';
     }
 
-    select(cols = '*') { this._selectCols = cols; this._method = 'GET'; return this; }
+    select(cols = '*') { this._selectCols = cols; if (this._method === 'GET') this._method = 'GET'; return this; }
     insert(body) { this._body = body; this._method = 'POST'; return this; }
     update(body) { this._body = body; this._method = 'PATCH'; return this; }
     upsert(body, opts = {}) {
@@ -2416,7 +2416,12 @@
 
     eq(col, val) { this._filters.push(`${col}=eq.${encodeURIComponent(val)}`); return this; }
     in(col, vals) { this._filters.push(`${col}=in.(${vals.map(v => encodeURIComponent(v)).join(',')})`); return this; }
-    order(col, { ascending = true } = {}) { this._filters.push(`order=${col}.${ascending ? 'asc' : 'desc'}`); return this; }
+    order(col, { ascending = true } = {}) { 
+      // Remove any existing order filter first
+      this._filters = this._filters.filter(f => !f.startsWith('order='));
+      this._filters.push(`order=${col}.${ascending ? 'asc' : 'desc'}`); 
+      return this; 
+    }
 
     single() { this._single = true; return this; }
 
@@ -2727,7 +2732,7 @@
     document.querySelectorAll('.log-type-btn').forEach(b => b.classList.remove('selected'));
     btn.classList.add('selected');
     selectedType = btn.getAttribute('data-type');
-    console.log('Selected type:', selectedType);
+    log.info('Selected workout type:', selectedType);
   }
 
   async function loadAndRenderCalendar() {
@@ -2735,8 +2740,9 @@
     if (!currentUser) { log.warn('No user — skipping calendar load'); log.end(); return; }
     document.getElementById('calGrid').innerHTML =
       '<div style="grid-column:1/-1;text-align:center;padding:24px;color:var(--muted);font-size:13px;">Loading... ⏳</div>';
+    // Order by created_at instead of ts for reliability
     const { data, error } = await supa.from('sessions')
-      .select('*').eq('user_id', currentUser.id).order('ts', { ascending: false });
+      .select('id,date,type,ts,created_at').eq('user_id', currentUser.id).order('created_at', { ascending: false });
     if (error) { log.error('Failed to load sessions:', error.message); }
     else { cachedSessions = data || []; log.ok('Loaded', cachedSessions.length, 'sessions'); }
     log.end();
@@ -2745,39 +2751,48 @@
 
   async function logSession() {
     if (!currentUser) { log.warn('logSession: no user'); return; }
+    // Always read type fresh from DOM
     const selectedBtn = document.querySelector('.log-type-btn.selected');
-    if (selectedBtn) selectedType = selectedBtn.getAttribute('data-type');
+    const typeToLog = selectedBtn ? selectedBtn.getAttribute('data-type') : selectedType;
     log.group('logSession');
-    log.info('Type:', selectedType, '| Date:', todayStr());
+    log.info('Type:', typeToLog, '| Date:', todayStr());
     const today = todayStr();
-    if (cachedSessions.find(s => s.date === today && s.type === selectedType)) {
-      log.warn('Already logged today for type:', selectedType);
+    if (cachedSessions.find(s => s.date === today && s.type === typeToLog)) {
+      log.warn('Already logged today for type:', typeToLog);
       log.end();
       alert('This workout is already logged for today!'); return;
     }
     const btn = document.querySelector('.log-save-btn');
     btn.disabled = true; btn.textContent = 'Saving...';
-    const { data, error } = await supa.from('sessions')
-      .insert({ user_id: currentUser.id, date: today, type: selectedType, ts: Date.now() })
-      .select().single();
+    const { error } = await supa.from('sessions')
+      .insert({ user_id: currentUser.id, date: today, type: typeToLog, ts: Date.now() });
     if (error) {
       log.error('logSession failed:', error.message);
       log.end();
       alert('Error: ' + error.message);
       btn.disabled = false; btn.textContent = '✅ Log Workout'; return;
     }
-    log.ok('Session logged:', data);
+    log.ok('Session inserted, reloading from cloud...');
+    // Always reload from cloud after insert to get fresh data with correct IDs
+    const { data: reloaded, error: reloadErr } = await supa.from('sessions')
+      .select('id,date,type,ts,created_at').eq('user_id', currentUser.id).order('created_at', { ascending: false });
+    if (!reloadErr && reloaded) {
+      cachedSessions = reloaded;
+      log.ok('Reloaded', cachedSessions.length, 'sessions from cloud');
+    }
     log.end();
-    cachedSessions.unshift(data);
     renderCalendar(); renderSessionsList(); updateStats();
     btn.textContent = '🎉 Saved!';
     setTimeout(() => { btn.textContent = '✅ Log Workout'; btn.disabled = false; }, 1800);
   }
 
-  async function deleteSession(ts) {
+  async function deleteSession(id) {
     if (!currentUser) return;
-    await supa.from('sessions').delete().eq('user_id', currentUser.id).eq('ts', ts);
-    cachedSessions = cachedSessions.filter(s => s.ts !== ts);
+    log.info('Deleting session id:', id);
+    const { error } = await supa.from('sessions').delete().eq('user_id', currentUser.id).eq('id', id);
+    if (error) { log.error('Delete failed:', error.message); return; }
+    cachedSessions = cachedSessions.filter(s => s.id !== id);
+    log.ok('Session deleted');
     renderCalendar(); renderSessionsList(); updateStats();
   }
 
@@ -2839,7 +2854,9 @@
   }
 
   function renderSessionsList() {
-    const sessions = [...cachedSessions].sort((a,b) => b.ts - a.ts);
+    const sessions = [...cachedSessions].sort((a,b) => {
+      return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+    });
     const el = document.getElementById('sessionsList');
     if (!sessions.length) {
       el.innerHTML = '<div class="no-sessions">No workout history yet.<br>Log your first session! 💪</div>';
@@ -2854,7 +2871,7 @@
           <div class="session-type" style="color:${TYPE_COLORS[s.type]||'#3dba6e'}">${s.type}</div>
           <div class="session-date">${dateLabel}</div>
         </div>
-        <button class="session-del" onclick="deleteSession(${s.ts})">Delete</button>
+        <button class="session-del" onclick="deleteSession('${s.id}')">Delete</button>
       </div>`;
     }).join('');
   }

@@ -613,7 +613,85 @@
   }
   .reset-btn:hover { border-color: #e05555; color: #e05555; }
 
-  /* ── AUTH OVERLAY ── */
+  /* ── BOTTOM SHEET ── */
+  .sheet-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 200;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s;
+  }
+  .sheet-backdrop.active {
+    opacity: 1;
+    pointer-events: all;
+  }
+  .bottom-sheet {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: var(--surface);
+    border-radius: 20px 20px 0 0;
+    padding: 12px 20px 40px;
+    z-index: 201;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -4px 24px rgba(0,0,0,0.15);
+  }
+  .bottom-sheet.active {
+    transform: translateY(0);
+  }
+  @supports (padding-bottom: env(safe-area-inset-bottom)) {
+    .bottom-sheet { padding-bottom: calc(32px + env(safe-area-inset-bottom)); }
+  }
+  .sheet-handle {
+    width: 36px; height: 4px;
+    background: var(--border);
+    border-radius: 4px;
+    margin: 0 auto 16px;
+  }
+  .sheet-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    letter-spacing: 2px;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .sheet-existing {
+    margin-bottom: 14px;
+    min-height: 0;
+  }
+  .sheet-existing-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--surface2);
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-bottom: 6px;
+    font-size: 13px;
+  }
+  .sheet-existing-type { font-weight: 600; }
+  .sheet-existing-del {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 6px;
+    padding: 3px 8px;
+    font-size: 11px;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.2s;
+  }
+  .sheet-existing-del:hover { border-color: #e05555; color: #e05555; }
+  .sheet-type-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-bottom: 14px;
+  }
+  .sheet-type-btn { flex: 1; min-width: 80px; }
   .auth-overlay {
     position: fixed;
     inset: 0;
@@ -1508,6 +1586,22 @@
     <div id="sessionsList"></div>
   </div>
 
+</div>
+
+<!-- DAY LOG BOTTOM SHEET -->
+<div class="sheet-backdrop" id="sheetBackdrop" onclick="closeSheet()"></div>
+<div class="bottom-sheet" id="bottomSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title" id="sheetTitle">Merkitse treeni</div>
+  <div class="sheet-existing" id="sheetExisting"></div>
+  <div class="sheet-type-row">
+    <button class="log-type-btn sheet-type-btn selected" data-type="Ohjelma 1" onclick="selectSheetType(this)">💪 Ohjelma 1</button>
+    <button class="log-type-btn sheet-type-btn" data-type="Ohjelma 2" onclick="selectSheetType(this)">🏋️ Ohjelma 2</button>
+    <button class="log-type-btn sheet-type-btn" data-type="Ohjelma 3" onclick="selectSheetType(this)">🔥 Ohjelma 3</button>
+    <button class="log-type-btn sheet-type-btn" data-type="Fysioterapia" onclick="selectSheetType(this)">🏥 Fysio</button>
+    <button class="log-type-btn sheet-type-btn" data-type="Muu" onclick="selectSheetType(this)">⚡ Muu</button>
+  </div>
+  <button class="log-save-btn" id="sheetSaveBtn" onclick="saveSheetSession()">✅ Tallenna</button>
 </div>
 
 <footer>Lauri · Treeniohjelmat</footer>
@@ -2966,6 +3060,12 @@
         });
         el.appendChild(dots);
       }
+      // Every day is tappable — today and past open the sheet
+      el.addEventListener('click', () => {
+        if (dateStr <= today) openSheet(dateStr);
+      });
+      if (dateStr <= today) el.style.cursor = 'pointer';
+      else el.style.opacity = '0.4';
       grid.appendChild(el);
     }
     const legend = document.getElementById('calLegend');
@@ -3013,6 +3113,96 @@
     document.getElementById('statTotal').textContent = cachedSessions.length;
     document.getElementById('statMonth').textContent = monthCount;
     document.getElementById('statStreak').textContent = streak;
+  }
+
+  /* ══════════════════════════════════════
+     BOTTOM SHEET — log past sessions
+  ══════════════════════════════════════ */
+  let sheetDate = null;
+  let sheetSelectedType = 'Ohjelma 1';
+
+  function openSheet(dateStr) {
+    sheetDate = dateStr;
+    sheetSelectedType = 'Ohjelma 1';
+
+    // Set title
+    const d = new Date(dateStr + 'T12:00:00');
+    const isToday = dateStr === todayStr();
+    const label = isToday
+      ? 'Tänään'
+      : d.toLocaleDateString('fi-FI', { weekday: 'long', day: 'numeric', month: 'long' });
+    document.getElementById('sheetTitle').textContent = '📅 ' + label;
+
+    // Show existing sessions for this day
+    const existing = cachedSessions.filter(s => s.date === dateStr);
+    const existingEl = document.getElementById('sheetExisting');
+    if (existing.length > 0) {
+      existingEl.innerHTML = existing.map(s =>
+        `<div class="sheet-existing-item">
+          <span class="sheet-existing-type" style="color:${TYPE_COLORS[s.type]||'#3dba6e'}">${TYPE_ICONS[s.type]||'⚡'} ${s.type}</span>
+          <button class="sheet-existing-del" onclick="deleteSheetSession('${s.id}')">Poista</button>
+        </div>`
+      ).join('');
+    } else {
+      existingEl.innerHTML = '';
+    }
+
+    // Reset type buttons
+    document.querySelectorAll('.sheet-type-btn').forEach(b => {
+      b.classList.toggle('selected', b.getAttribute('data-type') === 'Ohjelma 1');
+    });
+
+    document.getElementById('sheetBackdrop').classList.add('active');
+    document.getElementById('bottomSheet').classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeSheet() {
+    document.getElementById('sheetBackdrop').classList.remove('active');
+    document.getElementById('bottomSheet').classList.remove('active');
+    document.body.style.overflow = '';
+    sheetDate = null;
+  }
+
+  function selectSheetType(btn) {
+    document.querySelectorAll('.sheet-type-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    sheetSelectedType = btn.getAttribute('data-type');
+  }
+
+  async function saveSheetSession() {
+    if (!currentUser || !sheetDate) return;
+    if (cachedSessions.find(s => s.date === sheetDate && s.type === sheetSelectedType)) {
+      alert('This workout type is already logged for this day!'); return;
+    }
+    const btn = document.getElementById('sheetSaveBtn');
+    btn.disabled = true; btn.textContent = 'Saving...';
+    const { error } = await supa.from('sessions')
+      .insert({ user_id: currentUser.id, date: sheetDate, type: sheetSelectedType, ts: Date.now() });
+    if (error) {
+      alert('Error: ' + error.message);
+      btn.disabled = false; btn.textContent = '✅ Tallenna'; return;
+    }
+    // Reload sessions
+    const { data: reloaded } = await supa.from('sessions')
+      .select('id,date,type,ts,created_at').eq('user_id', currentUser.id).order('created_at', { ascending: false });
+    if (reloaded) cachedSessions = reloaded;
+    btn.textContent = '🎉 Tallennettu!';
+    setTimeout(() => {
+      btn.disabled = false; btn.textContent = '✅ Tallenna';
+      closeSheet();
+      renderCalendar(); renderSessionsList(); updateStats();
+    }, 800);
+  }
+
+  async function deleteSheetSession(id) {
+    if (!currentUser) return;
+    const { error } = await supa.from('sessions').delete().eq('user_id', currentUser.id).eq('id', id);
+    if (error) { alert('Error: ' + error.message); return; }
+    cachedSessions = cachedSessions.filter(s => s.id !== id);
+    // Refresh existing list in sheet
+    openSheet(sheetDate);
+    renderCalendar(); renderSessionsList(); updateStats();
   }
 
   /* ══════════════════════════════════════

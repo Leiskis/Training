@@ -772,39 +772,35 @@
   .log-type-btn.selected { background: var(--gold); border-color: var(--gold); color: #fff; font-weight: 600; }
   .log-type-btn:hover:not(.selected) { border-color: var(--gold); color: var(--gold); }
 
-  .date-picker-row {
+  .selected-date-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     margin-bottom: 10px;
-  }
-  .date-picker-label {
-    display: block;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--muted);
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-    margin-bottom: 6px;
-  }
-  .date-picker-input {
-    width: 100%;
+    padding: 10px 14px;
     background: var(--surface2);
-    border: 1.5px solid var(--border);
     border-radius: 10px;
-    padding: 11px 14px;
-    font-family: 'DM Sans', sans-serif;
+    border: 1.5px solid var(--border);
+  }
+  .selected-date-label {
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
+  }
+  .selected-date-value {
     font-size: 14px;
-    color: var(--text);
-    outline: none;
-    transition: border-color 0.2s;
-    cursor: pointer;
+    font-weight: 600;
+    color: var(--gold);
   }
-  .date-picker-input:focus { border-color: var(--gold); }
-  .date-picker-input::-webkit-calendar-picker-indicator {
-    opacity: 0.6;
-    cursor: pointer;
-    filter: var(--cal-icon-filter, none);
+  .cal-day.selected-for-log {
+    outline: 3px solid var(--gold);
+    outline-offset: -2px;
   }
-  html.light .date-picker-input::-webkit-calendar-picker-indicator {
-    filter: none;
+  .cal-day.selected-for-log:not(.has-session) {
+    background: rgba(200,168,75,0.1);
   }
   .log-save-btn {
     width: 100%;
@@ -1398,9 +1394,9 @@
       <button class="log-type-btn" data-type="Fysioterapia" onclick="selectType(this)">🏥 Fysio</button>
       <button class="log-type-btn" data-type="Muu" onclick="selectType(this)">⚡ Muu</button>
     </div>
-    <div class="date-picker-row">
-      <label class="date-picker-label">📅 Päivämäärä</label>
-      <input type="date" id="sessionDatePicker" class="date-picker-input" />
+    <div class="selected-date-row">
+      <span class="selected-date-label">Valittu päivä:</span>
+      <span class="selected-date-value" id="selectedDateLabel">Tänään</span>
     </div>
     <button class="log-save-btn" onclick="logSession()">✅ Tallenna treeni</button>
   </div>
@@ -2761,6 +2757,7 @@
   let calMonth = new Date().getMonth();
   let selectedType = 'Ohjelma 1';
   let cachedSessions = [];
+  let selectedLogDate = todayStr(); // tracks which day is selected for logging
 
   function todayStr() {
     const d = new Date();
@@ -2788,6 +2785,9 @@
     // Set date picker to today by default
     const picker = document.getElementById('sessionDatePicker');
     if (picker) picker.value = todayStr();
+    // Init selected date label
+    selectedLogDate = todayStr();
+    selectLogDate(selectedLogDate);
     renderCalendar(); renderSessionsList(); updateStats();
   }
 
@@ -2872,6 +2872,7 @@
       const dateStr = calYear + '-' + String(calMonth+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
       const el = document.createElement('div'); el.className = 'cal-day';
       if (dateStr === today) el.classList.add('cal-today');
+      if (dateStr === selectedLogDate) el.classList.add('selected-for-log');
       const types = dayMap[dateStr] || [];
       if (types.length > 0) {
         el.classList.add('has-session');
@@ -2887,6 +2888,8 @@
         });
         el.appendChild(dots);
       }
+      // Click to select this day for logging
+      el.addEventListener('click', () => selectLogDate(dateStr));
       grid.appendChild(el);
     }
     const legend = document.getElementById('calLegend');

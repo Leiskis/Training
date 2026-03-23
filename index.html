@@ -2356,7 +2356,9 @@
     upsert(body, opts = {}) {
       this._body = body;
       this._method = 'POST';
-      this._prefer = 'resolution=merge-duplicates,return=representation';
+      const conflict = opts.onConflict || '';
+      this._prefer = `resolution=merge-duplicates,return=representation`;
+      if (conflict) this._onConflict = conflict;
       return this;
     }
     delete() { this._method = 'DELETE'; return this; }
@@ -2375,8 +2377,9 @@
         const params = ['select=' + this._selectCols, ...this._filters];
         url += '?' + params.join('&');
       } else {
-        // For write ops, filters go in URL as query params (no select)
-        if (this._filters.length) url += '?' + this._filters.join('&');
+        const params = [...this._filters];
+        if (this._onConflict) params.push('on_conflict=' + encodeURIComponent(this._onConflict));
+        if (params.length) url += '?' + params.join('&');
       }
 
       const opts = {
@@ -2390,7 +2393,10 @@
       let data = null;
       try { data = JSON.parse(text); } catch { data = null; }
 
-      if (!res.ok) return { data: null, error: { message: (data && data.message) || text } };
+      if (!res.ok) {
+        console.error('Supabase error:', this._method, url, res.status, text);
+        return { data: null, error: { message: (data && data.message) || text } };
+      }
       if (this._single && Array.isArray(data)) data = data[0] || null;
       return { data, error: null };
     }
@@ -2551,10 +2557,12 @@
         card.classList.toggle('done', done);
         updateProgress();
         if (!currentUser) return;
-        await supa.from('exercise_checks').upsert({
+        const { error } = await supa.from('exercise_checks').upsert({
           user_id: currentUser.id, tab_id: tabId, exercise_name: name,
           done: done, updated_at: new Date().toISOString()
         }, { onConflict: 'user_id,tab_id,exercise_name' });
+        if (error) console.error('Checkbox save error:', error.message);
+        else console.log('Saved:', tabId, name, done);
       });
 
       wrap.appendChild(cb);

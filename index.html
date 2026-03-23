@@ -3263,7 +3263,7 @@
     }
 
     select(cols = '*') { this._selectCols = cols; if (this._method === 'GET') this._method = 'GET'; return this; }
-    insert(body) { this._body = body; this._method = 'POST'; return this; }
+    insert(body) { this._body = body; this._method = 'POST'; this._prefer = 'return=minimal'; return this; }
     update(body) { this._body = body; this._method = 'PATCH'; this._prefer = 'return=minimal'; return this; }
     upsert(body, opts = {}) {
       this._body = body;
@@ -4074,6 +4074,8 @@
     if (program) {
       hideNewProgramInput();
       renderProgramList();
+    } else {
+      alert('Ohjelman luominen epäonnistui — tarkista konsoli.');
     }
   }
 

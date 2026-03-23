@@ -1645,7 +1645,7 @@
 <body>
 
 <!-- AUTH OVERLAY -->
-<div class="auth-overlay" id="authOverlay" style="display:none">
+<div class="auth-overlay" id="authOverlay">
   <div class="auth-box">
     <div class="auth-logo">PERSONAL <span>TRAINING</span></div>
     <div class="auth-sub">Sign in to sync across all devices</div>
@@ -4597,8 +4597,7 @@
       onSignedIn(session.user);
     } else {
       log.info('No saved session — showing login screen');
-      // TESTING: comment out next line to skip login
-      // document.getElementById('authOverlay').style.display = 'flex';
+      document.getElementById('authOverlay').style.display = 'flex';
     }
     log.end();
   });

@@ -7,8 +7,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Personal Training">
-<meta name="theme-color" content="#f5f3ef" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#0e0e0e" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#ede8d8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1a1608" media="(prefers-color-scheme: dark)">
 <title>Personal Training</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -2941,12 +2941,29 @@
     const saved = localStorage.getItem('theme');
     const isLight = saved === null ? true : saved === 'light';
     if (isLight) document.documentElement.classList.add('light');
+    // Set status bar color immediately
+    const m = document.createElement('meta');
+    m.name = 'theme-color';
+    m.content = isLight ? '#ede8d8' : '#1a1608';
+    document.head.appendChild(m);
   })();
 
   function toggleTheme() {
     const nowLight = document.documentElement.classList.toggle('light');
     document.getElementById('themeBtn').textContent = nowLight ? '☀️' : '🌙';
     localStorage.setItem('theme', nowLight ? 'light' : 'dark');
+    // Update status bar color
+    document.querySelector('meta[name="theme-color"][media="(prefers-color-scheme: light)"]')
+      ?.setAttribute('content', nowLight ? '#ede8d8' : '#1a1608');
+    const themeMeta = document.querySelector('meta[name="theme-color"]:not([media])');
+    if (!themeMeta) {
+      const m = document.createElement('meta');
+      m.name = 'theme-color';
+      m.content = nowLight ? '#ede8d8' : '#1a1608';
+      document.head.appendChild(m);
+    } else {
+      themeMeta.content = nowLight ? '#ede8d8' : '#1a1608';
+    }
   }
 
   /* ══════════════════════════════════════

@@ -2250,6 +2250,16 @@
   const SUPA_URL = 'https://azgraotogacudqpuahrz.supabase.co';
   const SUPA_KEY = 'sb_publishable_RoeDClj0q0LC6T4A3AGkmQ_rWjYtvDk';
 
+  // ── Logger utility ──
+  const log = {
+    info:  (...a) => console.log('%c[PT]',  'color:#c8a84b;font-weight:700', ...a),
+    ok:    (...a) => console.log('%c[OK]',  'color:#3dba6e;font-weight:700', ...a),
+    warn:  (...a) => console.warn('%c[WARN]','color:#e8864a;font-weight:700', ...a),
+    error: (...a) => console.error('%c[ERR]','color:#e05555;font-weight:700', ...a),
+    group: (label) => console.groupCollapsed('%c[PT] ' + label, 'color:#c8a84b;font-weight:700'),
+    end:   () => console.groupEnd()
+  };
+
   // Minimal Supabase REST + Auth wrapper using plain fetch
   const supa = {
     _authToken: null,
@@ -2267,68 +2277,109 @@
     },
 
     auth: {
-      _parent: null,
-
       async signUp({ email, password }) {
-        const res = await fetch(`${SUPA_URL}/auth/v1/signup`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'apikey': SUPA_KEY },
-          body: JSON.stringify({ email, password })
-        });
-        const data = await res.json();
-        console.log('SignUp status:', res.status, 'data:', JSON.stringify(data));
-        // Supabase returns error in different fields
-        if (!res.ok) {
-          return { data: null, error: { message: data.error_description || data.message || data.msg || 'Sign up failed ('+res.status+')' } };
+        log.group('AUTH signUp');
+        log.info('Email:', email);
+        let res, data;
+        try {
+          res = await fetch(`${SUPA_URL}/auth/v1/signup`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'apikey': SUPA_KEY },
+            body: JSON.stringify({ email, password })
+          });
+          data = await res.json();
+        } catch(e) {
+          log.error('Network error during signUp:', e.message);
+          log.end();
+          return { data: null, error: { message: 'Network error: ' + e.message } };
         }
-        // Success — data contains user + access_token if email confirm is off
+        log.info('Status:', res.status);
+        log.info('Response:', JSON.stringify(data));
+        if (!res.ok) {
+          const msg = data.error_description || data.message || data.msg || 'Sign up failed (' + res.status + ')';
+          log.error('SignUp failed:', msg);
+          log.end();
+          return { data: null, error: { message: msg } };
+        }
         if (data.access_token) {
           supa._authToken = data.access_token;
           localStorage.setItem('pt_token', data.access_token);
           localStorage.setItem('pt_refresh', data.refresh_token || '');
           localStorage.setItem('pt_user', JSON.stringify(data.user));
+          log.ok('SignUp success — user auto signed in:', data.user?.email);
+        } else {
+          log.ok('SignUp success — email confirmation required');
         }
+        log.end();
         return { data: { user: data.user || data, session: data.access_token ? data : null }, error: null };
       },
 
       async signInWithPassword({ email, password }) {
-        const res = await fetch(`${SUPA_URL}/auth/v1/token?grant_type=password`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'apikey': SUPA_KEY },
-          body: JSON.stringify({ email, password })
-        });
-        const data = await res.json();
-        console.log('Login status:', res.status, 'data:', JSON.stringify(data));
+        log.group('AUTH signIn');
+        log.info('Email:', email);
+        let res, data;
+        try {
+          res = await fetch(`${SUPA_URL}/auth/v1/token?grant_type=password`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'apikey': SUPA_KEY },
+            body: JSON.stringify({ email, password })
+          });
+          data = await res.json();
+        } catch(e) {
+          log.error('Network error during signIn:', e.message);
+          log.end();
+          return { data: null, error: { message: 'Network error: ' + e.message } };
+        }
+        log.info('Status:', res.status);
         if (!res.ok) {
-          return { data: null, error: { message: data.error_description || data.message || 'Invalid email or password' } };
+          const msg = data.error_description || data.message || 'Invalid email or password';
+          log.error('SignIn failed:', msg);
+          log.end();
+          return { data: null, error: { message: msg } };
         }
         supa._authToken = data.access_token;
         localStorage.setItem('pt_token', data.access_token);
         localStorage.setItem('pt_refresh', data.refresh_token || '');
         localStorage.setItem('pt_user', JSON.stringify(data.user));
+        log.ok('SignIn success — user:', data.user?.email, '| id:', data.user?.id);
+        log.end();
         return { data: { user: data.user, session: data }, error: null };
       },
 
       async signOut() {
-        await fetch(`${SUPA_URL}/auth/v1/logout`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + supa._authToken }
-        });
+        log.group('AUTH signOut');
+        try {
+          await fetch(`${SUPA_URL}/auth/v1/logout`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + supa._authToken }
+          });
+          log.ok('Signed out successfully');
+        } catch(e) {
+          log.warn('SignOut request failed (clearing local anyway):', e.message);
+        }
         supa._authToken = null;
         localStorage.removeItem('pt_token');
         localStorage.removeItem('pt_refresh');
         localStorage.removeItem('pt_user');
+        log.end();
       },
 
       async getSession() {
         const token = localStorage.getItem('pt_token');
         const userStr = localStorage.getItem('pt_user');
-        if (!token || !userStr) return { data: { session: null } };
+        if (!token || !userStr) {
+          log.info('getSession: no saved session found');
+          return { data: { session: null } };
+        }
         supa._authToken = token;
         try {
           const user = JSON.parse(userStr);
+          log.ok('getSession: restored session for', user.email);
           return { data: { session: { user, access_token: token } } };
-        } catch { return { data: { session: null } }; }
+        } catch(e) {
+          log.error('getSession: failed to parse stored user:', e.message);
+          return { data: { session: null } };
+        }
       },
 
       onAuthStateChange(cb) { /* handled manually */ }
@@ -2388,15 +2439,27 @@
       };
       if (this._body && !isRead) opts.body = JSON.stringify(this._body);
 
-      const res = await fetch(url, opts);
-      const text = await res.text();
+      log.info(`DB ${this._method} ${this.table}`, isRead ? '' : JSON.stringify(this._body || '').slice(0,120));
+
+      let res, text;
+      try {
+        res = await fetch(url, opts);
+        text = await res.text();
+      } catch(e) {
+        log.error(`DB network error on ${this.table}:`, e.message);
+        return { data: null, error: { message: 'Network error: ' + e.message } };
+      }
+
       let data = null;
       try { data = JSON.parse(text); } catch { data = null; }
 
       if (!res.ok) {
-        console.error('Supabase error:', this._method, url, res.status, text);
+        log.error(`DB error ${this._method} ${this.table} — status:`, res.status, '| msg:', (data && data.message) || text);
         return { data: null, error: { message: (data && data.message) || text } };
       }
+
+      const count = Array.isArray(data) ? data.length : (data ? 1 : 0);
+      log.ok(`DB ${this._method} ${this.table} — ${count} row(s)`);
       if (this._single && Array.isArray(data)) data = data[0] || null;
       return { data, error: null };
     }
@@ -2481,6 +2544,7 @@
 
   function onSignedIn(user) {
     currentUser = user;
+    log.ok('onSignedIn — user:', user.email, '| id:', user.id);
     document.getElementById('authOverlay').style.display = 'none';
     const email = user.email || '';
     const initial = email.charAt(0).toUpperCase();
@@ -2556,13 +2620,14 @@
         const done = cb.checked;
         card.classList.toggle('done', done);
         updateProgress();
-        if (!currentUser) return;
+        if (!currentUser) { log.warn('Checkbox changed but no user logged in — not saved to cloud'); return; }
+        log.info('Saving checkbox:', tabId, '|', name, '|', done);
         const { error } = await supa.from('exercise_checks').upsert({
           user_id: currentUser.id, tab_id: tabId, exercise_name: name,
           done: done, updated_at: new Date().toISOString()
         }, { onConflict: 'user_id,tab_id,exercise_name' });
-        if (error) console.error('Checkbox save error:', error.message);
-        else console.log('Saved:', tabId, name, done);
+        if (error) log.error('Checkbox save failed:', error.message);
+        else log.ok('Checkbox saved:', name, '=', done);
       });
 
       wrap.appendChild(cb);
@@ -2571,10 +2636,16 @@
   }
 
   async function syncChecksFromCloud() {
-    if (!currentUser) return;
+    if (!currentUser) { log.warn('syncChecks: no user, skipping'); return; }
+    log.group('syncChecksFromCloud');
+    log.info('Fetching checks for user:', currentUser.id);
     const { data, error } = await supa.from('exercise_checks')
       .select('tab_id, exercise_name, done').eq('user_id', currentUser.id);
-    if (error || !data) return;
+    if (error) { log.error('Failed to fetch checks:', error.message); log.end(); return; }
+    if (!data) { log.warn('No data returned'); log.end(); return; }
+    log.ok('Fetched', data.length, 'exercise check rows');
+    const doneCount = data.filter(r => r.done).length;
+    log.info('Done:', doneCount, '/ Not done:', data.length - doneCount);
     // Reset all first
     document.querySelectorAll('.ex-checkbox').forEach(cb => {
       cb.checked = false;
@@ -2582,7 +2653,7 @@
     });
     data.forEach(row => {
       const page = document.getElementById(row.tab_id);
-      if (!page) return;
+      if (!page) { log.warn('Page not found for tab_id:', row.tab_id); return; }
       page.querySelectorAll('.exercise-card, .physio-card').forEach(card => {
         const nameEl = card.querySelector('.exercise-name');
         if (nameEl && nameEl.textContent.trim() === row.exercise_name) {
@@ -2592,6 +2663,8 @@
       });
     });
     updateProgress();
+    log.ok('Checkboxes restored from cloud');
+    log.end();
   }
 
   function updateProgress() {
@@ -2658,23 +2731,28 @@
   }
 
   async function loadAndRenderCalendar() {
+    log.group('loadAndRenderCalendar');
+    if (!currentUser) { log.warn('No user — skipping calendar load'); log.end(); return; }
     document.getElementById('calGrid').innerHTML =
       '<div style="grid-column:1/-1;text-align:center;padding:24px;color:var(--muted);font-size:13px;">Loading... ⏳</div>';
-    if (!currentUser) return;
     const { data, error } = await supa.from('sessions')
       .select('*').eq('user_id', currentUser.id).order('ts', { ascending: false });
-    if (!error && data) cachedSessions = data;
+    if (error) { log.error('Failed to load sessions:', error.message); }
+    else { cachedSessions = data || []; log.ok('Loaded', cachedSessions.length, 'sessions'); }
+    log.end();
     renderCalendar(); renderSessionsList(); updateStats();
   }
 
   async function logSession() {
-    if (!currentUser) return;
-    // Read selected type directly from DOM as source of truth
+    if (!currentUser) { log.warn('logSession: no user'); return; }
     const selectedBtn = document.querySelector('.log-type-btn.selected');
     if (selectedBtn) selectedType = selectedBtn.getAttribute('data-type');
-    console.log('Logging session with type:', selectedType);
+    log.group('logSession');
+    log.info('Type:', selectedType, '| Date:', todayStr());
     const today = todayStr();
     if (cachedSessions.find(s => s.date === today && s.type === selectedType)) {
+      log.warn('Already logged today for type:', selectedType);
+      log.end();
       alert('This workout is already logged for today!'); return;
     }
     const btn = document.querySelector('.log-save-btn');
@@ -2683,9 +2761,13 @@
       .insert({ user_id: currentUser.id, date: today, type: selectedType, ts: Date.now() })
       .select().single();
     if (error) {
+      log.error('logSession failed:', error.message);
+      log.end();
       alert('Error: ' + error.message);
       btn.disabled = false; btn.textContent = '✅ Log Workout'; return;
     }
+    log.ok('Session logged:', data);
+    log.end();
     cachedSessions.unshift(data);
     renderCalendar(); renderSessionsList(); updateStats();
     btn.textContent = '🎉 Saved!';
@@ -2796,18 +2878,25 @@
      INIT
   ══════════════════════════════════════ */
   document.addEventListener('DOMContentLoaded', async () => {
+    log.group('APP INIT');
     // Set theme button icon
     const isLight = document.documentElement.classList.contains('light');
     document.getElementById('themeBtn').textContent = isLight ? '☀️' : '🌙';
+    log.info('Theme:', isLight ? 'light' : 'dark');
 
     initCheckboxes();
+    log.info('Checkboxes initialized');
     updateProgress();
 
     // Check if already logged in (persisted session)
     const { data: { session } } = await supa.auth.getSession();
     if (session?.user) {
+      log.ok('Restored session for:', session.user.email);
       onSignedIn(session.user);
+    } else {
+      log.info('No saved session — showing login screen');
     }
+    log.end();
   });
 </script>
 </body>

@@ -1184,6 +1184,82 @@
     font-size: 14px;
     line-height: 1.6;
   }
+
+  /* ── PROGRAM EXERCISE CARDS ── */
+  .mp-ex-card {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    transition: border-color 0.2s;
+  }
+  .mp-ex-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .mp-ex-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.3;
+  }
+  .mp-ex-muscle {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .mp-ex-del {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 6px;
+    width: 28px; height: 28px;
+    font-size: 12px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .mp-ex-del:hover { border-color: #e05555; color: #e05555; }
+  .mp-ex-fields {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .mp-ex-field label {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-bottom: 4px;
+  }
+  .mp-ex-input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    outline: none;
+    text-align: center;
+    transition: border-color 0.2s;
+    -webkit-appearance: none;
+  }
+  .mp-ex-input:focus { border-color: var(--gold); }
+  /* Remove number input arrows */
+  .mp-ex-input[type=number]::-webkit-inner-spin-button,
+  .mp-ex-input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
+  .mp-ex-input[type=number] { -moz-appearance: textfield; }
   .auth-overlay {
     position: fixed;
     inset: 0;
@@ -4039,9 +4115,110 @@
     document.getElementById('mpDetail').style.display = 'block';
     document.getElementById('mpDetailName').textContent = name;
     document.getElementById('mpDetailExercises').innerHTML =
-      '<div class="mp-empty">Ei liikkeitä vielä.<br>Lisää ensimmäinen liike! 💪</div>';
+      '<div class="mp-empty">Ladataan liikkeitä...</div>';
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    // Step 4 will load exercises here
+    loadAndRenderProgramExercises(id);
+  }
+
+  async function loadAndRenderProgramExercises(programId) {
+    log.group('loadProgramExercises');
+    // Fetch workout exercises for this program
+    const { data: rows, error } = await supa.from('workout_day_exercises')
+      .select('id, exercise_id, sort_order, sets, reps, target_weight')
+      .eq('user_id', currentUser.id)
+      .eq('program_id', programId)
+      .order('sort_order');
+
+    if (error) {
+      log.error('Failed to load exercises:', error.message);
+      log.end();
+      document.getElementById('mpDetailExercises').innerHTML =
+        '<div class="mp-empty">Virhe ladattaessa liikkeitä.</div>';
+      return;
+    }
+
+    // Update pickerAddedIds so already-added exercises show as checked in picker
+    pickerAddedIds = new Set((rows || []).map(e => e.exercise_id));
+
+    if (!rows || rows.length === 0) {
+      log.ok('No exercises yet');
+      log.end();
+      renderProgramExercises([]);
+      return;
+    }
+
+    // Enrich with exercise library data from local cache
+    await loadExerciseLibrary();
+    const enriched = rows.map(row => ({
+      ...row,
+      exercise_library: exerciseLibrary.find(e => e.id === row.exercise_id) || {}
+    }));
+
+    log.ok('Loaded', enriched.length, 'exercises for program');
+    log.end();
+    renderProgramExercises(enriched);
+  }
+
+  function renderProgramExercises(exercises) {
+    const el = document.getElementById('mpDetailExercises');
+    if (!exercises.length) {
+      el.innerHTML = '<div class="mp-empty">Ei liikkeitä vielä.<br>Lisää ensimmäinen liike! 💪</div>';
+      return;
+    }
+    el.innerHTML = exercises.map((e, i) => {
+      const lib = e.exercise_library || {};
+      const weight = e.target_weight ? `${e.target_weight} kg` : '— kg';
+      return `<div class="mp-ex-card" data-id="${e.id}">
+        <div class="mp-ex-top">
+          <div class="mp-ex-info">
+            <div class="mp-ex-name">${lib.name || 'Tuntematon'}</div>
+            <div class="mp-ex-muscle">${lib.muscle_group || ''}</div>
+          </div>
+          <button class="mp-ex-del" onclick="removeExerciseFromProgram('${e.id}', '${e.exercise_id}')">✕</button>
+        </div>
+        <div class="mp-ex-fields">
+          <div class="mp-ex-field">
+            <label>Sarjat</label>
+            <input type="number" class="mp-ex-input" value="${e.sets}" min="1" max="20"
+              onchange="updateExerciseField('${e.id}', 'sets', this.value)" />
+          </div>
+          <div class="mp-ex-field">
+            <label>Toistot</label>
+            <input type="text" class="mp-ex-input" value="${e.reps}" maxlength="10"
+              placeholder="8-10"
+              onchange="updateExerciseField('${e.id}', 'reps', this.value)" />
+          </div>
+          <div class="mp-ex-field">
+            <label>Paino (kg)</label>
+            <input type="number" class="mp-ex-input" value="${e.target_weight || ''}"
+              placeholder="—" min="0" step="0.5"
+              onchange="updateExerciseField('${e.id}', 'target_weight', this.value || null)" />
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  async function removeExerciseFromProgram(rowId, exerciseId) {
+    log.info('Removing exercise row:', rowId);
+    const { error } = await supa.from('workout_day_exercises')
+      .delete().eq('user_id', currentUser.id).eq('id', rowId);
+    if (error) { log.error('Remove failed:', error.message); return; }
+    pickerAddedIds.delete(exerciseId);
+    log.ok('Exercise removed');
+    loadAndRenderProgramExercises(activeProgramId);
+  }
+
+  async function updateExerciseField(rowId, field, value) {
+    log.info('Updating', field, '=', value, 'for row:', rowId);
+    const update = { updated_at: new Date().toISOString() };
+    if (field === 'sets') update.sets = parseInt(value) || 3;
+    else if (field === 'reps') update.reps = value || '8-10';
+    else if (field === 'target_weight') update.target_weight = value ? parseFloat(value) : null;
+    const { error } = await supa.from('workout_day_exercises')
+      .update(update).eq('user_id', currentUser.id).eq('id', rowId);
+    if (error) log.error('Update failed:', error.message);
+    else log.ok('Updated', field, 'for', rowId);
   }
 
   function closeProgramDetail() {
@@ -4215,22 +4392,68 @@
     }).join('');
   }
 
-  function onPickerSelectExercise(id, name, category, muscleGroup) {
-    // For now just log — Step 3 will wire up saving
-    log.info('Selected exercise:', name, '| day:', pickerActiveDay);
-    // Visual feedback
+  async function onPickerSelectExercise(id, name, category, muscleGroup) {
+    if (!currentUser || !pickerActiveDay) { log.warn('No user or no active program'); return; }
+    log.group('addExerciseToProgram');
+    log.info('Exercise:', name, '| program:', pickerActiveDay);
+
+    // Check not already added
+    if (pickerAddedIds.has(id)) {
+      log.warn('Already added:', name);
+      log.end();
+      return;
+    }
+
+    // Visual feedback immediately
     const items = document.querySelectorAll('.picker-exercise-item');
+    let tappedItem = null;
     items.forEach(item => {
       if (item.querySelector('.picker-ex-name')?.textContent === name) {
+        tappedItem = item;
         item.style.borderColor = 'var(--gold)';
         item.style.background = 'var(--gold-dim)';
-        setTimeout(() => {
-          item.style.borderColor = '';
-          item.style.background = '';
-        }, 600);
+        item.querySelector('.picker-ex-add').textContent = '…';
       }
     });
-    // TODO Step 4: save to workout_day_exercises
+
+    const sort_order = pickerAddedIds.size;
+    const { error } = await supa.from('workout_day_exercises').insert({
+      user_id: currentUser.id,
+      program_id: pickerActiveDay,
+      exercise_id: id,
+      sort_order,
+      sets: 3,
+      reps: '8-10',
+      target_weight: null
+    });
+
+    if (error) {
+      log.error('Failed to add exercise:', error.message);
+      log.end();
+      if (tappedItem) {
+        tappedItem.style.borderColor = '#e05555';
+        tappedItem.querySelector('.picker-ex-add').textContent = '✕';
+        setTimeout(() => {
+          tappedItem.style.borderColor = '';
+          tappedItem.style.background = '';
+          tappedItem.querySelector('.picker-ex-add').textContent = '+';
+        }, 1000);
+      }
+      return;
+    }
+
+    // Mark as added
+    pickerAddedIds.add(id);
+    if (tappedItem) {
+      tappedItem.classList.add('already-added');
+      tappedItem.querySelector('.picker-ex-add').textContent = '✓';
+    }
+
+    log.ok('Exercise added:', name);
+    log.end();
+
+    // Refresh detail view in background
+    loadAndRenderProgramExercises(pickerActiveDay);
   }
 
   /* ══════════════════════════════════════

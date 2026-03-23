@@ -2,8 +2,14 @@
 <html lang="fi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Laurin Treeniohjelmat</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Personal Training">
+<meta name="theme-color" content="#f5f3ef" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0e0e0e" media="(prefers-color-scheme: dark)">
+<title>Personal Training</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
   /* ── DARK MODE (default) ── */
@@ -319,6 +325,124 @@
     color: var(--footer-color);
     font-size: 12px;
     letter-spacing: 0.5px;
+  }
+
+  /* ══════════════════════════════════════
+     MOBILE UX IMPROVEMENTS
+  ══════════════════════════════════════ */
+
+  /* Larger tap targets on mobile */
+  @media (max-width: 600px) {
+    /* Reduce header size on mobile */
+    header { padding: 28px 16px 20px; }
+    header h1 { font-size: 38px; }
+    .header-sub { font-size: 12px; margin-top: 6px; }
+
+    /* Tighter nav */
+    .tab-bar { padding: 8px 12px; gap: 6px; }
+    .tab-btn { padding: 7px 13px; font-size: 12px; }
+    .theme-toggle { padding: 6px 11px; font-size: 15px; }
+
+    /* Progress bar closer to content */
+    .progress-bar-wrap { padding: 0 12px 0; }
+
+    /* Cards — bigger tap target, less padding */
+    .card-header { padding: 14px 14px; }
+    .exercise-name { font-size: 14px; }
+    .card-body { padding: 0 14px 14px; }
+    .cue-list li { font-size: 13px; padding: 4px 0; }
+
+    /* Info blocks */
+    .info-block { padding: 14px; }
+    .info-block ul li { font-size: 13px; }
+
+    /* Section titles */
+    .section-title { margin: 20px 0 10px; font-size: 12px; }
+    .physio-section-title { margin: 20px 0 10px; font-size: 12px; }
+
+    /* Page padding */
+    .page { padding: 14px 12px 80px; }
+
+    /* Calendar grid — tighter */
+    .cal-grid { gap: 3px; }
+    .cal-day { border-radius: 6px; font-size: 12px; }
+    .cal-day-name { font-size: 10px; padding-bottom: 6px; }
+    .cal-month-label { font-size: 18px; }
+    .cal-nav { width: 30px; height: 30px; font-size: 14px; }
+
+    /* Stats row */
+    .stat-num { font-size: 24px; }
+    .stat-label { font-size: 10px; }
+
+    /* Log type buttons — 2 per row on small screens */
+    .log-row { gap: 6px; }
+    .log-type-btn { font-size: 11px; padding: 8px 6px; }
+
+    /* Log save button — bigger */
+    .log-save-btn { padding: 15px; font-size: 16px; border-radius: 12px; }
+
+    /* Session list */
+    .session-item { padding: 10px 12px; }
+    .session-type { font-size: 13px; }
+    .session-date { font-size: 11px; }
+
+    /* Auth box */
+    .auth-box { padding: 28px 20px; }
+    .auth-logo { font-size: 26px; }
+
+    /* User pill — shorter on mobile */
+    .user-pill { padding: 5px 8px 5px 6px; font-size: 11px; }
+    #userEmail { max-width: 60px; overflow: hidden; text-overflow: ellipsis; }
+
+    /* Checkboxes — bigger touch target */
+    .cb-wrap { width: 36px; height: 36px; }
+    .ex-checkbox { width: 24px; height: 24px; }
+  }
+
+  /* Bottom safe area for iPhone home bar */
+  @supports (padding-bottom: env(safe-area-inset-bottom)) {
+    .page { padding-bottom: calc(80px + env(safe-area-inset-bottom)); }
+    .tab-bar { padding-bottom: calc(8px + env(safe-area-inset-bottom)); }
+  }
+
+  /* Active state feedback for touch */
+  .exercise-card:active, .physio-card:active { opacity: 0.85; }
+  .tab-btn:active { transform: scale(0.96); }
+  .log-save-btn:active { transform: scale(0.98); }
+  .log-type-btn:active { transform: scale(0.95); }
+  .cal-day:not(.cal-empty):active { transform: scale(0.92); }
+  .session-del:active { transform: scale(0.95); }
+
+  /* Smooth card open/close animation */
+  .card-body {
+    animation: none;
+  }
+  .exercise-card.open .card-body,
+  .physio-card.open .card-body {
+    animation: slideDown 0.2s ease;
+  }
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Prevent text selection on tap */
+  .tab-btn, .log-type-btn, .log-save-btn, .cal-day,
+  .card-header, .exercise-card, .physio-card {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+  }
+
+  /* Sticky progress bar with backdrop blur */
+  .progress-bar-wrap {
+    position: sticky;
+    top: 53px;
+    z-index: 99;
+    background: var(--bg);
+    padding: 8px 16px 4px;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: background 0.25s;
   }
 
   /* PHYSIO STYLES */
@@ -772,40 +896,7 @@
   .log-type-btn.selected { background: var(--gold); border-color: var(--gold); color: #fff; font-weight: 600; }
   .log-type-btn:hover:not(.selected) { border-color: var(--gold); color: var(--gold); }
 
-  .date-picker-row {
-    margin-bottom: 10px;
-  }
-  .date-picker-label {
-    display: block;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--muted);
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-    margin-bottom: 6px;
-  }
-  .date-picker-input {
-    width: 100%;
-    background: var(--surface2);
-    border: 1.5px solid var(--border);
-    border-radius: 10px;
-    padding: 11px 14px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 14px;
-    color: var(--text);
-    outline: none;
-    transition: border-color 0.2s;
-    cursor: pointer;
-  }
-  .date-picker-input:focus { border-color: var(--gold); }
-  .date-picker-input::-webkit-calendar-picker-indicator {
-    opacity: 0.6;
-    cursor: pointer;
-    filter: var(--cal-icon-filter, none);
-  }
-  html.light .date-picker-input::-webkit-calendar-picker-indicator {
-    filter: none;
-  }
+
   .log-save-btn {
     width: 100%;
     background: #3dba6e;
@@ -1398,11 +1489,7 @@
       <button class="log-type-btn" data-type="Fysioterapia" onclick="selectType(this)">🏥 Fysio</button>
       <button class="log-type-btn" data-type="Muu" onclick="selectType(this)">⚡ Muu</button>
     </div>
-    <div class="date-picker-row">
-      <label class="date-picker-label">📅 Päivämäärä</label>
-      <input type="date" id="sessionDatePicker" class="date-picker-input" />
-    </div>
-    <button class="log-save-btn" onclick="logSession()">✅ Tallenna treeni</button>
+    <button class="log-save-btn" onclick="logSession()">✅ Log Workout</button>
   </div>
 
   <!-- Calendar -->
@@ -2785,9 +2872,6 @@
     if (error) { log.error('Failed to load sessions:', error.message); }
     else { cachedSessions = data || []; log.ok('Loaded', cachedSessions.length, 'sessions'); }
     log.end();
-    // Set date picker to today by default
-    const picker = document.getElementById('sessionDatePicker');
-    if (picker) picker.value = todayStr();
     renderCalendar(); renderSessionsList(); updateStats();
   }
 
@@ -2795,24 +2879,23 @@
     if (!currentUser) { log.warn('logSession: no user'); return; }
     const selectedBtn = document.querySelector('.log-type-btn.selected');
     const typeToLog = selectedBtn ? selectedBtn.getAttribute('data-type') : selectedType;
-    const picker = document.getElementById('sessionDatePicker');
-    const dateToLog = picker && picker.value ? picker.value : todayStr();
+    const today = todayStr();
     log.group('logSession');
-    log.info('Type:', typeToLog, '| Date:', dateToLog);
-    if (cachedSessions.find(s => s.date === dateToLog && s.type === typeToLog)) {
-      log.warn('Already logged for type:', typeToLog, 'on', dateToLog);
+    log.info('Type:', typeToLog, '| Date:', today);
+    if (cachedSessions.find(s => s.date === today && s.type === typeToLog)) {
+      log.warn('Already logged today for type:', typeToLog);
       log.end();
-      alert('This workout type is already logged for this date!'); return;
+      alert('This workout is already logged for today!'); return;
     }
     const btn = document.querySelector('.log-save-btn');
     btn.disabled = true; btn.textContent = 'Saving...';
     const { error } = await supa.from('sessions')
-      .insert({ user_id: currentUser.id, date: dateToLog, type: typeToLog, ts: Date.now() });
+      .insert({ user_id: currentUser.id, date: today, type: typeToLog, ts: Date.now() });
     if (error) {
       log.error('logSession failed:', error.message);
       log.end();
       alert('Error: ' + error.message);
-      btn.disabled = false; btn.textContent = '✅ Tallenna treeni'; return;
+      btn.disabled = false; btn.textContent = '✅ Log Workout'; return;
     }
     log.ok('Session inserted, reloading from cloud...');
     const { data: reloaded, error: reloadErr } = await supa.from('sessions')
@@ -2822,13 +2905,9 @@
       log.ok('Reloaded', cachedSessions.length, 'sessions from cloud');
     }
     log.end();
-    // Navigate calendar to the month of the logged date
-    const loggedDate = new Date(dateToLog + 'T12:00:00');
-    calYear = loggedDate.getFullYear();
-    calMonth = loggedDate.getMonth();
     renderCalendar(); renderSessionsList(); updateStats();
-    btn.textContent = '\uD83C\uDF89 Saved!';
-    setTimeout(() => { btn.textContent = '\u2705 Tallenna treeni'; btn.disabled = false; }, 1800);
+    btn.textContent = '🎉 Saved!';
+    setTimeout(() => { btn.textContent = '✅ Log Workout'; btn.disabled = false; }, 1800);
   }
 
   async function deleteSession(id) {

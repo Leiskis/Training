@@ -3537,13 +3537,7 @@
   /* ══════════════════════════════════════
      WORKOUT PROGRAMS
   ══════════════════════════════════════ */
-  let userPrograms = []; // cached list of user's programs
-
-  const DEFAULT_PROGRAMS = [
-    { name: 'Ohjelma A', sort_order: 0 },
-    { name: 'Ohjelma B', sort_order: 1 },
-    { name: 'Ohjelma C', sort_order: 2 },
-  ];
+  let userPrograms = [];
 
   async function loadUserPrograms() {
     if (!currentUser) return [];
@@ -3560,29 +3554,8 @@
   }
 
   async function ensureDefaultPrograms() {
-    if (!currentUser) return;
-    log.group('ensureDefaultPrograms');
-    const programs = await loadUserPrograms();
-    if (programs.length > 0) {
-      log.ok('User already has programs, skipping default creation');
-      log.end();
-      return;
-    }
-    log.info('No programs found — creating defaults...');
-    const toInsert = DEFAULT_PROGRAMS.map(p => ({
-      user_id: currentUser.id,
-      name: p.name,
-      sort_order: p.sort_order
-    }));
-    const { error } = await supa.from('workout_programs').insert(toInsert);
-    if (error) {
-      log.error('Failed to create default programs:', error.message);
-      log.end();
-      return;
-    }
+    // No default programs — user creates their own from scratch
     await loadUserPrograms();
-    log.ok('Default programs created:', userPrograms.map(p => p.name).join(', '));
-    log.end();
   }
 
   async function createProgram(name) {

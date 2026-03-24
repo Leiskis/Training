@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -3195,6 +3198,7 @@
 </div>
 
 <script>
+  /* APP VERSION: 2026-03-24-v2 — cache bust */
   /* ══════════════════════════════════════
      SUPABASE REST CLIENT (no CDN needed)
   ══════════════════════════════════════ */
@@ -4746,8 +4750,7 @@
           addBtn.addEventListener('click', (evt) => {
             evt.stopPropagation();
             evt.preventDefault();
-            console.log('🟢 ADD BTN CLICKED', e.name, '| pickerActiveDay:', pickerActiveDay, '| currentUser:', currentUser?.id);
-            onPickerSelectExercise(e.id, e.name, e.category, e.muscle_group);
+            onPickerSelectExercise(e.id, e.name, e.category, e.muscle_group, item, addBtn);
           });
         }
 
@@ -4757,32 +4760,17 @@
     });
   }
 
-  async function onPickerSelectExercise(id, name, category, muscleGroup) {
+  async function onPickerSelectExercise(id, name, category, muscleGroup, itemEl, btnEl) {
     log.group('onPickerSelectExercise');
     log.info('id:', id, '| name:', name, '| program:', pickerActiveDay, '| user:', currentUser?.id);
 
     if (!currentUser) { log.error('No user logged in'); log.end(); return; }
     if (!pickerActiveDay) { log.error('No active program — pickerActiveDay is null'); log.end(); return; }
+    if (pickerAddedIds.has(id)) { log.warn('Already added:', name); log.end(); return; }
 
-    // Check not already added
-    if (pickerAddedIds.has(id)) {
-      log.warn('Already added:', name);
-      log.end();
-      return;
-    }
-
-    // Visual feedback immediately
-    const allItems = document.querySelectorAll('.picker-exercise-item');
-    let tappedItem = null;
-    allItems.forEach(item => {
-      if (item.dataset.exId === id) {
-        tappedItem = item;
-        item.style.borderColor = 'var(--gold)';
-        item.style.background = 'var(--gold-dim)';
-        const addBtn = item.querySelector('.picker-ex-add-btn');
-        if (addBtn) addBtn.textContent = '…';
-      }
-    });
+    // Visual feedback — use direct references, no DOM querying
+    if (btnEl) btnEl.textContent = '…';
+    if (itemEl) { itemEl.style.borderColor = 'var(--gold)'; itemEl.style.background = 'var(--gold-dim)'; }
 
     const sort_order = pickerAddedIds.size;
     const { error } = await supa.from('workout_day_exercises').insert({
@@ -4797,35 +4785,28 @@
 
     if (error) {
       log.error('Failed to add exercise:', error.message);
-      log.end();
-      if (tappedItem) {
-        tappedItem.style.borderColor = '#e05555';
-        const addBtn = tappedItem.querySelector('.picker-ex-add-btn');
-        if (addBtn) addBtn.textContent = '✕';
+      if (itemEl) { itemEl.style.borderColor = '#e05555'; itemEl.style.background = ''; }
+      if (btnEl) {
+        btnEl.textContent = '✕ Virhe';
         setTimeout(() => {
-          tappedItem.style.borderColor = '';
-          tappedItem.style.background = '';
-          if (addBtn) addBtn.textContent = '+ Lisää';
-        }, 1000);
+          itemEl.style.borderColor = '';
+          btnEl.textContent = '+ Lisää';
+        }, 1500);
       }
+      log.end();
       return;
     }
 
-    // Mark as added
+    // Success — mark as added
     pickerAddedIds.add(id);
-    if (tappedItem) {
-      tappedItem.classList.add('already-added');
-      const addBtn = tappedItem.querySelector('.picker-ex-add-btn');
-      if (addBtn) { addBtn.textContent = '✓ Lisätty'; addBtn.classList.add('added'); }
-    }
+    if (itemEl) { itemEl.classList.add('already-added'); itemEl.style.borderColor = ''; itemEl.style.background = ''; }
+    if (btnEl) { btnEl.textContent = '✓ Lisätty'; btnEl.classList.add('added'); btnEl.removeEventListener('click', btnEl._handler); }
 
     log.ok('Exercise added:', name);
     log.end();
 
-    // Refresh detail view in background
+    // Refresh detail view and prog page in background
     loadAndRenderProgramExercises(pickerActiveDay);
-
-    // Also refresh prog page if this is a named program (Ohjelma 1/2/3)
     const slot = Object.keys(progPageIdMap).find(k => progPageIdMap[k] === pickerActiveDay);
     if (slot) renderProgPage(slot);
   }

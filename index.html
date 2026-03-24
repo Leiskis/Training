@@ -4640,7 +4640,28 @@
     document.getElementById('pickerList').scrollTop = 0;
   }
 
-  let _pickerDebounceTimer = null;
+  function initPickerDelegation() {
+    const el = document.getElementById('pickerList');
+    el.addEventListener('click', (evt) => {
+      const item = evt.target.closest('.picker-exercise-item');
+      if (!item) return;
+
+      const addBtn = evt.target.closest('[data-action="add"]');
+      const row = evt.target.closest('.picker-ex-row');
+
+      if (addBtn) {
+        evt.stopPropagation();
+        if (item.classList.contains('already-added')) return;
+        const id = item.dataset.exId;
+        const name = item.dataset.exName;
+        const cat = item.dataset.exCat;
+        const muscle = item.dataset.exMuscle;
+        onPickerSelectExercise(id, name, cat, muscle);
+      } else if (row && item.dataset.hasInstructions === '1') {
+        item.classList.toggle('expanded');
+      }
+    });
+  }
   function debouncePickerSearch() {
     clearTimeout(_pickerDebounceTimer);
     _pickerDebounceTimer = setTimeout(renderPickerList, 200);
@@ -4712,24 +4733,7 @@
       return heading + items;
     }).join('');
 
-    // Attach events via delegation — no inline onclick, no escaping issues
-    el.onclick = (evt) => {
-      const item = evt.target.closest('.picker-exercise-item');
-      if (!item) return;
-      const addBtn = evt.target.closest('[data-action="add"]');
-      const row = evt.target.closest('.picker-ex-row');
-
-      if (addBtn) {
-        if (item.classList.contains('already-added')) return;
-        const id = item.dataset.exId;
-        const name = item.dataset.exName;
-        const cat = item.dataset.exCat;
-        const muscle = item.dataset.exMuscle;
-        onPickerSelectExercise(id, name, cat, muscle);
-      } else if (row && item.dataset.hasInstructions === '1') {
-        item.classList.toggle('expanded');
-      }
-    };
+    // Events handled by initPickerDelegation (set up once on DOMContentLoaded)
   }
 
   async function onPickerSelectExercise(id, name, category, muscleGroup) {
@@ -5521,7 +5525,8 @@
 
     initCheckboxes();
     initSheetDelegation();
-    log.info('Checkboxes + sheet delegation initialized');
+    initPickerDelegation();
+    log.info('Event delegation initialized');
     updateProgress();
     applyTranslations();
 

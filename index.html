@@ -4585,6 +4585,89 @@
     sheetDate = null;
   }
 
+  /* ══════════════════════════════════════
+     WORKOUT HISTORY SNAPSHOT
+  ══════════════════════════════════════ */
+  async function logWorkoutWithSnapshot(programId, date, effortFeeling, postWorkoutMood, note, calendarSessionId) {
+    if (!currentUser) return null;
+    log.group('logWorkoutWithSnapshot');
+
+    // 1. Get program name from cache
+    const program = userPrograms.find(p => p.id === programId);
+    if (!program) { log.warn('Program not found in cache:', programId); log.end(); return null; }
+
+    // 2. Get current exercises from the program
+    const { data: exercises, error: exErr } = await supa
+      .from('workout_day_exercises')
+      .select('sort_order, sets, reps, target_weight, exercise_id')
+      .eq('user_id', currentUser.id)
+      .eq('program_id', programId)
+      .order('sort_order');
+
+    if (exErr) { log.error('Failed to fetch exercises for snapshot:', exErr.message); log.end(); return null; }
+
+    // Enrich with library names
+    await loadExerciseLibrary();
+    const enriched = (exercises || []).map(e => ({
+      ...e,
+      lib: exerciseLibrary.find(l => l.id === e.exercise_id) || {}
+    }));
+    log.info('Snapshotting', enriched.length, 'exercises for', program.name);
+
+    // 3. Insert workout_history row
+    const insertedAt = new Date().toISOString();
+    const { error: hErr } = await supa
+      .from('workout_history')
+      .insert({
+        user_id: currentUser.id,
+        session_id: calendarSessionId || null,
+        program_id: programId,
+        program_name: program.name,
+        logged_date: date,
+        effort_feeling: effortFeeling || null,
+        post_workout_mood: postWorkoutMood || null,
+        note: note || null
+      });
+
+    if (hErr) { log.error('Failed to create history row:', hErr.message); log.end(); return null; }
+
+    // Fetch the just-created history row by matching date + program_id + user
+    const { data: histRows } = await supa.from('workout_history')
+      .select('id')
+      .eq('user_id', currentUser.id)
+      .eq('program_id', programId)
+      .eq('logged_date', date)
+      .order('created_at', { ascending: false });
+
+    const historyId = histRows?.[0]?.id;
+    if (!historyId) { log.error('Could not find newly created history row'); log.end(); return null; }
+
+    // 4. Insert snapshot exercises one by one (bulk insert not supported in custom client)
+    let snapshotOk = 0;
+    for (const e of enriched) {
+      const { error: eiErr } = await supa.from('workout_history_exercises').insert({
+        history_id: historyId,
+        user_id: currentUser.id,
+        exercise_name: e.lib.name || 'Unknown',
+        category: e.lib.category || null,
+        muscle_group: e.lib.muscle_group || null,
+        sort_order: e.sort_order,
+        planned_sets: e.sets,
+        planned_reps: e.reps,
+        planned_weight: e.target_weight || null,
+        performed_sets: null,
+        performed_reps: null,
+        performed_weight: null
+      });
+      if (eiErr) log.error('Failed to snapshot exercise:', e.lib.name, eiErr.message);
+      else snapshotOk++;
+    }
+
+    log.ok('Snapshot complete — history id:', historyId, '| exercises:', snapshotOk + '/' + enriched.length);
+    log.end();
+    return historyId;
+  }
+
   async function saveSheetSession() {
     if (!currentUser || !sheetDate) return;
     if (cachedSessions.find(s => s.date === sheetDate && s.type === sheetSelectedType)) {
@@ -4593,6 +4676,8 @@
     const note = document.getElementById('sheetNote').value.trim() || null;
     const btn = document.getElementById('sheetSaveBtn');
     btn.disabled = true; btn.textContent = t('sheet.saving');
+
+    // 1. Save calendar session
     const { error } = await supa.from('sessions').insert({
       user_id: currentUser.id,
       date: sheetDate,
@@ -4606,10 +4691,29 @@
       alert('Error: ' + error.message);
       btn.disabled = false; btn.textContent = t('sheet.save'); return;
     }
+
+    // 2. Reload sessions to get the new session id
     const { data: reloaded } = await supa.from('sessions')
       .select('id,date,type,ts,created_at,effort_feeling,post_workout_mood,note')
       .eq('user_id', currentUser.id).order('created_at', { ascending: false });
     if (reloaded) cachedSessions = reloaded;
+
+    // 3. Snapshot the program if session type matches a user program
+    const matchingProgram = userPrograms.find(p => p.name === sheetSelectedType);
+    if (matchingProgram) {
+      const newSession = cachedSessions[0]; // most recent = just inserted
+      await logWorkoutWithSnapshot(
+        matchingProgram.id,
+        sheetDate,
+        sheetEffort,
+        sheetMood,
+        note,
+        newSession?.id
+      );
+    } else {
+      log.info('No matching program for type:', sheetSelectedType, '— skipping snapshot');
+    }
+
     btn.textContent = t('sheet.saved');
     setTimeout(() => {
       btn.disabled = false; btn.textContent = t('sheet.save');

@@ -4598,19 +4598,15 @@
   }
 
   function openExercisePicker(programId) {
-    pickerActiveDay = programId; // reuse same variable, now holds program UUID or prog1/2/3
+    pickerActiveDay = programId;
     pickerActiveCategory = 'Kaikki';
     document.getElementById('pickerSearch').value = '';
-
-    // Show sheet immediately with loading state
     document.getElementById('pickerBackdrop').classList.add('active');
     document.getElementById('pickerSheet').classList.add('active');
     document.body.style.overflow = 'hidden';
-
-    // Load library then render
     loadExerciseLibrary().then(() => {
-      renderPickerCategories();
-      renderPickerList();
+      buildPickerCategories();
+      buildPickerList();
     });
   }
 
@@ -4618,60 +4614,45 @@
     document.getElementById('pickerBackdrop').classList.remove('active');
     document.getElementById('pickerSheet').classList.remove('active');
     document.body.style.overflow = '';
-    // Delay nulling pickerActiveDay to allow any in-flight saves to complete
     setTimeout(() => { pickerActiveDay = null; }, 500);
   }
 
-  function renderPickerCategories() {
+  function buildPickerCategories() {
     const categories = ['Kaikki', ...new Set(exerciseLibrary.map(e => e.category))];
     const el = document.getElementById('pickerCategories');
-    el.innerHTML = categories.map(cat => {
-      const icon = CATEGORY_ICONS[cat] || '▸';
-      const active = cat === pickerActiveCategory ? 'active' : '';
-      return `<button class="picker-cat-btn ${active}" onclick="setPickerCategory('${cat}')">${icon} ${cat}</button>`;
-    }).join('');
-  }
-
-  function setPickerCategory(cat) {
-    pickerActiveCategory = cat;
-    renderPickerCategories();
-    renderPickerList();
-    // Scroll list back to top
-    document.getElementById('pickerList').scrollTop = 0;
-  }
-
-  function initPickerDelegation() {
-    const el = document.getElementById('pickerList');
-    el.addEventListener('click', (evt) => {
-      const item = evt.target.closest('.picker-exercise-item');
-      if (!item) return;
-
-      const addBtn = evt.target.closest('[data-action="add"]');
-      const row = evt.target.closest('.picker-ex-row');
-
-      if (addBtn) {
-        evt.stopPropagation();
-        if (item.classList.contains('already-added')) return;
-        const id = item.dataset.exId;
-        const name = item.dataset.exName;
-        const cat = item.dataset.exCat;
-        const muscle = item.dataset.exMuscle;
-        onPickerSelectExercise(id, name, cat, muscle);
-      } else if (row && item.dataset.hasInstructions === '1') {
-        item.classList.toggle('expanded');
-      }
+    el.innerHTML = '';
+    categories.forEach(cat => {
+      const btn = document.createElement('button');
+      btn.className = 'picker-cat-btn' + (cat === pickerActiveCategory ? ' active' : '');
+      btn.textContent = (CATEGORY_ICONS[cat] || '▸') + ' ' + cat;
+      btn.addEventListener('click', () => {
+        pickerActiveCategory = cat;
+        buildPickerCategories();
+        buildPickerList();
+        document.getElementById('pickerList').scrollTop = 0;
+      });
+      el.appendChild(btn);
     });
   }
+
+  // Keep old names as aliases so other code still works
+  function renderPickerCategories() { buildPickerCategories(); }
+  function setPickerCategory(cat) { pickerActiveCategory = cat; buildPickerCategories(); buildPickerList(); }
+  function initPickerDelegation() { /* no-op — not needed anymore */ }
+
+  let _pickerDebounceTimer = null;
   function debouncePickerSearch() {
     clearTimeout(_pickerDebounceTimer);
-    _pickerDebounceTimer = setTimeout(renderPickerList, 200);
+    _pickerDebounceTimer = setTimeout(buildPickerList, 200);
   }
+  function renderPickerList() { buildPickerList(); }
 
-  function renderPickerList() {
+  function buildPickerList() {
     const query = document.getElementById('pickerSearch').value.toLowerCase().trim();
     const el = document.getElementById('pickerList');
+    el.innerHTML = '';
 
-    let filtered = exerciseLibrary;
+    let filtered = exerciseLibrary.slice();
     if (pickerActiveCategory !== 'Kaikki') {
       filtered = filtered.filter(e => e.category === pickerActiveCategory);
     }
@@ -4685,10 +4666,14 @@
     }
 
     if (filtered.length === 0) {
-      el.innerHTML = `<div class="picker-empty">${t('picker.empty')} "<strong>${query}</strong>"</div>`;
+      const empty = document.createElement('div');
+      empty.className = 'picker-empty';
+      empty.innerHTML = `${t('picker.empty')} "<strong>${query}</strong>"`;
+      el.appendChild(empty);
       return;
     }
 
+    // Group by category
     const grouped = {};
     filtered.forEach(e => {
       if (!grouped[e.category]) grouped[e.category] = [];
@@ -4697,43 +4682,77 @@
 
     const showHeadings = pickerActiveCategory === 'Kaikki' && !query;
 
-    el.innerHTML = Object.entries(grouped).map(([cat, exercises]) => {
-      const heading = showHeadings
-        ? `<div class="picker-category-heading">${CATEGORY_ICONS[cat] || '▸'} ${cat}</div>`
-        : '';
-      const items = exercises.map(e => {
+    Object.entries(grouped).forEach(([cat, exercises]) => {
+      // Category heading
+      if (showHeadings) {
+        const heading = document.createElement('div');
+        heading.className = 'picker-category-heading';
+        heading.textContent = (CATEGORY_ICONS[cat] || '▸') + ' ' + cat;
+        el.appendChild(heading);
+      }
+
+      exercises.forEach(e => {
         const added = pickerAddedIds.has(e.id);
-        const addLabel = added
-          ? `✓ ${currentLang === 'en' ? 'Added' : 'Lisätty'}`
-          : `+ ${currentLang === 'en' ? 'Add' : 'Lisää'}`;
-        const instructions = e.instructions
-          ? `<div class="picker-ex-instructions">${e.instructions}</div>`
-          : '';
-        const chevron = e.instructions ? `<span class="picker-ex-chevron">⌄</span>` : '<span style="width:18px"></span>';
 
-        return `<div class="picker-exercise-item${added ? ' already-added' : ''}"
-            data-ex-id="${e.id}"
-            data-ex-name="${e.name.replace(/"/g,'&quot;')}"
-            data-ex-cat="${e.category.replace(/"/g,'&quot;')}"
-            data-ex-muscle="${e.muscle_group.replace(/"/g,'&quot;')}"
-            data-has-instructions="${e.instructions ? '1' : ''}">
-          <div class="picker-ex-row">
-            <div class="picker-ex-info">
-              <div class="picker-ex-name">${e.name}</div>
-              <div class="picker-ex-muscle">${e.muscle_group}</div>
-            </div>
-            ${chevron}
-          </div>
-          ${instructions}
-          <button class="picker-ex-add-btn ${added ? 'added' : ''}" data-action="add">
-            ${addLabel}
-          </button>
-        </div>`;
-      }).join('');
-      return heading + items;
-    }).join('');
+        // Outer item div
+        const item = document.createElement('div');
+        item.className = 'picker-exercise-item' + (added ? ' already-added' : '');
 
-    // Events handled by initPickerDelegation (set up once on DOMContentLoaded)
+        // Top row — name + muscle + chevron
+        const row = document.createElement('div');
+        row.className = 'picker-ex-row';
+
+        const info = document.createElement('div');
+        info.className = 'picker-ex-info';
+
+        const nameEl = document.createElement('div');
+        nameEl.className = 'picker-ex-name';
+        nameEl.textContent = e.name;
+
+        const muscleEl = document.createElement('div');
+        muscleEl.className = 'picker-ex-muscle';
+        muscleEl.textContent = e.muscle_group;
+
+        info.appendChild(nameEl);
+        info.appendChild(muscleEl);
+        row.appendChild(info);
+
+        // Chevron if instructions exist
+        if (e.instructions) {
+          const chevron = document.createElement('span');
+          chevron.className = 'picker-ex-chevron';
+          chevron.textContent = '⌄';
+          row.appendChild(chevron);
+          row.addEventListener('click', () => item.classList.toggle('expanded'));
+        }
+        item.appendChild(row);
+
+        // Instructions (hidden by default, shown when expanded)
+        if (e.instructions) {
+          const instrEl = document.createElement('div');
+          instrEl.className = 'picker-ex-instructions';
+          instrEl.textContent = e.instructions;
+          item.appendChild(instrEl);
+        }
+
+        // Add button — direct addEventListener, no delegation, no strings
+        const addBtn = document.createElement('button');
+        addBtn.className = 'picker-ex-add-btn' + (added ? ' added' : '');
+        addBtn.textContent = added
+          ? '✓ ' + (currentLang === 'en' ? 'Added' : 'Lisätty')
+          : '+ ' + (currentLang === 'en' ? 'Add' : 'Lisää');
+
+        if (!added) {
+          addBtn.addEventListener('click', (evt) => {
+            evt.stopPropagation();
+            onPickerSelectExercise(e.id, e.name, e.category, e.muscle_group);
+          });
+        }
+
+        item.appendChild(addBtn);
+        el.appendChild(item);
+      });
+    });
   }
 
   async function onPickerSelectExercise(id, name, category, muscleGroup) {

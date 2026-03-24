@@ -4681,44 +4681,54 @@
         : '';
       const items = exercises.map(e => {
         const added = pickerAddedIds.has(e.id);
-        const safeId = e.id;
-        const safeName = e.name.replace(/'/g, "\\'").replace(/"/g, '&quot;');
-        const safeCat = e.category.replace(/'/g, "\\'");
-        const safeMuscle = e.muscle_group.replace(/'/g, "\\'");
         const addLabel = added
           ? `✓ ${currentLang === 'en' ? 'Added' : 'Lisätty'}`
-          : `+ ${currentLang === 'en' ? 'Add exercise' : 'Lisää liike'}`;
+          : `+ ${currentLang === 'en' ? 'Add' : 'Lisää'}`;
         const instructions = e.instructions
           ? `<div class="picker-ex-instructions">${e.instructions}</div>`
           : '';
-        const chevron = `<span class="picker-ex-chevron">⌄</span>`;
+        const chevron = e.instructions ? `<span class="picker-ex-chevron">⌄</span>` : '<span style="width:18px"></span>';
 
-        return `<div class="picker-exercise-item${added ? ' already-added' : ''}" id="picker-item-${safeId}">
-          <div class="picker-ex-row" onclick="togglePickerItem('${safeId}')">
+        return `<div class="picker-exercise-item${added ? ' already-added' : ''}"
+            data-ex-id="${e.id}"
+            data-ex-name="${e.name.replace(/"/g,'&quot;')}"
+            data-ex-cat="${e.category.replace(/"/g,'&quot;')}"
+            data-ex-muscle="${e.muscle_group.replace(/"/g,'&quot;')}"
+            data-has-instructions="${e.instructions ? '1' : ''}">
+          <div class="picker-ex-row">
             <div class="picker-ex-info">
               <div class="picker-ex-name">${e.name}</div>
               <div class="picker-ex-muscle">${e.muscle_group}</div>
             </div>
-            ${e.instructions ? chevron : '<span style="width:18px"></span>'}
+            ${chevron}
           </div>
           ${instructions}
-          <button class="picker-ex-add-btn ${added ? 'added' : ''}"
-            onclick="${added ? '' : `onPickerSelectExercise('${safeId}','${safeName}','${safeCat}','${safeMuscle}')`}">
+          <button class="picker-ex-add-btn ${added ? 'added' : ''}" data-action="add">
             ${addLabel}
           </button>
         </div>`;
       }).join('');
       return heading + items;
     }).join('');
-  }
 
-  function togglePickerItem(id) {
-    const item = document.getElementById('picker-item-' + id);
-    if (!item) return;
-    // Only expand if there are instructions
-    const instructions = item.querySelector('.picker-ex-instructions');
-    if (!instructions) return;
-    item.classList.toggle('expanded');
+    // Attach events via delegation — no inline onclick, no escaping issues
+    el.onclick = (evt) => {
+      const item = evt.target.closest('.picker-exercise-item');
+      if (!item) return;
+      const addBtn = evt.target.closest('[data-action="add"]');
+      const row = evt.target.closest('.picker-ex-row');
+
+      if (addBtn) {
+        if (item.classList.contains('already-added')) return;
+        const id = item.dataset.exId;
+        const name = item.dataset.exName;
+        const cat = item.dataset.exCat;
+        const muscle = item.dataset.exMuscle;
+        onPickerSelectExercise(id, name, cat, muscle);
+      } else if (row && item.dataset.hasInstructions === '1') {
+        item.classList.toggle('expanded');
+      }
+    };
   }
 
   async function onPickerSelectExercise(id, name, category, muscleGroup) {

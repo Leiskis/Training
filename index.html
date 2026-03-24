@@ -1277,6 +1277,21 @@
   .mp-ex-input[type=number]::-webkit-inner-spin-button,
   .mp-ex-input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
   .mp-ex-input[type=number] { -moz-appearance: textfield; }
+
+  /* Prog page DB section */
+  .prog-db-title {
+    margin-top: 28px !important;
+    border-top: 1px solid var(--border);
+    padding-top: 20px;
+  }
+  .prog-db-fields {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    padding-top: 12px;
+  }
+  .prog-db-card .card-body { display: none; }
+  .prog-db-card.open .card-body { display: block; }
   .auth-overlay {
     position: fixed;
     inset: 0;
@@ -1888,8 +1903,12 @@
     </ul>
   </div>
 
+  <div class="prog-db-section" id="prog1-db-section" style="display:none">
+    <div class="section-title prog-db-title" id="prog1-db-title">Omat lisäykset</div>
+    <div id="prog1-db-exercises"></div>
+  </div>
   <div class="add-exercise-btn-wrap">
-    <button class="add-exercise-btn" onclick="openExercisePicker('prog1')">
+    <button class="add-exercise-btn" id="prog1-add-btn" onclick="openProgPagePicker('prog1')">
       + Lisää liike
     </button>
   </div>
@@ -2015,8 +2034,12 @@
     </ul>
   </div>
 
+  <div class="prog-db-section" id="prog2-db-section" style="display:none">
+    <div class="section-title prog-db-title" id="prog2-db-title">Omat lisäykset</div>
+    <div id="prog2-db-exercises"></div>
+  </div>
   <div class="add-exercise-btn-wrap">
-    <button class="add-exercise-btn" onclick="openExercisePicker('prog2')">
+    <button class="add-exercise-btn" id="prog2-add-btn" onclick="openProgPagePicker('prog2')">
       + Lisää liike
     </button>
   </div>
@@ -2151,8 +2174,12 @@
     </div>
   </div>
 
+  <div class="prog-db-section" id="prog3-db-section" style="display:none">
+    <div class="section-title prog-db-title" id="prog3-db-title">Omat lisäykset</div>
+    <div id="prog3-db-exercises"></div>
+  </div>
   <div class="add-exercise-btn-wrap">
-    <button class="add-exercise-btn" onclick="openExercisePicker('prog3')">
+    <button class="add-exercise-btn" id="prog3-add-btn" onclick="openProgPagePicker('prog3')">
       + Lisää liike
     </button>
   </div>
@@ -3550,6 +3577,7 @@
     document.getElementById('userPill').style.display = 'flex';
     syncChecksFromCloud();
     ensureDefaultPrograms();
+    loadProgPageExercises();
   }
 
   /* ══════════════════════════════════════
@@ -3729,6 +3757,10 @@
     currentTab = id;
     if (id === 'calendar') loadAndRenderCalendar();
     else if (id === 'myprograms') renderProgramList();
+    else if (['prog1','prog2','prog3'].includes(id)) {
+      updateProgress();
+      if (progPageIdMap[id]) renderProgPageExercises(id, progPageIdMap[id]);
+    }
     else updateProgress();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -4349,6 +4381,123 @@
   }
 
   /* ══════════════════════════════════════
+     PROG PAGE DYNAMIC EXERCISES
+     Loads user's DB exercises into prog1/2/3 pages
+  ══════════════════════════════════════ */
+
+  // Maps 'prog1'/'prog2'/'prog3' → program UUID once loaded
+  const progPageIdMap = {};
+
+  async function loadProgPageExercises() {
+    if (!currentUser) return;
+    await loadUserPrograms();
+    await loadExerciseLibrary();
+
+    // Find programs named 'Ohjelma 1', 'Ohjelma 2', 'Ohjelma 3'
+    const nameMap = { prog1: 'Ohjelma 1', prog2: 'Ohjelma 2', prog3: 'Ohjelma 3' };
+
+    for (const [slot, progName] of Object.entries(nameMap)) {
+      const prog = userPrograms.find(p => p.name === progName);
+      if (!prog) continue;
+      progPageIdMap[slot] = prog.id;
+      await renderProgPageExercises(slot, prog.id);
+    }
+  }
+
+  async function renderProgPageExercises(slot, programId) {
+    const section = document.getElementById(`${slot}-db-section`);
+    const container = document.getElementById(`${slot}-db-exercises`);
+    const titleEl = document.getElementById(`${slot}-db-title`);
+    if (!section || !container) return;
+
+    const { data: rows, error } = await supa.from('workout_day_exercises')
+      .select('id, exercise_id, sort_order, sets, reps, target_weight')
+      .eq('user_id', currentUser.id)
+      .eq('program_id', programId)
+      .order('sort_order');
+
+    if (error) { log.error('renderProgPageExercises error:', error.message); return; }
+    if (!rows || rows.length === 0) { section.style.display = 'none'; return; }
+
+    // Enrich with library names
+    const enriched = rows.map(r => ({
+      ...r,
+      exercise_library: exerciseLibrary.find(e => e.id === r.exercise_id) || {}
+    }));
+
+    section.style.display = 'block';
+    if (titleEl) titleEl.textContent = currentLang === 'en' ? 'My exercises' : 'Omat liikkeet';
+
+    container.innerHTML = enriched.map(e => {
+      const lib = e.exercise_library;
+      return `<div class="exercise-card prog-db-card">
+        <div class="card-header" onclick="toggleCard(this.closest('.exercise-card'))">
+          <div class="card-header-left">
+            <div class="exercise-name">${lib.name || 'Tuntematon'}</div>
+            <span class="exercise-sets">${e.sets} × ${e.reps}${e.target_weight ? ' · ' + e.target_weight + ' kg' : ''}</span>
+          </div>
+          <div class="chevron">⌄</div>
+        </div>
+        <div class="card-body">
+          <div class="prog-db-fields">
+            <div class="mp-ex-field">
+              <label>${currentLang === 'en' ? 'Sets' : 'Sarjat'}</label>
+              <input type="number" class="mp-ex-input" value="${e.sets}" min="1" max="20"
+                onchange="updateExerciseField('${e.id}', 'sets', this.value); refreshProgPageCard(this, '${slot}', '${e.id}')" />
+            </div>
+            <div class="mp-ex-field">
+              <label>${currentLang === 'en' ? 'Reps' : 'Toistot'}</label>
+              <input type="text" class="mp-ex-input" value="${e.reps}" maxlength="10"
+                onchange="updateExerciseField('${e.id}', 'reps', this.value); refreshProgPageCard(this, '${slot}', '${e.id}')" />
+            </div>
+            <div class="mp-ex-field">
+              <label>${currentLang === 'en' ? 'Weight (kg)' : 'Paino (kg)'}</label>
+              <input type="number" class="mp-ex-input" value="${e.target_weight || ''}" placeholder="—" min="0" step="0.5"
+                onchange="updateExerciseField('${e.id}', 'target_weight', this.value || null); refreshProgPageCard(this, '${slot}', '${e.id}')" />
+            </div>
+          </div>
+          <button class="mp-ex-del" style="margin-top:10px;width:100%;border-radius:8px;padding:8px"
+            onclick="removeFromProgPage('${slot}', '${programId}', '${e.id}', '${e.exercise_id}')">
+            ${currentLang === 'en' ? 'Remove' : 'Poista'}
+          </button>
+        </div>
+      </div>`;
+    }).join('');
+
+    // Also update add button to use real program ID
+    const addBtn = document.getElementById(`${slot}-add-btn`);
+    if (addBtn) addBtn.onclick = () => openProgPagePicker(slot);
+  }
+
+  function openProgPagePicker(slot) {
+    // Use mapped UUID if available, else use slot name
+    const programId = progPageIdMap[slot] || slot;
+    pickerAddedIds = new Set(); // will be populated by loadAndRenderProgramExercises
+    openExercisePicker(programId);
+    // After picker closes and exercise is added, refresh this page
+    pickerActiveDay = programId;
+  }
+
+  async function removeFromProgPage(slot, programId, rowId, exerciseId) {
+    await removeExerciseFromProgram(rowId, exerciseId);
+    renderProgPageExercises(slot, programId);
+  }
+
+  function refreshProgPageCard(input, slot, rowId) {
+    // Update the exercise-sets badge in the card header
+    const card = input.closest('.exercise-card');
+    if (!card) return;
+    const fields = card.querySelectorAll('.mp-ex-input');
+    if (fields.length >= 2) {
+      const sets = fields[0].value;
+      const reps = fields[1].value;
+      const weight = fields[2]?.value;
+      const badge = card.querySelector('.exercise-sets');
+      if (badge) badge.textContent = `${sets} × ${reps}${weight ? ' · ' + weight + ' kg' : ''}`;
+    }
+  }
+
+  /* ══════════════════════════════════════
      EXERCISE PICKER
   ══════════════════════════════════════ */
   let exerciseLibrary = [];       // all exercises from Supabase
@@ -4548,6 +4697,10 @@
 
     // Refresh detail view in background
     loadAndRenderProgramExercises(pickerActiveDay);
+
+    // Also refresh prog page if this is a named program (Ohjelma 1/2/3)
+    const slot = Object.keys(progPageIdMap).find(k => progPageIdMap[k] === pickerActiveDay);
+    if (slot) renderProgPageExercises(slot, pickerActiveDay);
   }
 
   /* ══════════════════════════════════════

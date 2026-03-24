@@ -3553,9 +3553,79 @@
     return userPrograms;
   }
 
+  // Exercises matching the existing static programs
+  const SEED_PROGRAMS = [
+    {
+      name: 'Ohjelma 1',
+      sort_order: 0,
+      exercises: [
+        'Maastaveto (trap bar)', 'Tuettu soutu laitteessa', 'Penkkipunnerrus',
+        'Askelkyykky', 'Hauiskääntö scott-tangolla', 'Ranskalainen punnerrus'
+      ]
+    },
+    {
+      name: 'Ohjelma 2',
+      sort_order: 1,
+      exercises: [
+        'Hack kyykky', 'Ylätalja', 'Vinopenkkipunnerrus käsipainoilla',
+        'Yhden käden kulmasoutu', 'Polven ojennus laitteessa', 'Polven koukistus maaten'
+      ]
+    },
+    {
+      name: 'Ohjelma 3',
+      sort_order: 2,
+      exercises: [
+        'Leuanveto', 'Pendlay row tangolla', 'Jalkaprässi yhdellä jalalla',
+        'Ristikkäistalja punnerrus', 'Romanialainen maastaveto',
+        'Pohkeet laitteessa', 'Vartalon kierto taljassa'
+      ]
+    }
+  ];
+
   async function ensureDefaultPrograms() {
-    // No default programs — user creates their own from scratch
+    if (!currentUser) return;
+    const programs = await loadUserPrograms();
+    if (programs.length > 0) {
+      log.ok('User already has programs, skipping seed');
+      return;
+    }
+    log.group('seedDefaultPrograms');
+    log.info('First login — seeding Ohjelma 1/2/3...');
+
+    // Make sure exercise library is loaded
+    await loadExerciseLibrary();
+
+    for (const seed of SEED_PROGRAMS) {
+      // Create program
+      const { error: progErr } = await supa.from('workout_programs')
+        .insert({ user_id: currentUser.id, name: seed.name, sort_order: seed.sort_order });
+      if (progErr) { log.error('Failed to seed program', seed.name, ':', progErr.message); continue; }
+
+      // Reload to get the new program's ID
+      await loadUserPrograms();
+      const prog = userPrograms.find(p => p.name === seed.name);
+      if (!prog) continue;
+
+      // Add exercises
+      let sort = 0;
+      for (const exName of seed.exercises) {
+        const ex = exerciseLibrary.find(e => e.name === exName);
+        if (!ex) { log.warn('Exercise not found in library:', exName); continue; }
+        await supa.from('workout_day_exercises').insert({
+          user_id: currentUser.id,
+          program_id: prog.id,
+          exercise_id: ex.id,
+          sort_order: sort++,
+          sets: 3,
+          reps: '8-10',
+          target_weight: null
+        });
+      }
+      log.ok('Seeded', seed.name, 'with', sort, 'exercises');
+    }
     await loadUserPrograms();
+    log.ok('Default programs seeded:', userPrograms.map(p => p.name).join(', '));
+    log.end();
   }
 
   async function createProgram(name) {
@@ -4056,7 +4126,6 @@
     const listEl = document.getElementById('mpProgramList');
     const detailEl = document.getElementById('mpDetail');
 
-    // Hide detail, show list
     listEl.style.display = 'block';
     detailEl.style.display = 'none';
     hideNewProgramInput();
@@ -4077,17 +4146,30 @@
       return;
     }
 
-    listEl.innerHTML = userPrograms.map((p, i) => `
-      <div class="mp-program-card" onclick="openProgramDetail('${p.id}', '${p.name.replace(/'/g,"\\'")}')">
-        <div class="mp-program-icon">${getProgramEmoji(i)}</div>
-        <div class="mp-program-info">
-          <div class="mp-program-name">${p.name}</div>
-          <div class="mp-program-meta">Napauta muokataksesi</div>
-        </div>
-        <div class="mp-program-arrow">›</div>
-        <button class="mp-program-del" onclick="event.stopPropagation(); confirmDeleteProgram('${p.id}', '${p.name.replace(/'/g,"\\'")}')">Poista</button>
-      </div>
-    `).join('');
+    // Fetch exercise counts per program
+    const { data: counts } = await supa.from('workout_day_exercises')
+      .select('program_id')
+      .eq('user_id', currentUser.id);
+
+    const countMap = {};
+    (counts || []).forEach(r => {
+      countMap[r.program_id] = (countMap[r.program_id] || 0) + 1;
+    });
+
+    listEl.innerHTML = userPrograms.map((p, i) => {
+      const exCount = countMap[p.id] || 0;
+      const meta = exCount > 0 ? `${exCount} liikettä` : 'Ei liikkeitä vielä';
+      return `
+        <div class="mp-program-card" onclick="openProgramDetail('${p.id}', '${p.name.replace(/'/g,"\\'")}')">
+          <div class="mp-program-icon">${getProgramEmoji(i)}</div>
+          <div class="mp-program-info">
+            <div class="mp-program-name">${p.name}</div>
+            <div class="mp-program-meta">${meta}</div>
+          </div>
+          <div class="mp-program-arrow">›</div>
+          <button class="mp-program-del" onclick="event.stopPropagation(); confirmDeleteProgram('${p.id}', '${p.name.replace(/'/g,"\\'")}')">Poista</button>
+        </div>`;
+    }).join('');
   }
 
   function openProgramDetail(id, name) {

@@ -2272,42 +2272,42 @@
 </div>
 
 <!-- DAY LOG BOTTOM SHEET -->
-<div class="sheet-backdrop" id="sheetBackdrop" onclick="closeSheet()"></div>
+<div class="sheet-backdrop" id="sheetBackdrop"></div>
 <div class="bottom-sheet" id="bottomSheet">
   <div class="sheet-handle"></div>
   <div class="sheet-title" id="sheetTitle">Merkitse treeni</div>
   <div class="sheet-existing" id="sheetExisting"></div>
 
   <div class="sheet-section-label">Treeni</div>
-  <div class="sheet-type-row">
-    <button class="log-type-btn sheet-type-btn selected" data-type="Ohjelma 1" onclick="selectSheetType(this)">💪 Ohjelma 1</button>
-    <button class="log-type-btn sheet-type-btn" data-type="Ohjelma 2" onclick="selectSheetType(this)">🏋️ Ohjelma 2</button>
-    <button class="log-type-btn sheet-type-btn" data-type="Ohjelma 3" onclick="selectSheetType(this)">🔥 Ohjelma 3</button>
-    <button class="log-type-btn sheet-type-btn" data-type="Fysioterapia" onclick="selectSheetType(this)">🏥 Fysio</button>
-    <button class="log-type-btn sheet-type-btn" data-type="Muu" onclick="selectSheetType(this)">⚡ Muu</button>
+  <div class="sheet-type-row" id="sheetTypeRow">
+    <button class="log-type-btn sheet-type-btn selected" data-type="Ohjelma 1">💪 Ohjelma 1</button>
+    <button class="log-type-btn sheet-type-btn" data-type="Ohjelma 2">🏋️ Ohjelma 2</button>
+    <button class="log-type-btn sheet-type-btn" data-type="Ohjelma 3">🔥 Ohjelma 3</button>
+    <button class="log-type-btn sheet-type-btn" data-type="Fysioterapia">🏥 Fysio</button>
+    <button class="log-type-btn sheet-type-btn" data-type="Muu">⚡ Muu</button>
   </div>
 
   <div class="sheet-section-label">Kuinka raskas treeni oli?</div>
   <div class="feeling-row" id="effortRow">
-    <button class="feeling-btn selected" data-value="easy" onclick="selectFeeling('effort', this)">😌 Helppo</button>
-    <button class="feeling-btn" data-value="good" onclick="selectFeeling('effort', this)">💪 Hyvä</button>
-    <button class="feeling-btn" data-value="hard" onclick="selectFeeling('effort', this)">😤 Raskas</button>
-    <button class="feeling-btn" data-value="exhausting" onclick="selectFeeling('effort', this)">🥵 Uuvuttava</button>
+    <button class="feeling-btn selected" data-kind="effort" data-value="easy">😌 Helppo</button>
+    <button class="feeling-btn" data-kind="effort" data-value="good">💪 Hyvä</button>
+    <button class="feeling-btn" data-kind="effort" data-value="hard">😤 Raskas</button>
+    <button class="feeling-btn" data-kind="effort" data-value="exhausting">🥵 Uuvuttava</button>
   </div>
 
   <div class="sheet-section-label">Fiilis treenin jälkeen?</div>
   <div class="feeling-row" id="moodRow">
-    <button class="feeling-btn selected" data-value="great" onclick="selectFeeling('mood', this)">🌟 Mahtava</button>
-    <button class="feeling-btn" data-value="energized" onclick="selectFeeling('mood', this)">⚡ Energinen</button>
-    <button class="feeling-btn" data-value="neutral" onclick="selectFeeling('mood', this)">😐 Neutraali</button>
-    <button class="feeling-btn" data-value="tired" onclick="selectFeeling('mood', this)">😴 Väsynyt</button>
-    <button class="feeling-btn" data-value="stressed" onclick="selectFeeling('mood', this)">😰 Stressaantunut</button>
+    <button class="feeling-btn selected" data-kind="mood" data-value="great">🌟 Mahtava</button>
+    <button class="feeling-btn" data-kind="mood" data-value="energized">⚡ Energinen</button>
+    <button class="feeling-btn" data-kind="mood" data-value="neutral">😐 Neutraali</button>
+    <button class="feeling-btn" data-kind="mood" data-value="tired">😴 Väsynyt</button>
+    <button class="feeling-btn" data-kind="mood" data-value="stressed">😰 Stressaantunut</button>
   </div>
 
   <div class="sheet-section-label">Muistiinpano <span style="font-weight:400;text-transform:none;letter-spacing:0">(valinnainen)</span></div>
   <textarea class="sheet-note" id="sheetNote" placeholder="Esim. selkä kipeä, uni huono..." maxlength="200"></textarea>
 
-  <button class="log-save-btn" id="sheetSaveBtn" onclick="saveSheetSession()">✅ Tallenna</button>
+  <button class="log-save-btn" id="sheetSaveBtn">✅ Tallenna</button>
 </div>
 
 <!-- EXERCISE PICKER SHEET -->
@@ -4809,19 +4809,40 @@
   let sheetEffort = 'easy';
   let sheetMood = 'great';
 
-  function selectSheetType(btn) {
-    document.querySelectorAll('.sheet-type-btn').forEach(b => b.classList.remove('selected'));
-    btn.classList.add('selected');
-    sheetSelectedType = btn.getAttribute('data-type');
+  // Single delegation handler for the entire bottom sheet
+  function initSheetDelegation() {
+    const sheet = document.getElementById('bottomSheet');
+    const backdrop = document.getElementById('sheetBackdrop');
+
+    backdrop.addEventListener('click', closeSheet);
+    document.getElementById('sheetSaveBtn').addEventListener('click', saveSheetSession);
+
+    sheet.addEventListener('click', (e) => {
+      // Type buttons
+      const typeBtn = e.target.closest('.sheet-type-btn');
+      if (typeBtn) {
+        document.querySelectorAll('.sheet-type-btn').forEach(b => b.classList.remove('selected'));
+        typeBtn.classList.add('selected');
+        sheetSelectedType = typeBtn.dataset.type;
+        return;
+      }
+      // Feeling buttons
+      const feelBtn = e.target.closest('.feeling-btn');
+      if (feelBtn) {
+        const kind = feelBtn.dataset.kind;
+        const rowId = kind === 'effort' ? 'effortRow' : 'moodRow';
+        document.querySelectorAll('#' + rowId + ' .feeling-btn').forEach(b => b.classList.remove('selected'));
+        feelBtn.classList.add('selected');
+        if (kind === 'effort') sheetEffort = feelBtn.dataset.value;
+        else sheetMood = feelBtn.dataset.value;
+        return;
+      }
+    });
   }
 
-  function selectFeeling(kind, btn) {
-    const rowId = kind === 'effort' ? 'effortRow' : 'moodRow';
-    document.querySelectorAll('#' + rowId + ' .feeling-btn').forEach(b => b.classList.remove('selected'));
-    btn.classList.add('selected');
-    if (kind === 'effort') sheetEffort = btn.getAttribute('data-value');
-    else sheetMood = btn.getAttribute('data-value');
-  }
+  // Keep these as no-ops for backwards compat (applyTranslations references them)
+  function selectSheetType(btn) {}
+  function selectFeeling(kind, btn) {}
 
   function openSheet(dateStr) {
     sheetDate = dateStr;
@@ -5495,7 +5516,8 @@
     log.info('Theme:', isLight ? 'light' : 'dark');
 
     initCheckboxes();
-    log.info('Checkboxes initialized');
+    initSheetDelegation();
+    log.info('Checkboxes + sheet delegation initialized');
     updateProgress();
     applyTranslations();
 

@@ -956,26 +956,16 @@
     margin: 16px 0 8px;
   }
   .picker-exercise-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
     padding: 13px 14px;
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 10px;
     margin-bottom: 7px;
-    cursor: pointer;
     transition: all 0.15s;
-    -webkit-tap-highlight-color: transparent;
     gap: 10px;
-  }
-  .picker-exercise-item:active {
-    transform: scale(0.98);
-    border-color: var(--gold);
   }
   .picker-exercise-item.already-added {
     opacity: 0.45;
-    pointer-events: none;
   }
   .picker-ex-info { flex: 1; }
   .picker-ex-name {
@@ -989,23 +979,71 @@
     color: var(--muted);
     margin-top: 2px;
   }
-  .picker-ex-add {
-    width: 30px; height: 30px;
-    background: var(--gold-dim);
-    border: 1.5px solid var(--gold);
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 18px;
-    color: var(--gold);
-    font-weight: 700;
-    flex-shrink: 0;
-    line-height: 1;
-  }
   .picker-empty {
     text-align: center;
     padding: 32px 16px;
     color: var(--muted);
     font-size: 14px;
+  }
+
+  /* Picker instructions dropdown */
+  .picker-exercise-item {
+    flex-direction: column;
+    align-items: stretch;
+    cursor: default;
+  }
+  .picker-ex-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .picker-ex-row:active { opacity: 0.8; }
+  .picker-ex-chevron {
+    font-size: 13px;
+    color: var(--muted);
+    transition: transform 0.2s;
+    flex-shrink: 0;
+    margin-left: 2px;
+  }
+  .picker-exercise-item.expanded .picker-ex-chevron {
+    transform: rotate(180deg);
+    color: var(--gold);
+  }
+  .picker-ex-instructions {
+    display: none;
+    font-size: 13px;
+    color: var(--cue-text);
+    line-height: 1.55;
+    padding: 10px 4px 4px;
+    border-top: 1px solid var(--border);
+    margin-top: 10px;
+    animation: slideDown 0.18s ease;
+  }
+  .picker-exercise-item.expanded .picker-ex-instructions {
+    display: block;
+  }
+  .picker-ex-add-btn {
+    margin-top: 10px;
+    width: 100%;
+    background: var(--gold);
+    border: none;
+    border-radius: 8px;
+    padding: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+    cursor: pointer;
+    transition: opacity 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .picker-ex-add-btn:active { opacity: 0.8; }
+  .picker-ex-add-btn.added {
+    background: var(--surface2);
+    color: var(--muted);
+    cursor: default;
   }
 
   /* ── MY PROGRAMS ── */
@@ -1292,6 +1330,88 @@
   }
   .prog-db-card .card-body { display: none; }
   .prog-db-card.open .card-body { display: block; }
+
+  /* Dynamic program pages */
+  .prog-loading {
+    text-align: center;
+    padding: 48px 20px;
+    color: var(--muted);
+    font-size: 14px;
+  }
+  .prog-category-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 13px;
+    letter-spacing: 3px;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin: 24px 0 10px;
+  }
+  .prog-category-title:first-child { margin-top: 4px; }
+  .prog-ex-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    margin-bottom: 10px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .prog-ex-card .card-header {
+    display: flex;
+    align-items: center;
+    padding: 14px 16px;
+    cursor: pointer;
+    user-select: none;
+    gap: 10px;
+  }
+  .prog-ex-card.open .chevron { transform: rotate(180deg); color: var(--gold); }
+  .prog-ex-card .card-body {
+    display: none;
+    padding: 0 16px 16px;
+    border-top: 1px solid var(--border);
+  }
+  .prog-ex-card.open .card-body { display: block; }
+  .prog-ex-sets {
+    display: inline-block;
+    margin-top: 4px;
+    background: rgba(200,168,75,0.15);
+    color: var(--gold);
+    border-radius: 6px;
+    padding: 3px 10px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .prog-ex-instructions {
+    font-size: 14px;
+    color: var(--cue-text);
+    line-height: 1.6;
+    padding: 12px 0 10px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 12px;
+  }
+  .prog-ex-fields {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .prog-ex-field label {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-bottom: 4px;
+  }
+  .prog-add-wrap { padding: 8px 0 4px; }
+  .prog-empty {
+    text-align: center;
+    padding: 32px 20px;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.6;
+  }
   .auth-overlay {
     position: fixed;
     inset: 0;
@@ -1786,402 +1906,22 @@
 
 <!-- PROGRAM 1 -->
 <div id="prog1" class="page">
-
-  <div class="section-title">Jalat & Selkä</div>
-
-  <div class="exercise-card" onclick="toggleCard(this)">
-    <div class="card-header">
-      <div class="card-header-left">
-        <div class="exercise-name">Maastaveto (trap bar)</div>
-        <span class="exercise-sets">3 × 8–10 · 40–70 kg</span>
-      </div>
-      <div class="chevron">⌄</div>
-    </div>
-    <div class="card-body">
-      <ul class="cue-list">
-        <li>Lantion levyinen haara jaloissa → etunoja asento</li>
-        <li>Tukeva ote kahvoista, hyvä ryhti, hartiat taakse ja aktiivinen lapatuki</li>
-      </ul>
-    </div>
-  </div>
-
-  <div class="section-title">Yläselkä</div>
-
-  <div class="exercise-card" onclick="toggleCard(this)">
-    <div class="card-header">
-      <div class="card-header-left">
-        <div class="exercise-name">Tuettu soutu laitteessa</div>
-        <span class="exercise-sets">3 × 8–10 · 10–15 kg</span>
-      </div>
-      <div class="chevron">⌄</div>
-    </div>
-    <div class="card-body">
-      <ul class="cue-list">
-        <li>Vapauta laite telineestä</li>
-        <li>Venytä hartiat ja yläselkä ala-asennossa</li>
-        <li>Kevennä veto vaiheessa rintakehää irti penkistä → purista lavat yhteen</li>
-      </ul>
-    </div>
-  </div>
-
-  <div class="section-title">Rinta</div>
-
-  <div class="exercise-card" onclick="toggleCard(this)">
-    <div class="card-header">
-      <div class="card-header-left">
-        <div class="exercise-name">Penkkipunnerrus</div>
-        <span class="exercise-sets">3 × 6–10 · 50–65 kg</span>
-      </div>
-      <div class="chevron">⌄</div>
-    </div>
-    <div class="card-body">
-      <ul class="cue-list">
-        <li>Rintakehä auki – lavat yhteen – alaselän alle kaari</li>
-        <li>Lantiosta voimaa – paina kantapäitä lattiaan ja polvi-varvaslinja hieman auki</li>
-      </ul>
-    </div>
-  </div>
-
-  <div class="section-title">Jalat</div>
-
-  <div class="exercise-card" onclick="toggleCard(this)">
-    <div class="card-header">
-      <div class="card-header-left">
-        <div class="exercise-name">Askelkyykky tangolla tai käsipainoilla</div>
-        <span class="exercise-sets">3 × 8+8 · tanko / 12.5–15 kg</span>
-      </div>
-      <div class="chevron">⌄</div>
-    </div>
-    <div class="card-body">
-      <ul class="cue-list">
-        <li>Askel taakse – keskivartalo tiukkana → aktiivinen keskivartalo ja hyvä ryhti</li>
-        <li>Hieman lantiota leveämpi haara jaloissa</li>
-      </ul>
-    </div>
-  </div>
-
-  <div class="section-title">Hauikset & Ojentajat</div>
-
-  <div class="exercise-card" onclick="toggleCard(this)">
-    <div class="card-header">
-      <div class="card-header-left">
-        <div class="exercise-name">Hauiskääntö scott-tangolla</div>
-        <span class="exercise-sets">3 × 8–10 · 15 kg</span>
-      </div>
-      <div class="chevron">⌄</div>
-    </div>
-    <div class="card-body">
-      <ul class="cue-list">
-        <li>Säädä penkin korkeus → liike lähtee alhaalta kohti hartioita/rintakehää</li>
-        <li>Vartalon ja tangon väliin jää ylä-asennossa ilmaa</li>
-      </ul>
-    </div>
-  </div>
-
-  <div class="exercise-card" onclick="toggleCard(this)">
-    <div class="card-header">
-      <div class="card-header-left">
-        <div class="exercise-name">Ranskalainen punnerrus scott-tangolla</div>
-        <span class="exercise-sets">3 × 8–10 · 10 kg</span>
-      </div>
-      <div class="chevron">⌄</div>
-    </div>
-    <div class="card-body">
-      <ul class="cue-list">
-        <li>Noin hartioiden levyinen ote (mutkien kohdalta)</li>
-        <li>Koukistus kohti otsaa / pään yli</li>
-        <li>Kyynärpäät pysyy paikoillaan</li>
-      </ul>
-    </div>
-  </div>
-
-  <div class="section-title">Vatsat</div>
-  <div class="info-block">
-    <ul>
-      <li>2–3 kierrosta / 10–15 toistoa per kylki</li>
-      <li>Vartalon kierto levykiekolla tai kahvakuulalla</li>
-    </ul>
-  </div>
-
-  <div class="prog-db-section" id="prog1-db-section" style="display:none">
-    <div class="section-title prog-db-title" id="prog1-db-title">Omat lisäykset</div>
-    <div id="prog1-db-exercises"></div>
-  </div>
-  <div class="add-exercise-btn-wrap">
-    <button class="add-exercise-btn" id="prog1-add-btn" onclick="openProgPagePicker('prog1')">
-      + Lisää liike
-    </button>
+  <div id="prog1-content">
+    <div class="prog-loading">Ladataan...</div>
   </div>
 </div>
 
 <!-- PROGRAM 2 -->
 <div id="prog2" class="page">
-
-  <div class="section-title">Jalat</div>
-
-  <div class="exercise-card" onclick="toggleCard(this)">
-    <div class="card-header">
-      <div class="card-header-left">
-        <div class="exercise-name">Hack kyykky</div>
-        <span class="exercise-sets">3 × 8–10 · 20–40 kg + laite 40 kg</span>
-      </div>
-      <div class="chevron">⌄</div>
-    </div>
-    <div class="card-body">
-      <ul class="cue-list">
-        <li>Lantiota hieman leveämpi haara jaloissa</li>
-        <li>Liimaa selkä kiinni penkkiin ja varpaat n. ylimpien karhennus tarrojen kohdalle</li>
-      </ul>
-    </div>
-  </div>
-
-  <div class="section-title">Yläselkä</div>
-
-  <div class="exercise-card" onclick="toggleCard(this)">
-    <div class="card-header">
-      <div class="card-header-left">
-        <div class="exercise-name">Ylätalja (musta kahva)</div>
-        <span class="exercise-sets">3 × 8–10 · 54 kg</span>
-      </div>
-      <div class="chevron">⌄</div>
-    </div>
-    <div class="card-body">
-      <ul class="cue-list">
-        <li>Veto leuan alapuolelle kohti rintaa</li>
-        <li>Kyynärpäät kohti lattiaa – pieni pysäytys alhaalla</li>
-      </ul>
-    </div>
-  </div>
-
-  <div class="section-title">Rinta</div>
-
-  <div class="exercise-card" onclick="toggleCard(this)">
-    <div class="card-header">
-      <div class="card-header-left">
-        <div class="exercise-name">Vinopenkkipunnerrus käsipainoilla</div>
-        <span class="exercise-sets">3 × 10 · 17.5–20 kg</span>
-      </div>
-      <div class="chevron">⌄</div>
-    </div>
-    <div class="card-body">
-      <ul class="cue-list">
-        <li>Ranteet tiukkana, ala-asennossa kyynärpäät ovat hieman hartioita alempana</li>
-        <li>Liike sivulta ylös rintakehän linjaan → painojen väliin jää ilmaa</li>
-      </ul>
-    </div>
-  </div>
-
-  <div class="section-title">Selkä</div>
-
-  <div class="exercise-card" onclick="toggleCard(this)">
-    <div class="card-header">
-      <div class="card-header-left">
-        <div class="exercise-name">Yhden käden kulmasoutu käsipainolla</div>
-        <span class="exercise-sets">3 × 8–10 · 15–17.5 kg</span>
-      </div>
-      <div class="chevron">⌄</div>
-    </div>
-    <div class="card-body">
-      <ul class="cue-list">
-        <li>Etunoja penkkiä vasten – keskivartalo tiukkana</li>
-        <li>Venytä hartia alas → soutu kyynärpää edellä kohti kylkeä</li>
-      </ul>
-    </div>
-  </div>
-
-  <div class="section-title">Jalat – Etureidet & Takareidet</div>
-
-  <div class="exercise-card" onclick="toggleCard(this)">
-    <div class="card-header">
-      <div class="card-header-left">
-        <div class="exercise-name">Polven ojennus laitteessa</div>
-        <span class="exercise-sets">3 × 8–10 · 15+15 kg</span>
-      </div>
-      <div class="chevron">⌄</div>
-    </div>
-    <div class="card-body">
-      <ul class="cue-list">
-        <li>Säädä penkin selkänoja</li>
-        <li>Tee liike ensin toisella jalalla ja sitten toisella</li>
-        <li>Ojennus vaiheessa ylhäällä pieni koukku polvessa</li>
-      </ul>
-    </div>
-  </div>
-
-  <div class="exercise-card" onclick="toggleCard(this)">
-    <div class="card-header">
-      <div class="card-header-left">
-        <div class="exercise-name">Polven koukistus maaten</div>
-        <span class="exercise-sets">3 × 10 · 35–40 kg</span>
-      </div>
-      <div class="chevron">⌄</div>
-    </div>
-    <div class="card-body">
-      <ul class="cue-list">
-        <li>Maaten: säädä nilkkatuki, paina lantio penkkiä vasten ja aktivoi keskivartalo</li>
-        <li>Liike kantapäät edellä kohti pakaroita</li>
-        <li>Nilkat rentoina</li>
-      </ul>
-    </div>
-  </div>
-
-  <div class="section-title">Vatsat</div>
-  <div class="info-block">
-    <ul>
-      <li>2–3 kierrosta / 1 min tai 10+10</li>
-      <li>Lankku pito</li>
-      <li>Selin: Linkkuveitsi (vastakkainen käsi + jalka ristiin ylös)</li>
-    </ul>
-  </div>
-
-  <div class="prog-db-section" id="prog2-db-section" style="display:none">
-    <div class="section-title prog-db-title" id="prog2-db-title">Omat lisäykset</div>
-    <div id="prog2-db-exercises"></div>
-  </div>
-  <div class="add-exercise-btn-wrap">
-    <button class="add-exercise-btn" id="prog2-add-btn" onclick="openProgPagePicker('prog2')">
-      + Lisää liike
-    </button>
+  <div id="prog2-content">
+    <div class="prog-loading">Ladataan...</div>
   </div>
 </div>
 
 <!-- PROGRAM 3 -->
 <div id="prog3" class="page">
-
-  <div class="section-title">Yläselkä</div>
-
-  <div class="exercise-card" onclick="toggleCard(this)">
-    <div class="card-header">
-      <div class="card-header-left">
-        <div class="exercise-name">Leuanveto</div>
-        <span class="exercise-sets">3 × max</span>
-      </div>
-      <div class="chevron">⌄</div>
-    </div>
-    <div class="card-body">
-      <ul class="cue-list">
-        <li>Lämmittely – niin monta toistoa kun menee</li>
-      </ul>
-    </div>
-  </div>
-
-  <div class="exercise-card" onclick="toggleCard(this)">
-    <div class="card-header">
-      <div class="card-header-left">
-        <div class="exercise-name">Pendlay row tangolla</div>
-        <span class="exercise-sets">3 × 8 · 50 kg</span>
-      </div>
-      <div class="chevron">⌄</div>
-    </div>
-    <div class="card-body">
-      <ul class="cue-list">
-        <li>Hartioita leveämpi ote tangosta</li>
-        <li>Ojenna lantio taakse – pieni pehmeys polvissa</li>
-        <li>Napakka veto rintakehän ja navan väliin → pysäytä alhaalla</li>
-        <li>Kyynärpäät aukeaa sivulle veto vaiheessa</li>
-      </ul>
-    </div>
-  </div>
-
-  <div class="section-title">Jalat</div>
-
-  <div class="exercise-card" onclick="toggleCard(this)">
-    <div class="card-header">
-      <div class="card-header-left">
-        <div class="exercise-name">Jalkaprässi yhdellä jalalla</div>
-        <span class="exercise-sets">3 × 8–12 · 50 kg / puoli</span>
-      </div>
-      <div class="chevron">⌄</div>
-    </div>
-    <div class="card-body">
-      <ul class="cue-list">
-        <li>Aseta jalka noin lantio linjaan → käännä hieman varpaita auki</li>
-        <li>Alaselkä tukevasti penkissä</li>
-        <li>Pieni pehmeys polvessa yläasennossa</li>
-      </ul>
-    </div>
-  </div>
-
-  <div class="section-title">Rinta</div>
-
-  <div class="exercise-card" onclick="toggleCard(this)">
-    <div class="card-header">
-      <div class="card-header-left">
-        <div class="exercise-name">Ristikkäistalja punnerrus</div>
-        <span class="exercise-sets">3 × 10–12 · 23 kg</span>
-      </div>
-      <div class="chevron">⌄</div>
-    </div>
-    <div class="card-body">
-      <ul class="cue-list">
-        <li>Aseta taljan vaijerit n. 10 kohdalle</li>
-        <li>Etunoja – askel eteen → keskivartalo tiukkana</li>
-        <li>N. hartia linjasta punnerrus alas viistoon</li>
-      </ul>
-    </div>
-  </div>
-
-  <div class="section-title">Takareidet & Pohkeet</div>
-
-  <div class="exercise-card" onclick="toggleCard(this)">
-    <div class="card-header">
-      <div class="card-header-left">
-        <div class="exercise-name">Romanialainen maastaveto käsipainoilla</div>
-        <span class="exercise-sets">3 × 8–12 · 17.5–20 kg</span>
-      </div>
-      <div class="chevron">⌄</div>
-    </div>
-    <div class="card-body">
-      <ul class="cue-list">
-        <li>Lantiokori työntyy taakse → pieni pehmeys polvissa</li>
-        <li>Painot kulkee läheltä jalkoja polven alapuolelle</li>
-        <li>Ojennus ylös – hartiat taakse</li>
-      </ul>
-    </div>
-  </div>
-
-  <div class="exercise-card" onclick="toggleCard(this)">
-    <div class="card-header">
-      <div class="card-header-left">
-        <div class="exercise-name">Pohkeet laitteessa</div>
-        <span class="exercise-sets">3 × 10–15</span>
-      </div>
-      <div class="chevron">⌄</div>
-    </div>
-    <div class="card-body">
-      <ul class="cue-list">
-        <li>Aseta jalkaterä laudan päälle → kantapää venyy alas</li>
-      </ul>
-    </div>
-  </div>
-
-  <div class="section-title">Core</div>
-
-  <div class="exercise-card" onclick="toggleCard(this)">
-    <div class="card-header">
-      <div class="card-header-left">
-        <div class="exercise-name">Vartalon kierto taljassa kahvalla</div>
-        <span class="exercise-sets">3 × 12+12 · 15 kg</span>
-      </div>
-      <div class="chevron">⌄</div>
-    </div>
-    <div class="card-body">
-      <ul class="cue-list">
-        <li>Säädä taljan vaijeri n. hartioiden korkeudelle</li>
-        <li>Astu taljasta riittävän kauas</li>
-        <li>Keskivartalo tiukkana → lantio pysyy paikallaan</li>
-      </ul>
-    </div>
-  </div>
-
-  <div class="prog-db-section" id="prog3-db-section" style="display:none">
-    <div class="section-title prog-db-title" id="prog3-db-title">Omat lisäykset</div>
-    <div id="prog3-db-exercises"></div>
-  </div>
-  <div class="add-exercise-btn-wrap">
-    <button class="add-exercise-btn" id="prog3-add-btn" onclick="openProgPagePicker('prog3')">
-      + Lisää liike
-    </button>
+  <div id="prog3-content">
+    <div class="prog-loading">Ladataan...</div>
   </div>
 </div>
 
@@ -3577,7 +3317,7 @@
     document.getElementById('userPill').style.display = 'flex';
     syncChecksFromCloud();
     ensureDefaultPrograms();
-    loadProgPageExercises();
+    loadAllProgPages();
   }
 
   /* ══════════════════════════════════════
@@ -3759,7 +3499,7 @@
     else if (id === 'myprograms') renderProgramList();
     else if (['prog1','prog2','prog3'].includes(id)) {
       updateProgress();
-      if (progPageIdMap[id]) renderProgPageExercises(id, progPageIdMap[id]);
+      renderProgPage(id);
     }
     else updateProgress();
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -4319,7 +4059,7 @@
     if (error) { log.error('Remove failed:', error.message); return; }
     pickerAddedIds.delete(exerciseId);
     log.ok('Exercise removed');
-    loadAndRenderProgramExercises(activeProgramId);
+    if (activeProgramId) loadAndRenderProgramExercises(activeProgramId);
   }
 
   async function updateExerciseField(rowId, field, value) {
@@ -4380,35 +4120,46 @@
     openExercisePicker(activeProgramId);
   }
 
+
   /* ══════════════════════════════════════
-     PROG PAGE DYNAMIC EXERCISES
-     Loads user's DB exercises into prog1/2/3 pages
+     DYNAMIC PROGRAM PAGES (prog1/2/3)
   ══════════════════════════════════════ */
+  const progPageIdMap = {}; // slot → UUID
 
-  // Maps 'prog1'/'prog2'/'prog3' → program UUID once loaded
-  const progPageIdMap = {};
-
-  async function loadProgPageExercises() {
+  async function loadAllProgPages() {
     if (!currentUser) return;
     await loadUserPrograms();
     await loadExerciseLibrary();
-
-    // Find programs named 'Ohjelma 1', 'Ohjelma 2', 'Ohjelma 3'
+    // Map Ohjelma 1/2/3 to their UUIDs
     const nameMap = { prog1: 'Ohjelma 1', prog2: 'Ohjelma 2', prog3: 'Ohjelma 3' };
-
-    for (const [slot, progName] of Object.entries(nameMap)) {
-      const prog = userPrograms.find(p => p.name === progName);
-      if (!prog) continue;
-      progPageIdMap[slot] = prog.id;
-      await renderProgPageExercises(slot, prog.id);
+    for (const [slot, name] of Object.entries(nameMap)) {
+      const prog = userPrograms.find(p => p.name === name);
+      if (prog) progPageIdMap[slot] = prog.id;
+    }
+    // Render whichever is currently visible
+    for (const slot of ['prog1','prog2','prog3']) {
+      if (document.getElementById(slot)?.classList.contains('active')) {
+        await renderProgPage(slot);
+      }
     }
   }
 
-  async function renderProgPageExercises(slot, programId) {
-    const section = document.getElementById(`${slot}-db-section`);
-    const container = document.getElementById(`${slot}-db-exercises`);
-    const titleEl = document.getElementById(`${slot}-db-title`);
-    if (!section || !container) return;
+  async function renderProgPage(slot) {
+    const container = document.getElementById(`${slot}-content`);
+    if (!container) return;
+
+    const programId = progPageIdMap[slot];
+    if (!programId) {
+      container.innerHTML = `<div class="prog-empty">${currentLang === 'en' ? 'Program not found. Go to My Programs to set it up.' : 'Ohjelmaa ei löydy. Mene Omat ohjelmat -sivulle lisätäksesi liikkeitä.'}</div>
+        <div class="prog-add-wrap">
+          <button class="add-exercise-btn" onclick="showTab('myprograms')" style="border-style:solid;border-color:var(--gold);color:var(--gold)">
+            ${currentLang === 'en' ? '→ Go to My Programs' : '→ Siirry Omat ohjelmat'}
+          </button>
+        </div>`;
+      return;
+    }
+
+    container.innerHTML = `<div class="prog-loading">${currentLang === 'en' ? 'Loading...' : 'Ladataan...'}</div>`;
 
     const { data: rows, error } = await supa.from('workout_day_exercises')
       .select('id, exercise_id, sort_order, sets, reps, target_weight')
@@ -4416,85 +4167,110 @@
       .eq('program_id', programId)
       .order('sort_order');
 
-    if (error) { log.error('renderProgPageExercises error:', error.message); return; }
-    if (!rows || rows.length === 0) { section.style.display = 'none'; return; }
+    if (error) {
+      log.error('renderProgPage error:', error.message);
+      container.innerHTML = `<div class="prog-empty">Virhe ladattaessa.</div>`;
+      return;
+    }
 
-    // Enrich with library names
+    if (!rows || rows.length === 0) {
+      container.innerHTML = `
+        <div class="prog-empty">${currentLang === 'en' ? 'No exercises yet.\nTap below to add some! 💪' : 'Ei liikkeitä vielä.\nLisää liikkeitä alta! 💪'}</div>
+        <div class="prog-add-wrap">
+          <button class="add-exercise-btn" onclick="openProgPicker('${slot}')">+ ${currentLang === 'en' ? 'Add exercise' : 'Lisää liike'}</button>
+        </div>`;
+      return;
+    }
+
+    // Enrich with library data
     const enriched = rows.map(r => ({
       ...r,
-      exercise_library: exerciseLibrary.find(e => e.id === r.exercise_id) || {}
+      lib: exerciseLibrary.find(e => e.id === r.exercise_id) || {}
     }));
 
-    section.style.display = 'block';
-    if (titleEl) titleEl.textContent = currentLang === 'en' ? 'My exercises' : 'Omat liikkeet';
+    // Group by category
+    const grouped = {};
+    enriched.forEach(e => {
+      const cat = e.lib.category || '—';
+      if (!grouped[cat]) grouped[cat] = [];
+      grouped[cat].push(e);
+    });
 
-    container.innerHTML = enriched.map(e => {
-      const lib = e.exercise_library;
-      return `<div class="exercise-card prog-db-card">
-        <div class="card-header" onclick="toggleCard(this.closest('.exercise-card'))">
-          <div class="card-header-left">
-            <div class="exercise-name">${lib.name || 'Tuntematon'}</div>
-            <span class="exercise-sets">${e.sets} × ${e.reps}${e.target_weight ? ' · ' + e.target_weight + ' kg' : ''}</span>
+    const sLabel = currentLang === 'en' ? 'Sets' : 'Sarjat';
+    const rLabel = currentLang === 'en' ? 'Reps' : 'Toistot';
+    const wLabel = currentLang === 'en' ? 'Weight (kg)' : 'Paino (kg)';
+    const removeLabel = currentLang === 'en' ? 'Remove exercise' : 'Poista liike';
+
+    const html = Object.entries(grouped).map(([cat, exercises]) => `
+      <div class="prog-category-title">${cat}</div>
+      ${exercises.map(e => `
+        <div class="prog-ex-card" onclick="toggleCard(this)">
+          <div class="card-header">
+            <div class="card-header-left" style="flex:1">
+              <div class="exercise-name">${e.lib.name || 'Tuntematon'}</div>
+              <span class="prog-ex-sets" id="badge-${e.id}">${e.sets} × ${e.reps}${e.target_weight ? ' · ' + e.target_weight + ' kg' : ''}</span>
+            </div>
+            <div class="chevron">⌄</div>
           </div>
-          <div class="chevron">⌄</div>
-        </div>
-        <div class="card-body">
-          <div class="prog-db-fields">
-            <div class="mp-ex-field">
-              <label>${currentLang === 'en' ? 'Sets' : 'Sarjat'}</label>
-              <input type="number" class="mp-ex-input" value="${e.sets}" min="1" max="20"
-                onchange="updateExerciseField('${e.id}', 'sets', this.value); refreshProgPageCard(this, '${slot}', '${e.id}')" />
+          <div class="card-body">
+            ${e.lib.instructions ? `<div class="prog-ex-instructions">▸ ${e.lib.instructions}</div>` : ''}
+            <div class="prog-ex-fields">
+              <div class="prog-ex-field">
+                <label>${sLabel}</label>
+                <input type="number" class="mp-ex-input" value="${e.sets}" min="1" max="20"
+                  onclick="event.stopPropagation()"
+                  onchange="updateExerciseField('${e.id}','sets',this.value); updateBadge('${e.id}',this.closest('.prog-ex-fields'))" />
+              </div>
+              <div class="prog-ex-field">
+                <label>${rLabel}</label>
+                <input type="text" class="mp-ex-input" value="${e.reps}" maxlength="10"
+                  onclick="event.stopPropagation()"
+                  onchange="updateExerciseField('${e.id}','reps',this.value); updateBadge('${e.id}',this.closest('.prog-ex-fields'))" />
+              </div>
+              <div class="prog-ex-field">
+                <label>${wLabel}</label>
+                <input type="number" class="mp-ex-input" value="${e.target_weight || ''}" placeholder="—" min="0" step="0.5"
+                  onclick="event.stopPropagation()"
+                  onchange="updateExerciseField('${e.id}','target_weight',this.value||null); updateBadge('${e.id}',this.closest('.prog-ex-fields'))" />
+              </div>
             </div>
-            <div class="mp-ex-field">
-              <label>${currentLang === 'en' ? 'Reps' : 'Toistot'}</label>
-              <input type="text" class="mp-ex-input" value="${e.reps}" maxlength="10"
-                onchange="updateExerciseField('${e.id}', 'reps', this.value); refreshProgPageCard(this, '${slot}', '${e.id}')" />
-            </div>
-            <div class="mp-ex-field">
-              <label>${currentLang === 'en' ? 'Weight (kg)' : 'Paino (kg)'}</label>
-              <input type="number" class="mp-ex-input" value="${e.target_weight || ''}" placeholder="—" min="0" step="0.5"
-                onchange="updateExerciseField('${e.id}', 'target_weight', this.value || null); refreshProgPageCard(this, '${slot}', '${e.id}')" />
-            </div>
+            <button class="mp-ex-del" style="width:100%;border-radius:8px;padding:10px;font-size:13px"
+              onclick="event.stopPropagation(); removeProgExercise('${slot}','${e.id}','${e.exercise_id}')">
+              ${removeLabel}
+            </button>
           </div>
-          <button class="mp-ex-del" style="margin-top:10px;width:100%;border-radius:8px;padding:8px"
-            onclick="removeFromProgPage('${slot}', '${programId}', '${e.id}', '${e.exercise_id}')">
-            ${currentLang === 'en' ? 'Remove' : 'Poista'}
-          </button>
-        </div>
+        </div>`).join('')}
+    `).join('');
+
+    container.innerHTML = html + `
+      <div class="prog-add-wrap">
+        <button class="add-exercise-btn" onclick="openProgPicker('${slot}')">+ ${currentLang === 'en' ? 'Add exercise' : 'Lisää liike'}</button>
       </div>`;
-    }).join('');
-
-    // Also update add button to use real program ID
-    const addBtn = document.getElementById(`${slot}-add-btn`);
-    if (addBtn) addBtn.onclick = () => openProgPagePicker(slot);
   }
 
-  function openProgPagePicker(slot) {
-    // Use mapped UUID if available, else use slot name
-    const programId = progPageIdMap[slot] || slot;
-    pickerAddedIds = new Set(); // will be populated by loadAndRenderProgramExercises
-    openExercisePicker(programId);
-    // After picker closes and exercise is added, refresh this page
-    pickerActiveDay = programId;
+  function updateBadge(rowId, fieldsEl) {
+    const inputs = fieldsEl.querySelectorAll('.mp-ex-input');
+    const sets = inputs[0]?.value || '3';
+    const reps = inputs[1]?.value || '8-10';
+    const weight = inputs[2]?.value;
+    const badge = document.getElementById('badge-' + rowId);
+    if (badge) badge.textContent = `${sets} × ${reps}${weight ? ' · ' + weight + ' kg' : ''}`;
   }
 
-  async function removeFromProgPage(slot, programId, rowId, exerciseId) {
+  async function removeProgExercise(slot, rowId, exerciseId) {
     await removeExerciseFromProgram(rowId, exerciseId);
-    renderProgPageExercises(slot, programId);
+    renderProgPage(slot);
+    // Also refresh detail view if open in My Programs
+    if (activeProgramId === progPageIdMap[slot]) {
+      loadAndRenderProgramExercises(activeProgramId);
+    }
   }
 
-  function refreshProgPageCard(input, slot, rowId) {
-    // Update the exercise-sets badge in the card header
-    const card = input.closest('.exercise-card');
-    if (!card) return;
-    const fields = card.querySelectorAll('.mp-ex-input');
-    if (fields.length >= 2) {
-      const sets = fields[0].value;
-      const reps = fields[1].value;
-      const weight = fields[2]?.value;
-      const badge = card.querySelector('.exercise-sets');
-      if (badge) badge.textContent = `${sets} × ${reps}${weight ? ' · ' + weight + ' kg' : ''}`;
-    }
+  function openProgPicker(slot) {
+    const programId = progPageIdMap[slot];
+    if (!programId) return;
+    pickerAddedIds = new Set();
+    openExercisePicker(programId);
   }
 
   /* ══════════════════════════════════════
@@ -4517,11 +4293,11 @@
   };
 
   async function loadExerciseLibrary() {
-    if (exerciseLibrary.length > 0) return; // already loaded
+    if (exerciseLibrary.length > 0) return;
     log.group('loadExerciseLibrary');
     try {
       const res = await fetch(
-        `${SUPA_URL}/rest/v1/exercise_library?select=id,name,category,muscle_group&order=category.asc,name.asc`,
+        `${SUPA_URL}/rest/v1/exercise_library?select=id,name,category,muscle_group,instructions&order=category.asc,name.asc`,
         { headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY } }
       );
       const data = await res.json();
@@ -4585,27 +4361,23 @@
     const el = document.getElementById('pickerList');
 
     let filtered = exerciseLibrary;
-
-    // Filter by category
     if (pickerActiveCategory !== 'Kaikki') {
       filtered = filtered.filter(e => e.category === pickerActiveCategory);
     }
-
-    // Filter by search query
     if (query) {
       filtered = filtered.filter(e =>
         e.name.toLowerCase().includes(query) ||
         e.muscle_group.toLowerCase().includes(query) ||
-        e.category.toLowerCase().includes(query)
+        e.category.toLowerCase().includes(query) ||
+        (e.instructions || '').toLowerCase().includes(query)
       );
     }
 
     if (filtered.length === 0) {
-      el.innerHTML = `<div class="picker-empty">Ei tuloksia haulle "<strong>${query}</strong>"</div>`;
+      el.innerHTML = `<div class="picker-empty">${t('picker.empty')} "<strong>${query}</strong>"</div>`;
       return;
     }
 
-    // Group by category (unless filtered to one)
     const grouped = {};
     filtered.forEach(e => {
       if (!grouped[e.category]) grouped[e.category] = [];
@@ -4619,18 +4391,45 @@
         ? `<div class="picker-category-heading">${CATEGORY_ICONS[cat] || '▸'} ${cat}</div>`
         : '';
       const items = exercises.map(e => {
-        const added = pickerAddedIds.has(e.id) ? 'already-added' : '';
-        const addIcon = pickerAddedIds.has(e.id) ? '✓' : '+';
-        return `<div class="picker-exercise-item ${added}" onclick="onPickerSelectExercise('${e.id}', '${e.name.replace(/'/g, "\\'")}', '${e.category}', '${e.muscle_group.replace(/'/g, "\\'")}')">
-          <div class="picker-ex-info">
-            <div class="picker-ex-name">${e.name}</div>
-            <div class="picker-ex-muscle">${e.muscle_group}</div>
+        const added = pickerAddedIds.has(e.id);
+        const safeId = e.id;
+        const safeName = e.name.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        const safeCat = e.category.replace(/'/g, "\\'");
+        const safeMuscle = e.muscle_group.replace(/'/g, "\\'");
+        const addLabel = added
+          ? `✓ ${currentLang === 'en' ? 'Added' : 'Lisätty'}`
+          : `+ ${currentLang === 'en' ? 'Add exercise' : 'Lisää liike'}`;
+        const instructions = e.instructions
+          ? `<div class="picker-ex-instructions">${e.instructions}</div>`
+          : '';
+        const chevron = `<span class="picker-ex-chevron">⌄</span>`;
+
+        return `<div class="picker-exercise-item${added ? ' already-added' : ''}" id="picker-item-${safeId}">
+          <div class="picker-ex-row" onclick="togglePickerItem('${safeId}')">
+            <div class="picker-ex-info">
+              <div class="picker-ex-name">${e.name}</div>
+              <div class="picker-ex-muscle">${e.muscle_group}</div>
+            </div>
+            ${e.instructions ? chevron : '<span style="width:18px"></span>'}
           </div>
-          <div class="picker-ex-add">${addIcon}</div>
+          ${instructions}
+          <button class="picker-ex-add-btn ${added ? 'added' : ''}"
+            onclick="${added ? '' : `onPickerSelectExercise('${safeId}','${safeName}','${safeCat}','${safeMuscle}')`}">
+            ${addLabel}
+          </button>
         </div>`;
       }).join('');
       return heading + items;
     }).join('');
+  }
+
+  function togglePickerItem(id) {
+    const item = document.getElementById('picker-item-' + id);
+    if (!item) return;
+    // Only expand if there are instructions
+    const instructions = item.querySelector('.picker-ex-instructions');
+    if (!instructions) return;
+    item.classList.toggle('expanded');
   }
 
   async function onPickerSelectExercise(id, name, category, muscleGroup) {
@@ -4700,7 +4499,7 @@
 
     // Also refresh prog page if this is a named program (Ohjelma 1/2/3)
     const slot = Object.keys(progPageIdMap).find(k => progPageIdMap[k] === pickerActiveDay);
-    if (slot) renderProgPageExercises(slot, pickerActiveDay);
+    if (slot) renderProgPage(slot);
   }
 
   /* ══════════════════════════════════════

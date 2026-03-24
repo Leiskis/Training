@@ -4618,7 +4618,8 @@
     document.getElementById('pickerBackdrop').classList.remove('active');
     document.getElementById('pickerSheet').classList.remove('active');
     document.body.style.overflow = '';
-    pickerActiveDay = null;
+    // Delay nulling pickerActiveDay to allow any in-flight saves to complete
+    setTimeout(() => { pickerActiveDay = null; }, 500);
   }
 
   function renderPickerCategories() {
@@ -4746,14 +4747,15 @@
     }
 
     // Visual feedback immediately
-    const items = document.querySelectorAll('.picker-exercise-item');
+    const allItems = document.querySelectorAll('.picker-exercise-item');
     let tappedItem = null;
-    items.forEach(item => {
-      if (item.querySelector('.picker-ex-name')?.textContent === name) {
+    allItems.forEach(item => {
+      if (item.dataset.exId === id) {
         tappedItem = item;
         item.style.borderColor = 'var(--gold)';
         item.style.background = 'var(--gold-dim)';
-        item.querySelector('.picker-ex-add').textContent = '…';
+        const addBtn = item.querySelector('.picker-ex-add-btn');
+        if (addBtn) addBtn.textContent = '…';
       }
     });
 
@@ -4773,11 +4775,12 @@
       log.end();
       if (tappedItem) {
         tappedItem.style.borderColor = '#e05555';
-        tappedItem.querySelector('.picker-ex-add').textContent = '✕';
+        const addBtn = tappedItem.querySelector('.picker-ex-add-btn');
+        if (addBtn) addBtn.textContent = '✕';
         setTimeout(() => {
           tappedItem.style.borderColor = '';
           tappedItem.style.background = '';
-          tappedItem.querySelector('.picker-ex-add').textContent = '+';
+          if (addBtn) addBtn.textContent = '+ Lisää';
         }, 1000);
       }
       return;
@@ -4787,7 +4790,8 @@
     pickerAddedIds.add(id);
     if (tappedItem) {
       tappedItem.classList.add('already-added');
-      tappedItem.querySelector('.picker-ex-add').textContent = '✓';
+      const addBtn = tappedItem.querySelector('.picker-ex-add-btn');
+      if (addBtn) { addBtn.textContent = '✓ Lisätty'; addBtn.classList.add('added'); }
     }
 
     log.ok('Exercise added:', name);

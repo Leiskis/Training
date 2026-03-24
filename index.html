@@ -4745,6 +4745,8 @@
         if (!added) {
           addBtn.addEventListener('click', (evt) => {
             evt.stopPropagation();
+            evt.preventDefault();
+            console.log('🟢 ADD BTN CLICKED', e.name, '| pickerActiveDay:', pickerActiveDay, '| currentUser:', currentUser?.id);
             onPickerSelectExercise(e.id, e.name, e.category, e.muscle_group);
           });
         }

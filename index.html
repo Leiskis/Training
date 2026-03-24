@@ -3956,13 +3956,26 @@
 
   async function deleteSession(id) {
     if (!currentUser) return;
+    log.group('deleteSession');
     log.info('Deleting session id:', id);
-    // Delete session (workout_history.session_id will set null via ON DELETE SET NULL)
+
+    // Delete matching workout_history row first (exercises cascade automatically)
+    const { error: histErr } = await supa.from('workout_history')
+      .delete()
+      .eq('user_id', currentUser.id)
+      .eq('session_id', id);
+    if (histErr) log.warn('History delete failed (may not exist):', histErr.message);
+    else log.ok('Workout history deleted for session');
+
+    // Delete the calendar session
     const { error } = await supa.from('sessions').delete().eq('user_id', currentUser.id).eq('id', id);
-    if (error) { log.error('Delete failed:', error.message); return; }
+    if (error) { log.error('Session delete failed:', error.message); log.end(); return; }
     cachedSessions = cachedSessions.filter(s => s.id !== id);
+    cachedHistory = cachedHistory.filter(h => h.session_id !== id);
     log.ok('Session deleted');
+    log.end();
     renderCalendar(); renderSessionsList(); updateStats();
+    if (currentTab === 'history') renderHistoryList();
   }
 
   function calNav(dir) {
@@ -5002,12 +5015,29 @@
 
   async function deleteSheetSession(id) {
     if (!currentUser) return;
+    log.group('deleteSheetSession');
+    log.info('Deleting session id:', id);
+
+    // Delete matching workout_history row (exercises cascade automatically)
+    const { error: histErr } = await supa.from('workout_history')
+      .delete()
+      .eq('user_id', currentUser.id)
+      .eq('session_id', id);
+    if (histErr) log.warn('History delete failed (may not exist):', histErr.message);
+    else log.ok('Workout history deleted for session');
+
+    // Delete the calendar session
     const { error } = await supa.from('sessions').delete().eq('user_id', currentUser.id).eq('id', id);
-    if (error) { alert('Error: ' + error.message); return; }
+    if (error) { log.error('Session delete failed:', error.message); log.end(); alert('Error: ' + error.message); return; }
     cachedSessions = cachedSessions.filter(s => s.id !== id);
-    // Refresh existing list in sheet
+    cachedHistory = cachedHistory.filter(h => h.session_id !== id);
+    log.ok('Sheet session deleted');
+    log.end();
+
+    // Refresh sheet and calendar
     openSheet(sheetDate);
     renderCalendar(); renderSessionsList(); updateStats();
+    if (currentTab === 'history') renderHistoryList();
   }
 
   /* ══════════════════════════════════════

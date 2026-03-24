@@ -1813,11 +1813,11 @@
     <div id="loginForm">
       <div class="auth-field">
         <label>Email</label>
-        <input type="email" id="loginEmail" placeholder="your@email.com" />
+        <input type="email" id="loginEmail" placeholder="your@email.com" autocomplete="email" inputmode="email" />
       </div>
       <div class="auth-field">
         <label>Password</label>
-        <input type="password" id="loginPassword" placeholder="••••••••" />
+        <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password" />
       </div>
       <button class="auth-submit" onclick="doLogin()">Sign In →</button>
     </div>
@@ -1825,11 +1825,11 @@
     <div id="registerForm" style="display:none">
       <div class="auth-field">
         <label>Email</label>
-        <input type="email" id="regEmail" placeholder="your@email.com" />
+        <input type="email" id="regEmail" placeholder="your@email.com" autocomplete="email" inputmode="email" />
       </div>
       <div class="auth-field">
         <label>Password</label>
-        <input type="password" id="regPassword" placeholder="Min. 6 characters" />
+        <input type="password" id="regPassword" placeholder="Min. 6 characters" autocomplete="new-password" />
       </div>
       <button class="auth-submit" onclick="doRegister()">Create Account →</button>
     </div>
@@ -2072,7 +2072,7 @@
       id="pickerSearch"
       class="picker-search"
       placeholder="Hae liikettä..."
-      oninput="renderPickerList()"
+      oninput="debouncePickerSearch()"
       autocomplete="off"
       autocorrect="off"
     />
@@ -3397,7 +3397,7 @@
       for (const exName of seed.exercises) {
         const ex = exerciseLibrary.find(e => e.name === exName);
         if (!ex) { log.warn('Exercise not found in library:', exName); continue; }
-        await supa.from('workout_day_exercises').insert({
+        const { error: seedExErr } = await supa.from('workout_day_exercises').insert({
           user_id: currentUser.id,
           program_id: prog.id,
           exercise_id: ex.id,
@@ -3406,6 +3406,7 @@
           reps: '8-10',
           target_weight: null
         });
+        if (seedExErr) log.error('Seed exercise failed:', ex.name, seedExErr.message);
       }
       log.ok('Seeded', seed.name, 'with', sort, 'exercises');
     }
@@ -3484,7 +3485,7 @@
      TABS
   ══════════════════════════════════════ */
   let currentTab = 'warmup';
-  function showTab(id) {
+  function showTab(id, triggerEl) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(b => {
       b.classList.remove('active');
@@ -3493,7 +3494,8 @@
       b.style.removeProperty('border-color');
     });
     document.getElementById(id).classList.add('active');
-    event.target.classList.add('active');
+    const btn = triggerEl || (typeof event !== 'undefined' && event?.target);
+    if (btn && btn.classList?.contains('tab-btn')) btn.classList.add('active');
     currentTab = id;
     if (id === 'calendar') loadAndRenderCalendar();
     else if (id === 'myprograms') renderProgramList();
@@ -3702,6 +3704,7 @@
   async function deleteSession(id) {
     if (!currentUser) return;
     log.info('Deleting session id:', id);
+    // Delete session (workout_history.session_id will set null via ON DELETE SET NULL)
     const { error } = await supa.from('sessions').delete().eq('user_id', currentUser.id).eq('id', id);
     if (error) { log.error('Delete failed:', error.message); return; }
     cachedSessions = cachedSessions.filter(s => s.id !== id);
@@ -3853,7 +3856,7 @@
     const types = Object.keys(tirednessMap).filter(t => tirednessMap[t].total >= 2);
     if (types.length > 0) {
       const worstType = types.sort((a,b) => (tirednessMap[b].tired/tirednessMap[b].total) - (tirednessMap[a].tired/tirednessMap[a].total))[0];
-      const pct = Math.round(tirednessMap[worstType].tired / tirednessMap[worstType].total * 100);
+      const pct = tirednessMap[worstType].total > 0 ? Math.round(tirednessMap[worstType].tired / tirednessMap[worstType].total * 100) : 0;
       if (pct >= 40) {
         tiredTypeHtml = `<div class="insight-card">
           <div class="insight-card-title">Palautuminen</div>
@@ -3892,7 +3895,8 @@
     const monthCount = cachedSessions.filter(s => s.date.startsWith(thisMonth)).length;
     const uniqueDays = [...new Set(cachedSessions.map(s => s.date))].sort();
     let streak = 0, d = new Date();
-    while (true) {
+    let safetyLimit = 365; // never loop more than a year back
+    while (safetyLimit-- > 0) {
       const ds = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
       if (uniqueDays.includes(ds)) { streak++; d.setDate(d.getDate()-1); } else break;
     }
@@ -3957,7 +3961,7 @@
             <div class="mp-program-meta">${meta}</div>
           </div>
           <div class="mp-program-arrow">›</div>
-          <button class="mp-program-del" onclick="event.stopPropagation(); confirmDeleteProgram('${p.id}', '${p.name.replace(/'/g,"\\'")}')}">${t('mp.delete')}</button>
+          <button class="mp-program-del" onclick="event.stopPropagation(); confirmDeleteProgram('${p.id}', '${p.name.replace(/'/g,"\\'")}')">${t('mp.delete')}</button>
         </div>`;
     }).join('');
   }
@@ -3974,6 +3978,7 @@
   }
 
   async function loadAndRenderProgramExercises(programId) {
+    if (!currentUser) { log.warn('loadAndRenderProgramExercises: no user'); return; }
     log.group('loadProgramExercises');
     // Fetch workout exercises for this program
     const { data: rows, error } = await supa.from('workout_day_exercises')
@@ -4032,7 +4037,7 @@
         <div class="mp-ex-fields">
           <div class="mp-ex-field">
             <label>Sarjat</label>
-            <input type="number" class="mp-ex-input" value="${e.sets}" min="1" max="20"
+            <input type="number" class="mp-ex-input" inputmode="numeric" value="${e.sets}" min="1" max="20"
               onchange="updateExerciseField('${e.id}', 'sets', this.value)" />
           </div>
           <div class="mp-ex-field">
@@ -4053,6 +4058,7 @@
   }
 
   async function removeExerciseFromProgram(rowId, exerciseId) {
+    if (!currentUser) { log.warn('removeExerciseFromProgram: no user'); return; }
     log.info('Removing exercise row:', rowId);
     const { error } = await supa.from('workout_day_exercises')
       .delete().eq('user_id', currentUser.id).eq('id', rowId);
@@ -4063,6 +4069,7 @@
   }
 
   async function updateExerciseField(rowId, field, value) {
+    if (!currentUser) { log.warn('updateExerciseField: no user'); return; }
     log.info('Updating', field, '=', value, 'for row:', rowId);
     const update = { updated_at: new Date().toISOString() };
     if (field === 'sets') update.sets = parseInt(value) || 3;
@@ -4217,7 +4224,7 @@
             <div class="prog-ex-fields">
               <div class="prog-ex-field">
                 <label>${sLabel}</label>
-                <input type="number" class="mp-ex-input" value="${e.sets}" min="1" max="20"
+                <input type="number" class="mp-ex-input" inputmode="numeric" value="${e.sets}" min="1" max="20"
                   onclick="event.stopPropagation()"
                   onchange="updateExerciseField('${e.id}','sets',this.value); updateBadge('${e.id}',this.closest('.prog-ex-fields'))" />
               </div>
@@ -4229,7 +4236,7 @@
               </div>
               <div class="prog-ex-field">
                 <label>${wLabel}</label>
-                <input type="number" class="mp-ex-input" value="${e.target_weight || ''}" placeholder="—" min="0" step="0.5"
+                <input type="number" class="mp-ex-input" inputmode="decimal" value="${e.target_weight || ''}" placeholder="—" min="0" step="0.5"
                   onclick="event.stopPropagation()"
                   onchange="updateExerciseField('${e.id}','target_weight',this.value||null); updateBadge('${e.id}',this.closest('.prog-ex-fields'))" />
               </div>
@@ -4292,26 +4299,36 @@
     'Fysio':   '🏥',
   };
 
+  let _libraryLoading = false;
+  let _libraryLoadPromise = null;
+
   async function loadExerciseLibrary() {
-    if (exerciseLibrary.length > 0) return;
-    log.group('loadExerciseLibrary');
-    try {
-      const res = await fetch(
-        `${SUPA_URL}/rest/v1/exercise_library?select=id,name,category,muscle_group,instructions&order=category.asc,name.asc`,
-        { headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY } }
-      );
-      const data = await res.json();
-      if (!res.ok) {
-        log.error('Exercise library load failed:', res.status, JSON.stringify(data));
-        log.end();
-        return;
+    if (exerciseLibrary.length > 0) return; // cached
+    if (_libraryLoading) return _libraryLoadPromise; // already in flight — wait for it
+    _libraryLoading = true;
+    _libraryLoadPromise = (async () => {
+      log.group('loadExerciseLibrary');
+      try {
+        const res = await fetch(
+          `${SUPA_URL}/rest/v1/exercise_library?select=id,name,category,muscle_group,instructions&order=category.asc,name.asc`,
+          { headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY } }
+        );
+        const data = await res.json();
+        if (!res.ok) {
+          log.error('Exercise library load failed:', res.status, JSON.stringify(data));
+          return;
+        }
+        exerciseLibrary = data || [];
+        log.ok('Exercise library loaded:', exerciseLibrary.length, 'exercises');
+      } catch(e) {
+        log.error('Exercise library network error:', e.message);
+      } finally {
+        _libraryLoading = false;
+        _libraryLoadPromise = null;
       }
-      exerciseLibrary = data || [];
-      log.ok('Exercise library loaded:', exerciseLibrary.length, 'exercises');
-    } catch(e) {
-      log.error('Exercise library network error:', e.message);
-    }
-    log.end();
+      log.end();
+    })();
+    return _libraryLoadPromise;
   }
 
   function openExercisePicker(programId) {
@@ -4354,6 +4371,12 @@
     renderPickerList();
     // Scroll list back to top
     document.getElementById('pickerList').scrollTop = 0;
+  }
+
+  let _pickerDebounceTimer = null;
+  function debouncePickerSearch() {
+    clearTimeout(_pickerDebounceTimer);
+    _pickerDebounceTimer = setTimeout(renderPickerList, 200);
   }
 
   function renderPickerList() {

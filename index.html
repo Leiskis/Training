@@ -2181,14 +2181,14 @@
 <body>
 
 <!-- AUTH OVERLAY -->
-<div class="auth-overlay" id="authOverlay" style="display:none">
+<div class="auth-overlay" id="authOverlay">
   <div class="auth-box">
     <div class="auth-logo">PERSONAL <span>TRAINING</span></div>
     <div class="auth-sub">Sign in to sync across all devices</div>
 
     <div class="auth-tabs">
-      <button class="auth-tab active" onclick="switchAuthTab('login')">Sign In</button>
-      <button class="auth-tab" onclick="switchAuthTab('register')">Register</button>
+      <button class="auth-tab active" data-auth-tab="login">Sign In</button>
+      <button class="auth-tab" data-auth-tab="register">Register</button>
     </div>
 
     <div id="authError" class="auth-error"></div>
@@ -2226,14 +2226,14 @@
 </header>
 
 <nav class="tab-bar">
-  <button class="tab-btn active" onclick="showTab('warmup')" data-i18n-tab="warmup">🔥 Alkulämmittely</button>
-  <button class="tab-btn" onclick="showTab('prog1')">Ohjelma 1</button>
-  <button class="tab-btn" onclick="showTab('prog2')">Ohjelma 2</button>
-  <button class="tab-btn" onclick="showTab('prog3')">Ohjelma 3</button>
-  <button class="tab-btn" onclick="showTab('physio')" id="physio-tab" data-i18n-tab="physio">🏥 Fysioterapia</button>
-  <button class="tab-btn" onclick="showTab('myprograms')" data-i18n-tab="myprograms">✏️ Omat</button>
-  <button class="tab-btn" onclick="showTab('calendar')" data-i18n-tab="calendar">📅 Kalenteri</button>
-  <button class="tab-btn" onclick="showTab('history')" data-i18n-tab="history">📋 Historia</button>
+  <button class="tab-btn active" data-tab="warmup" data-i18n-tab="warmup">🔥 Alkulämmittely</button>
+  <button class="tab-btn" data-tab="prog1">Ohjelma 1</button>
+  <button class="tab-btn" data-tab="prog2">Ohjelma 2</button>
+  <button class="tab-btn" data-tab="prog3">Ohjelma 3</button>
+  <button class="tab-btn" data-tab="physio" id="physio-tab" data-i18n-tab="physio">🏥 Fysioterapia</button>
+  <button class="tab-btn" data-tab="myprograms" data-i18n-tab="myprograms">✏️ Omat</button>
+  <button class="tab-btn" data-tab="calendar" data-i18n-tab="calendar">📅 Kalenteri</button>
+  <button class="tab-btn" data-tab="history" data-i18n-tab="history">📋 Historia</button>
   <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn" title="Toggle theme">🌙</button>
   <button class="lang-toggle" onclick="toggleLang()" id="langBtn" title="Change language">EN</button>
   <button class="user-pill" id="userPill" onclick="doLogout()" style="display:none" title="Sign out">
@@ -2454,11 +2454,7 @@
 
   <div class="sheet-section-label">Treeni</div>
   <div class="sheet-type-row" id="sheetTypeRow">
-    <button class="log-type-btn sheet-type-btn selected" data-type="Ohjelma 1">💪 Ohjelma 1</button>
-    <button class="log-type-btn sheet-type-btn" data-type="Ohjelma 2">🏋️ Ohjelma 2</button>
-    <button class="log-type-btn sheet-type-btn" data-type="Ohjelma 3">🔥 Ohjelma 3</button>
-    <button class="log-type-btn sheet-type-btn" data-type="Fysioterapia">🏥 Fysio</button>
-    <button class="log-type-btn sheet-type-btn" data-type="Muu">⚡ Muu</button>
+    <!-- populated dynamically by openSheet() -->
   </div>
 
   <div class="sheet-section-label">Kuinka raskas treeni oli?</div>
@@ -3920,9 +3916,10 @@
       b.style.removeProperty('color');
       b.style.removeProperty('border-color');
     });
-    document.getElementById(id).classList.add('active');
-    const btn = triggerEl || (typeof event !== 'undefined' && event?.target);
-    if (btn && btn.classList?.contains('tab-btn')) btn.classList.add('active');
+    const page = document.getElementById(id);
+    if (!page) { log.warn('showTab: page not found:', id); return; }
+    page.classList.add('active');
+    if (triggerEl && triggerEl.classList?.contains('tab-btn')) triggerEl.classList.add('active');
     currentTab = id;
     if (id === 'calendar') loadAndRenderCalendar();
     else if (id === 'myprograms') renderProgramList();
@@ -3933,6 +3930,14 @@
     }
     else updateProgress();
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function initTabDelegation() {
+    document.querySelector('.tab-bar').addEventListener('click', (e) => {
+      const btn = e.target.closest('.tab-btn[data-tab]');
+      if (!btn) return;
+      showTab(btn.dataset.tab, btn);
+    });
   }
 
   /* ══════════════════════════════════════
@@ -4993,10 +4998,9 @@
     if (pickerAddedIds.has(id)) { log.warn('Already added:', name); log.end(); return; }
 
     // Find the item and button — works with both old and new DOM structure
-    const resolvedItem = itemEl || document.querySelector(`[data-ex-id="${id}"]`);
-    const resolvedBtn = btnEl
-      || resolvedItem?.querySelector('.picker-ex-add-btn')
-      || resolvedItem?.querySelector('.picker-ex-add');
+    // itemEl and btnEl are passed directly from buildPickerList — no DOM querying needed
+    const resolvedItem = itemEl || null;
+    const resolvedBtn = btnEl || null;
 
     // Visual feedback
     if (resolvedBtn) resolvedBtn.textContent = '…';
@@ -5079,15 +5083,37 @@
     });
   }
 
-  // Keep these as no-ops for backwards compat (applyTranslations references them)
-  function selectSheetType(btn) {}
-  function selectFeeling(kind, btn) {}
+  function initAuthDelegation() {
+    const tabs = document.querySelector('.auth-tabs');
+    if (!tabs) return;
+    tabs.addEventListener('click', (e) => {
+      const btn = e.target.closest('.auth-tab[data-auth-tab]');
+      if (!btn) return;
+      switchAuthTab(btn.dataset.authTab);
+    });
+  }
 
   function openSheet(dateStr) {
     sheetDate = dateStr;
-    sheetSelectedType = 'Ohjelma 1';
     sheetEffort = 'easy';
     sheetMood = 'great';
+
+    // Build type buttons from user's programs + Muu
+    const typeRow = document.getElementById('sheetTypeRow');
+    typeRow.innerHTML = '';
+    const types = [
+      ...userPrograms.map((p, i) => ({ label: (getProgramEmoji(i) || '💪') + ' ' + p.name, type: p.name })),
+      { label: '⚡ Muu', type: 'Muu' }
+    ];
+    const firstType = types[0]?.type || 'Muu';
+    sheetSelectedType = firstType;
+    types.forEach((t, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'log-type-btn sheet-type-btn' + (i === 0 ? ' selected' : '');
+      btn.dataset.type = t.type;
+      btn.textContent = t.label;
+      typeRow.appendChild(btn);
+    });
 
     // Set title
     const d = new Date(dateStr + 'T12:00:00');
@@ -5118,10 +5144,6 @@
       existingEl.innerHTML = '';
     }
 
-    // Reset type buttons
-    document.querySelectorAll('.sheet-type-btn').forEach(b => {
-      b.classList.toggle('selected', b.getAttribute('data-type') === 'Ohjelma 1');
-    });
     // Reset feeling buttons
     document.querySelectorAll('#effortRow .feeling-btn').forEach(b => {
       b.classList.toggle('selected', b.getAttribute('data-value') === 'easy');
@@ -5330,7 +5352,11 @@
     document.getElementById('histTabAnalytics').classList.toggle('active', tab === 'analytics');
     document.getElementById('historyList').style.display = tab === 'log' ? 'block' : 'none';
     document.getElementById('historyAnalytics').style.display = tab === 'analytics' ? 'block' : 'none';
-    if (tab === 'analytics') loadAndRenderAnalytics();
+    if (tab === 'analytics') {
+      // Always reload to pick up new sessions
+      cachedAnalyticsData = null;
+      loadAndRenderAnalytics();
+    }
   }
 
   let cachedHistory = [];
@@ -6191,6 +6217,8 @@
     initCheckboxes();
     initSheetDelegation();
     initPickerDelegation();
+    initTabDelegation();
+    initAuthDelegation();
     log.info('Event delegation initialized');
     updateProgress();
     applyTranslations();
@@ -6202,8 +6230,7 @@
       onSignedIn(session.user);
     } else {
       log.info('No saved session — showing login screen');
-      // TESTING: login screen hidden
-      // document.getElementById('authOverlay').style.display = 'flex';
+      document.getElementById('authOverlay').style.display = 'flex';
     }
     log.end();
   });

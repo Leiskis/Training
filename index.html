@@ -6245,12 +6245,35 @@
     applyTranslations();
 
     // Check if already logged in (persisted session)
-    const { data: { session } } = await supa.auth.getSession();
-    if (session?.user) {
-      log.ok('Restored session for:', session.user.email);
-      onSignedIn(session.user);
-    } else {
-      log.info('No saved session — showing login screen');
+    try {
+      const { data: { session } } = await supa.auth.getSession();
+      if (session?.user) {
+        log.ok('Restored session for:', session.user.email);
+        onSignedIn(session.user);
+      } else {
+        // Try token refresh before giving up
+        const refreshed = await supa.refreshSession();
+        if (refreshed) {
+          const token = localStorage.getItem('pt_token');
+          const userStr = localStorage.getItem('pt_user');
+          if (token && userStr) {
+            const user = JSON.parse(userStr);
+            log.ok('Session restored via refresh for:', user.email);
+            onSignedIn(user);
+          } else {
+            throw new Error('No user after refresh');
+          }
+        } else {
+          throw new Error('No session');
+        }
+      }
+    } catch(e) {
+      log.info('No valid session — showing login screen');
+      // Clear stale tokens
+      localStorage.removeItem('pt_token');
+      localStorage.removeItem('pt_refresh');
+      localStorage.removeItem('pt_user');
+      supa._authToken = null;
       document.getElementById('authOverlay').style.display = 'flex';
     }
     log.end();

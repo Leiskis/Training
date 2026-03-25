@@ -1154,52 +1154,8 @@
   .prog-ex-reorder-btn:disabled { opacity: 0.25; cursor: default; }
 
   /* History performed fields */
-  .hist-ex-row { flex-direction: column; align-items: stretch; gap: 8px; }
-  .hist-ex-top { display: flex; align-items: center; gap: 12px; }
-  .hist-ex-performed {
+  /* hist-ex-row, hist-ex-top and hist-ex-performed defined below in detail sheet CSS */
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 6px;
-    padding: 10px 0 4px;
-    border-top: 1px solid var(--border);
-  }
-  .hist-ex-field label {
-    display: block;
-    font-size: 10px;
-    font-weight: 700;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.6px;
-    margin-bottom: 3px;
-  }
-  .hist-ex-input {
-    width: 100%;
-    background: var(--surface2);
-    border: 1.5px solid var(--border);
-    border-radius: 8px;
-    padding: 8px 6px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 15px;
-    font-weight: 600;
-    color: var(--text);
-    outline: none;
-    text-align: center;
-    transition: border-color 0.2s;
-    -webkit-appearance: none;
-  }
-  .hist-ex-input:focus { border-color: var(--gold); }
-  .hist-ex-input[type=number]::-webkit-inner-spin-button,
-  .hist-ex-input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
-  .hist-ex-input[type=number] { -moz-appearance: textfield; }
-  .hist-performed-label {
-    font-size: 11px;
-    color: var(--gold);
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-    margin-bottom: 6px;
-  }
-
   /* ── MY PROGRAMS ── */
   .mp-header {
     display: flex;
@@ -1788,41 +1744,46 @@
 
   /* History detail sheet */
   .hist-detail-sheet {
-    max-height: 92vh;
+    max-height: 96vh;
     display: flex;
     flex-direction: column;
-    padding: 12px 0 0;
+    padding: 10px 0 0;
   }
   .hist-detail-head {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
-    padding: 0 20px 12px;
+    padding: 0 16px 10px;
     flex-shrink: 0;
-    gap: 12px;
+    gap: 10px;
     border-bottom: 1px solid var(--border);
   }
   .hist-detail-program {
     font-family: 'Bebas Neue', sans-serif;
-    font-size: 22px;
+    font-size: 20px;
     letter-spacing: 2px;
     color: var(--text);
     line-height: 1.2;
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
-  .hist-detail-date { font-size: 13px; color: var(--muted); margin-top: 3px; }
+  .hist-detail-date { font-size: 12px; color: var(--muted); margin-top: 2px; }
   .hist-detail-feelings {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
-    padding: 12px 20px;
+    gap: 5px;
+    padding: 8px 16px;
     flex-shrink: 0;
   }
   .hist-feeling-chip {
     background: var(--gold-dim);
     border: 1px solid rgba(200,168,75,0.3);
     border-radius: 20px;
-    padding: 5px 12px;
-    font-size: 13px;
+    padding: 4px 10px;
+    font-size: 12px;
     color: var(--gold);
     font-weight: 500;
   }
@@ -1832,11 +1793,11 @@
     color: var(--blue);
   }
   .hist-detail-note {
-    margin: 0 20px 12px;
+    margin: 0 16px 8px;
     background: var(--surface2);
     border-radius: 8px;
-    padding: 10px 14px;
-    font-size: 14px;
+    padding: 8px 12px;
+    font-size: 13px;
     color: var(--muted);
     font-style: italic;
     flex-shrink: 0;
@@ -1852,22 +1813,85 @@
   }
   .hist-ex-row {
     display: flex;
-    align-items: center;
-    gap: 12px;
+    flex-direction: column;
+    gap: 0;
     padding: 12px 0;
     border-bottom: 1px solid var(--border);
   }
   .hist-ex-row:last-child { border-bottom: none; }
+  .hist-ex-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 0;
+  }
   .hist-ex-num {
-    width: 26px; height: 26px;
+    width: 24px; height: 24px;
     background: var(--surface2);
     border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 700;
     color: var(--muted);
     flex-shrink: 0;
+    margin-top: 2px;
   }
+  .hist-ex-info { flex: 1; min-width: 0; }
+  .hist-ex-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.3;
+  }
+  .hist-ex-muscle { font-size: 11px; color: var(--muted); margin-top: 1px; }
+  .hist-ex-sets { text-align: right; flex-shrink: 0; }
+  .hist-ex-sets-val {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--gold);
+  }
+  .hist-ex-sets-label { font-size: 10px; color: var(--muted); margin-top: 1px; }
+  .hist-performed-label {
+    font-size: 11px;
+    color: var(--gold);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin: 10px 0 6px;
+  }
+  .hist-ex-performed {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+  .hist-ex-field label {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-bottom: 3px;
+  }
+  .hist-ex-input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 6px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    outline: none;
+    text-align: center;
+    transition: border-color 0.2s;
+    -webkit-appearance: none;
+  }
+  .hist-ex-input:focus { border-color: var(--gold); }
+  .hist-ex-input[type=number]::-webkit-inner-spin-button,
+  .hist-ex-input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
+  .hist-ex-input[type=number] { -moz-appearance: textfield; }
   .hist-ex-info { flex: 1; }
   .hist-ex-name { font-size: 15px; font-weight: 600; color: var(--text); }
   .hist-ex-muscle { font-size: 12px; color: var(--muted); margin-top: 2px; }

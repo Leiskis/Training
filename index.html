@@ -2203,7 +2203,7 @@
         <label>Password</label>
         <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password" />
       </div>
-      <button class="auth-submit" onclick="doLogin()">Sign In →</button>
+      <button class="auth-submit" id="loginSubmitBtn">Sign In →</button>
     </div>
 
     <div id="registerForm" style="display:none">
@@ -2215,7 +2215,7 @@
         <label>Password</label>
         <input type="password" id="regPassword" placeholder="Min. 6 characters" autocomplete="new-password" />
       </div>
-      <button class="auth-submit" onclick="doRegister()">Create Account →</button>
+      <button class="auth-submit" id="registerSubmitBtn">Create Account →</button>
     </div>
   </div>
 </div>
@@ -2234,9 +2234,9 @@
   <button class="tab-btn" data-tab="myprograms" data-i18n-tab="myprograms">✏️ Omat</button>
   <button class="tab-btn" data-tab="calendar" data-i18n-tab="calendar">📅 Kalenteri</button>
   <button class="tab-btn" data-tab="history" data-i18n-tab="history">📋 Historia</button>
-  <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn" title="Toggle theme">🌙</button>
-  <button class="lang-toggle" onclick="toggleLang()" id="langBtn" title="Change language">EN</button>
-  <button class="user-pill" id="userPill" onclick="doLogout()" style="display:none" title="Sign out">
+  <button class="theme-toggle" id="themeBtn" title="Toggle theme">🌙</button>
+  <button class="lang-toggle" id="langBtn" title="Change language">EN</button>
+  <button class="user-pill" id="userPill" style="display:none" title="Sign out">
     <div class="user-avatar" id="userAvatar">?</div>
     <span id="userEmail">...</span>
     · <span data-i18n="signOut">Kirjaudu ulos</span>
@@ -2247,7 +2247,7 @@
   <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
   <div class="progress-label">
     <span><span class="done-count" id="progressDone">0</span> / <span id="progressTotal">0</span> tehty</span>
-    <button class="reset-btn" onclick="resetProgress()">Nollaa</button>
+    <button class="reset-btn" id="resetBtn">Nollaa</button>
   </div>
 </div>
 
@@ -2423,9 +2423,9 @@
 
   <!-- Calendar -->
   <div class="cal-header">
-    <button class="cal-nav" onclick="calNav(-1)">‹</button>
+    <button class="cal-nav">‹</button>
     <div class="cal-month-label" id="calMonthLabel"></div>
-    <button class="cal-nav" onclick="calNav(1)">›</button>
+    <button class="cal-nav">›</button>
   </div>
 
   <div class="cal-legend" id="calLegend"></div>
@@ -3933,10 +3933,24 @@
   }
 
   function initTabDelegation() {
+    // Tab buttons
     document.querySelector('.tab-bar').addEventListener('click', (e) => {
       const btn = e.target.closest('.tab-btn[data-tab]');
-      if (!btn) return;
-      showTab(btn.dataset.tab, btn);
+      if (btn) { showTab(btn.dataset.tab, btn); return; }
+    });
+
+    // Theme, lang, logout, reset — direct listeners on stable elements
+    document.getElementById('themeBtn').addEventListener('click', toggleTheme);
+    document.getElementById('langBtn').addEventListener('click', toggleLang);
+    document.getElementById('userPill').addEventListener('click', doLogout);
+    document.getElementById('resetBtn').addEventListener('click', resetProgress);
+
+    // Calendar nav buttons
+    document.addEventListener('click', (e) => {
+      if (e.target.closest('.cal-nav')) {
+        const dir = e.target.closest('.cal-nav').textContent.trim() === '‹' ? -1 : 1;
+        calNav(dir);
+      }
     });
   }
 
@@ -5084,13 +5098,20 @@
   }
 
   function initAuthDelegation() {
+    // Auth tab switching
     const tabs = document.querySelector('.auth-tabs');
-    if (!tabs) return;
-    tabs.addEventListener('click', (e) => {
-      const btn = e.target.closest('.auth-tab[data-auth-tab]');
-      if (!btn) return;
-      switchAuthTab(btn.dataset.authTab);
-    });
+    if (tabs) {
+      tabs.addEventListener('click', (e) => {
+        const btn = e.target.closest('.auth-tab[data-auth-tab]');
+        if (btn) switchAuthTab(btn.dataset.authTab);
+      });
+    }
+    // Login / Register submit
+    document.getElementById('loginSubmitBtn')?.addEventListener('click', doLogin);
+    document.getElementById('registerSubmitBtn')?.addEventListener('click', doRegister);
+    // Also allow Enter key in password fields
+    document.getElementById('loginPassword')?.addEventListener('keydown', (e) => { if (e.key === 'Enter') doLogin(); });
+    document.getElementById('regPassword')?.addEventListener('keydown', (e) => { if (e.key === 'Enter') doRegister(); });
   }
 
   function openSheet(dateStr) {

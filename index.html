@@ -1456,6 +1456,110 @@
     color: var(--muted);
     font-size: 14px;
   }
+
+  /* History tab switcher */
+  .hist-tab-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  .hist-tab-btn {
+    flex: 1;
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: 20px;
+    padding: 9px 16px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .hist-tab-btn.active {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: #fff;
+    font-weight: 600;
+  }
+
+  /* Analytics */
+  .analytics-loading {
+    text-align: center;
+    padding: 48px 20px;
+    color: var(--muted);
+    font-size: 14px;
+  }
+  .analytics-empty {
+    text-align: center;
+    padding: 48px 20px;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.7;
+  }
+  .analytics-empty strong {
+    display: block;
+    font-size: 17px;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+  .chart-card {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .chart-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+  .chart-subtitle {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+  .chart-canvas-wrap {
+    position: relative;
+    width: 100%;
+  }
+  .chart-canvas-wrap canvas {
+    width: 100% !important;
+    height: auto !important;
+    display: block;
+  }
+  .chart-stats {
+    display: flex;
+    gap: 10px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
+  .chart-stat {
+    flex: 1;
+    text-align: center;
+  }
+  .chart-stat-val {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--gold);
+  }
+  .chart-stat-label {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .chart-stat-trend {
+    font-size: 12px;
+    font-weight: 600;
+    margin-top: 2px;
+  }
+  .trend-up { color: #3dba6e; }
+  .trend-down { color: #e05555; }
+  .trend-flat { color: var(--muted); }
   .hist-empty {
     text-align: center;
     padding: 48px 20px;
@@ -2234,8 +2338,22 @@
     <h2 class="hist-title" data-i18n="hist.title">Treenihistoria</h2>
     <p class="hist-subtitle" data-i18n="hist.subtitle">Tallennetut treenikerrat</p>
   </div>
+
+  <!-- Tab switcher -->
+  <div class="hist-tab-row">
+    <button class="hist-tab-btn active" id="histTabLog" onclick="switchHistTab('log')">📋 Historia</button>
+    <button class="hist-tab-btn" id="histTabAnalytics" onclick="switchHistTab('analytics')">📈 Analytiikka</button>
+  </div>
+
+  <!-- Log view -->
   <div id="historyList">
     <div class="hist-loading" data-i18n="hist.loading">Ladataan...</div>
+  </div>
+
+  <!-- Analytics view -->
+  <div id="historyAnalytics" style="display:none">
+    <div class="analytics-loading" id="analyticsLoading">Ladataan analytiikkaa...</div>
+    <div id="analyticsCharts"></div>
   </div>
 </div>
 
@@ -3869,6 +3987,12 @@
   function updateProgress() {
     const page = document.getElementById(currentTab);
     if (!page) return;
+    // Hide on non-workout tabs
+    const noProgressTabs = ['myprograms', 'calendar', 'history'];
+    if (noProgressTabs.includes(currentTab)) {
+      document.getElementById('progressWrap').style.display = 'none';
+      return;
+    }
     const all = page.querySelectorAll('.ex-checkbox');
     const doneEls = page.querySelectorAll('.ex-checkbox:checked');
     const total = all.length, doneCount = doneEls.length;
@@ -5127,6 +5251,7 @@
       renderCalendar(); renderSessionsList(); updateStats(); renderInsights(); applyTranslations();
       // Refresh history if it's been loaded
       if (cachedHistory.length > 0 || currentTab === 'history') loadAndRenderHistory();
+      if (currentTab === 'history' && currentHistTab === 'analytics') loadAndRenderAnalytics();
     }, 800);
   }
 
@@ -5167,6 +5292,17 @@
     great: '🌟 Mahtava', energized: '⚡ Energinen', neutral: '😐 Neutraali',
     tired: '😴 Väsynyt', stressed: '😰 Stressaantunut'
   };
+
+  let currentHistTab = 'log';
+
+  function switchHistTab(tab) {
+    currentHistTab = tab;
+    document.getElementById('histTabLog').classList.toggle('active', tab === 'log');
+    document.getElementById('histTabAnalytics').classList.toggle('active', tab === 'analytics');
+    document.getElementById('historyList').style.display = tab === 'log' ? 'block' : 'none';
+    document.getElementById('historyAnalytics').style.display = tab === 'analytics' ? 'block' : 'none';
+    if (tab === 'analytics') loadAndRenderAnalytics();
+  }
 
   let cachedHistory = [];
 
@@ -5307,6 +5443,261 @@
     document.getElementById('histDetailBackdrop').classList.remove('active');
     document.getElementById('histDetailSheet').classList.remove('active');
     document.body.style.overflow = '';
+  }
+
+  /* ══════════════════════════════════════
+     ANALYTICS — WEIGHT PROGRESSION
+  ══════════════════════════════════════ */
+  let cachedAnalyticsData = null;
+
+  async function loadAndRenderAnalytics() {
+    if (!currentUser) return;
+    const chartsEl = document.getElementById('analyticsCharts');
+    const loadingEl = document.getElementById('analyticsLoading');
+    loadingEl.style.display = 'block';
+    chartsEl.innerHTML = '';
+
+    // Load all history exercises with their dates
+    const { data: histRows, error: hErr } = await supa.from('workout_history')
+      .select('id, logged_date, program_name')
+      .eq('user_id', currentUser.id)
+      .order('logged_date');
+    if (hErr || !histRows || histRows.length === 0) {
+      loadingEl.style.display = 'none';
+      chartsEl.innerHTML = `<div class="analytics-empty">
+        <strong>${currentLang === 'en' ? 'No data yet' : 'Ei dataa vielä'}</strong>
+        ${currentLang === 'en' ? 'Log workouts to see weight progression charts.' : 'Merkitse treenejä nähdäksesi painokehitysgraafit.'}
+      </div>`;
+      return;
+    }
+
+    const histIds = histRows.map(h => h.id);
+    const histDateMap = {};
+    histRows.forEach(h => { histDateMap[h.id] = h.logged_date; });
+
+    // Load all exercises from those history sessions
+    // Fetch in batches of 50 to avoid URL length limits
+    let allExercises = [];
+    for (let i = 0; i < histIds.length; i += 50) {
+      const batch = histIds.slice(i, i + 50);
+      const { data: exRows } = await supa.from('workout_history_exercises')
+        .select('history_id, exercise_name, planned_weight, performed_weight, planned_sets, planned_reps')
+        .in('history_id', batch)
+        .order('exercise_name');
+      if (exRows) allExercises = allExercises.concat(exRows);
+    }
+
+    loadingEl.style.display = 'none';
+
+    // Group by exercise name — only include exercises with weight data
+    const byExercise = {};
+    allExercises.forEach(ex => {
+      const weight = ex.performed_weight || ex.planned_weight;
+      if (!weight || weight <= 0) return;
+      if (!byExercise[ex.exercise_name]) byExercise[ex.exercise_name] = [];
+      byExercise[ex.exercise_name].push({
+        date: histDateMap[ex.history_id],
+        weight: parseFloat(weight),
+        sets: ex.planned_sets,
+        reps: ex.planned_reps
+      });
+    });
+
+    const exercises = Object.entries(byExercise)
+      .filter(([, pts]) => pts.length >= 1)
+      .sort((a, b) => b[1].length - a[1].length); // most tracked first
+
+    if (exercises.length === 0) {
+      chartsEl.innerHTML = `<div class="analytics-empty">
+        <strong>${currentLang === 'en' ? 'No weight data yet' : 'Ei painodataa vielä'}</strong>
+        ${currentLang === 'en' ? 'Start logging performed weights to track progression.' : 'Aloita kirjaamaan toteuttamasi painot seurataksesi kehitystä.'}
+      </div>`;
+      return;
+    }
+
+    exercises.forEach(([name, points]) => {
+      const sorted = points.sort((a, b) => new Date(a.date) - new Date(b.date));
+      chartsEl.appendChild(buildChartCard(name, sorted));
+    });
+  }
+
+  function buildChartCard(exerciseName, points) {
+    const card = document.createElement('div');
+    card.className = 'chart-card';
+
+    // Title
+    const title = document.createElement('div');
+    title.className = 'chart-title';
+    title.textContent = exerciseName;
+    card.appendChild(title);
+
+    const subtitle = document.createElement('div');
+    subtitle.className = 'chart-subtitle';
+    subtitle.textContent = points.length === 1
+      ? (currentLang === 'en' ? '1 session' : '1 kerta')
+      : `${points.length} ${currentLang === 'en' ? 'sessions' : 'kertaa'}`;
+    card.appendChild(subtitle);
+
+    // Chart
+    const wrap = document.createElement('div');
+    wrap.className = 'chart-canvas-wrap';
+    const canvas = document.createElement('canvas');
+    const DPR = window.devicePixelRatio || 1;
+    const W = Math.min(window.innerWidth - 64, 520);
+    const H = 160;
+    canvas.width = W * DPR;
+    canvas.height = H * DPR;
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    wrap.appendChild(canvas);
+    card.appendChild(wrap);
+
+    // Draw chart
+    drawLineChart(canvas, points, DPR, W, H);
+
+    // Stats row
+    const weights = points.map(p => p.weight);
+    const maxW = Math.max(...weights);
+    const minW = Math.min(...weights);
+    const latestW = weights[weights.length - 1];
+    const firstW = weights[0];
+    const diff = latestW - firstW;
+    const diffStr = (diff >= 0 ? '+' : '') + diff.toFixed(1) + ' kg';
+    const trendClass = diff > 0 ? 'trend-up' : diff < 0 ? 'trend-down' : 'trend-flat';
+    const trendIcon = diff > 0 ? '↑' : diff < 0 ? '↓' : '→';
+
+    const stats = document.createElement('div');
+    stats.className = 'chart-stats';
+    stats.innerHTML = `
+      <div class="chart-stat">
+        <div class="chart-stat-val">${latestW} kg</div>
+        <div class="chart-stat-label">${currentLang === 'en' ? 'Latest' : 'Viimeisin'}</div>
+      </div>
+      <div class="chart-stat">
+        <div class="chart-stat-val">${maxW} kg</div>
+        <div class="chart-stat-label">${currentLang === 'en' ? 'Best' : 'Paras'}</div>
+      </div>
+      <div class="chart-stat">
+        <div class="chart-stat-val ${trendClass}">${trendIcon} ${diffStr}</div>
+        <div class="chart-stat-label">${currentLang === 'en' ? 'Progress' : 'Kehitys'}</div>
+      </div>`;
+    card.appendChild(stats);
+
+    return card;
+  }
+
+  function drawLineChart(canvas, points, dpr, W, H) {
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+
+    const PAD = { top: 16, right: 16, bottom: 28, left: 40 };
+    const chartW = W - PAD.left - PAD.right;
+    const chartH = H - PAD.top - PAD.bottom;
+
+    const weights = points.map(p => p.weight);
+    const minW = Math.min(...weights);
+    const maxW = Math.max(...weights);
+    const range = maxW - minW || 1;
+    const paddedMin = minW - range * 0.15;
+    const paddedMax = maxW + range * 0.15;
+
+    // Detect theme
+    const isLight = document.documentElement.classList.contains('light');
+    const gridColor = isLight ? 'rgba(0,0,0,0.07)' : 'rgba(255,255,255,0.07)';
+    const labelColor = isLight ? '#888' : '#666';
+    const lineColor = '#c8a84b';
+    const dotColor = '#c8a84b';
+    const dotFill = isLight ? '#fff' : '#1a1a1a';
+    const areaTop = isLight ? 'rgba(200,168,75,0.18)' : 'rgba(200,168,75,0.12)';
+    const areaBot = isLight ? 'rgba(200,168,75,0)' : 'rgba(200,168,75,0)';
+
+    const xPos = i => PAD.left + (points.length === 1 ? chartW / 2 : (i / (points.length - 1)) * chartW);
+    const yPos = w => PAD.top + chartH - ((w - paddedMin) / (paddedMax - paddedMin)) * chartH;
+
+    // Grid lines (3)
+    ctx.strokeStyle = gridColor;
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= 3; i++) {
+      const y = PAD.top + (i / 3) * chartH;
+      ctx.beginPath(); ctx.moveTo(PAD.left, y); ctx.lineTo(PAD.left + chartW, y); ctx.stroke();
+    }
+
+    // Y axis labels
+    ctx.fillStyle = labelColor;
+    ctx.font = `${11 * dpr / dpr}px DM Sans, sans-serif`;
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    const yTicks = [paddedMin + (paddedMax - paddedMin) * 0.15, paddedMin + (paddedMax - paddedMin) * 0.5, paddedMin + (paddedMax - paddedMin) * 0.85];
+    yTicks.forEach(val => {
+      ctx.fillText(Math.round(val) + ' kg', PAD.left - 6, yPos(val));
+    });
+
+    // X axis labels (first, middle if >3, last)
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    const xLabels = points.length === 1
+      ? [0]
+      : points.length <= 3
+        ? points.map((_, i) => i)
+        : [0, Math.floor((points.length - 1) / 2), points.length - 1];
+    xLabels.forEach(i => {
+      const d = new Date(points[i].date + 'T12:00:00');
+      const label = d.toLocaleDateString('fi-FI', { day: 'numeric', month: 'numeric' });
+      ctx.fillText(label, xPos(i), PAD.top + chartH + 6);
+    });
+
+    if (points.length === 1) {
+      // Single point — just draw dot and value
+      const x = xPos(0), y = yPos(points[0].weight);
+      ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI * 2);
+      ctx.fillStyle = dotColor; ctx.fill();
+      ctx.fillStyle = labelColor; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+      ctx.fillText(points[0].weight + ' kg', x, y - 8);
+      return;
+    }
+
+    // Area fill
+    const grad = ctx.createLinearGradient(0, PAD.top, 0, PAD.top + chartH);
+    grad.addColorStop(0, areaTop);
+    grad.addColorStop(1, areaBot);
+    ctx.beginPath();
+    ctx.moveTo(xPos(0), yPos(points[0].weight));
+    points.forEach((p, i) => { if (i > 0) ctx.lineTo(xPos(i), yPos(p.weight)); });
+    ctx.lineTo(xPos(points.length - 1), PAD.top + chartH);
+    ctx.lineTo(xPos(0), PAD.top + chartH);
+    ctx.closePath();
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // Line
+    ctx.beginPath();
+    ctx.moveTo(xPos(0), yPos(points[0].weight));
+    points.forEach((p, i) => { if (i > 0) ctx.lineTo(xPos(i), yPos(p.weight)); });
+    ctx.strokeStyle = lineColor;
+    ctx.lineWidth = 2.5;
+    ctx.lineJoin = 'round';
+    ctx.stroke();
+
+    // Dots + value labels on first and last
+    points.forEach((p, i) => {
+      const x = xPos(i), y = yPos(p.weight);
+      ctx.beginPath(); ctx.arc(x, y, i === 0 || i === points.length - 1 ? 5 : 3.5, 0, Math.PI * 2);
+      ctx.fillStyle = dotFill; ctx.fill();
+      ctx.strokeStyle = dotColor; ctx.lineWidth = 2; ctx.stroke();
+    });
+
+    // Value label on last point (and first if different)
+    const drawLabel = (i) => {
+      const x = xPos(i), y = yPos(points[i].weight);
+      ctx.fillStyle = lineColor;
+      ctx.font = `bold ${12 * dpr / dpr}px DM Sans, sans-serif`;
+      ctx.textAlign = i === points.length - 1 ? 'right' : 'left';
+      ctx.textBaseline = 'bottom';
+      const offset = i === points.length - 1 ? -8 : 8;
+      ctx.fillText(points[i].weight + ' kg', x + offset, y - 6);
+    };
+    drawLabel(points.length - 1);
+    if (points.length > 1) drawLabel(0);
   }
 
   /* ══════════════════════════════════════

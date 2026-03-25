@@ -2048,7 +2048,7 @@
 <body>
 
 <!-- AUTH OVERLAY -->
-<div class="auth-overlay" id="authOverlay">
+<div class="auth-overlay" id="authOverlay" style="display:none">
   <div class="auth-box">
     <div class="auth-logo">PERSONAL <span>TRAINING</span></div>
     <div class="auth-sub">Sign in to sync across all devices</div>
@@ -2343,7 +2343,6 @@
   <div class="sheet-handle"></div>
   <div class="picker-header">
     <div class="sheet-title">Lisää liike</div>
-    <button class="picker-close" onclick="closeExercisePicker()">✕</button>
   </div>
   <div class="picker-search-wrap">
     <input
@@ -3854,7 +3853,7 @@
     data.forEach(row => {
       const page = document.getElementById(row.tab_id);
       if (!page) { log.warn('Page not found for tab_id:', row.tab_id); return; }
-      page.querySelectorAll('.exercise-card, .physio-card').forEach(card => {
+      page.querySelectorAll('.exercise-card, .physio-card, .prog-ex-card').forEach(card => {
         const nameEl = card.querySelector('.exercise-name');
         if (nameEl && nameEl.textContent.trim() === row.exercise_name) {
           const cb = card.querySelector('.ex-checkbox');
@@ -3886,7 +3885,7 @@
     const names = [];
     page.querySelectorAll('.ex-checkbox').forEach(cb => {
       cb.checked = false;
-      const card = cb.closest('.exercise-card, .physio-card');
+      const card = cb.closest('.exercise-card, .physio-card, .prog-ex-card');
       if (card) card.classList.remove('done');
       const nameEl = card?.querySelector('.exercise-name');
       const name = nameEl ? nameEl.textContent.trim() : '';
@@ -4513,6 +4512,9 @@
               <span class="prog-ex-sets" id="badge-${e.id}">${e.sets} × ${e.reps}${e.target_weight ? ' · ' + e.target_weight + ' kg' : ''}</span>
             </div>
             <div class="chevron">⌄</div>
+            <div class="cb-wrap" onclick="event.stopPropagation()">
+              <input type="checkbox" class="ex-checkbox" data-tab="${slot}" data-name="${e.lib.name || ''}" />
+            </div>
           </div>
           <div class="card-body">
             ${e.lib.instructions ? `<div class="prog-ex-instructions">▸ ${e.lib.instructions}</div>` : ''}
@@ -4548,6 +4550,50 @@
       <div class="prog-add-wrap">
         <button class="add-exercise-btn" onclick="openProgPicker('${slot}')">+ ${currentLang === 'en' ? 'Add exercise' : 'Lisää liike'}</button>
       </div>`;
+
+    // Wire up checkboxes for this prog page
+    initProgCheckboxes(slot, container);
+    updateProgress();
+  }
+
+  function initProgCheckboxes(slot, container) {
+    container.querySelectorAll('.ex-checkbox').forEach(cb => {
+      const name = cb.dataset.name;
+      const card = cb.closest('.prog-ex-card');
+
+      // Restore from cloud cache if available
+      if (currentUser) {
+        supa.from('exercise_checks')
+          .select('done')
+          .eq('user_id', currentUser.id)
+          .eq('tab_id', slot)
+          .eq('exercise_name', name)
+          .then(({ data }) => {
+            if (data && data[0]) {
+              cb.checked = data[0].done;
+              card?.classList.toggle('done', data[0].done);
+              updateProgress();
+            }
+          });
+      }
+
+      cb.addEventListener('change', async (e) => {
+        e.stopPropagation();
+        const done = cb.checked;
+        card?.classList.toggle('done', done);
+        updateProgress();
+        if (!currentUser) return;
+        const { error } = await supa.from('exercise_checks').upsert({
+          user_id: currentUser.id,
+          tab_id: slot,
+          exercise_name: name,
+          done,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'user_id,tab_id,exercise_name' });
+        if (error) log.error('Prog checkbox save failed:', error.message);
+        else log.ok('Prog checkbox saved:', name, '=', done);
+      });
+    });
   }
 
   function updateBadge(rowId, fieldsEl) {
@@ -5569,7 +5615,8 @@
       onSignedIn(session.user);
     } else {
       log.info('No saved session — showing login screen');
-      document.getElementById('authOverlay').style.display = 'flex';
+      // TESTING: login screen hidden
+      // document.getElementById('authOverlay').style.display = 'flex';
     }
     log.end();
   });

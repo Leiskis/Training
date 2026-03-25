@@ -3686,10 +3686,10 @@
     const email = document.getElementById('loginEmail').value.trim();
     const password = document.getElementById('loginPassword').value;
     if (!email || !password) { showAuthError('Please enter email and password.'); return; }
-    const btn = document.querySelector('#loginForm .auth-submit');
-    btn.disabled = true; btn.textContent = 'Signing in...';
+    const btn = document.getElementById('loginSubmitBtn');
+    btn.disabled = true; btn.textContent = t('auth.signingIn');
     const { data, error } = await supa.auth.signInWithPassword({ email, password });
-    btn.disabled = false; btn.textContent = 'Sign In →';
+    btn.disabled = false; btn.textContent = t('auth.signinBtn');
     if (error) { showAuthError(error.message); return; }
     onSignedIn(data.user);
   }
@@ -3699,10 +3699,10 @@
     const password = document.getElementById('regPassword').value;
     if (!email || !password) { showAuthError('Please enter email and password.'); return; }
     if (password.length < 6) { showAuthError('Password must be at least 6 characters.'); return; }
-    const btn = document.querySelector('#registerForm .auth-submit');
-    btn.disabled = true; btn.textContent = 'Creating account...';
+    const btn = document.getElementById('registerSubmitBtn');
+    btn.disabled = true; btn.textContent = t('auth.creating');
     const { data, error } = await supa.auth.signUp({ email, password });
-    btn.disabled = false; btn.textContent = 'Create Account →';
+    btn.disabled = false; btn.textContent = t('auth.registerBtn');
     if (error) { showAuthError(error.message); return; }
     if (data && data.user && data.user.identities && data.user.identities.length === 0) {
       showAuthError('An account with this email already exists.'); return;
@@ -6160,9 +6160,9 @@
       if (l.textContent.match(/Email|Sähköposti/)) l.textContent = t('auth.email');
       if (l.textContent.match(/Password|Salasana/)) l.textContent = t('auth.password');
     });
-    const loginBtn = document.querySelector('#loginForm .auth-submit');
+    const loginBtn = document.getElementById('loginSubmitBtn');
     if (loginBtn && !loginBtn.disabled) loginBtn.textContent = t('auth.signinBtn');
-    const regBtn = document.querySelector('#registerForm .auth-submit');
+    const regBtn = document.getElementById('registerSubmitBtn');
     if (regBtn && !regBtn.disabled) regBtn.textContent = t('auth.registerBtn');
 
     // Calendar stats

@@ -1073,6 +1073,133 @@
     cursor: default;
   }
 
+
+  /* Editable program name */
+  .mp-detail-name-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+  }
+  .mp-detail-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 2px;
+    color: var(--text);
+    cursor: pointer;
+    border-bottom: 1.5px dashed transparent;
+    transition: border-color 0.2s;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+  }
+  .mp-detail-name:hover, .mp-detail-name:focus { border-color: var(--gold); outline: none; }
+  .mp-detail-name-input {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 2px;
+    color: var(--text);
+    background: var(--surface2);
+    border: 1.5px solid var(--gold);
+    border-radius: 6px;
+    padding: 2px 8px;
+    width: 180px;
+    outline: none;
+  }
+
+  /* Reorder buttons */
+  .mp-ex-reorder {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex-shrink: 0;
+  }
+  .mp-ex-reorder-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    width: 26px; height: 22px;
+    font-size: 11px;
+    color: var(--muted);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .mp-ex-reorder-btn:active { background: var(--gold-dim); border-color: var(--gold); color: var(--gold); }
+  .mp-ex-reorder-btn:disabled { opacity: 0.25; cursor: default; }
+
+  /* Prog-ex-card reorder buttons */
+  .prog-ex-reorder {
+    display: flex;
+    gap: 4px;
+    margin-top: 10px;
+  }
+  .prog-ex-reorder-btn {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 7px;
+    font-size: 13px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: 'DM Sans', sans-serif;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .prog-ex-reorder-btn:active { background: var(--gold-dim); border-color: var(--gold); color: var(--gold); }
+  .prog-ex-reorder-btn:disabled { opacity: 0.25; cursor: default; }
+
+  /* History performed fields */
+  .hist-ex-row { flex-direction: column; align-items: stretch; gap: 8px; }
+  .hist-ex-top { display: flex; align-items: center; gap: 12px; }
+  .hist-ex-performed {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    padding: 10px 0 4px;
+    border-top: 1px solid var(--border);
+  }
+  .hist-ex-field label {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-bottom: 3px;
+  }
+  .hist-ex-input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 6px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    outline: none;
+    text-align: center;
+    transition: border-color 0.2s;
+    -webkit-appearance: none;
+  }
+  .hist-ex-input:focus { border-color: var(--gold); }
+  .hist-ex-input[type=number]::-webkit-inner-spin-button,
+  .hist-ex-input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
+  .hist-ex-input[type=number] { -moz-appearance: textfield; }
+  .hist-performed-label {
+    font-size: 11px;
+    color: var(--gold);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 6px;
+  }
+
   /* ── MY PROGRAMS ── */
   .mp-header {
     display: flex;
@@ -2243,7 +2370,7 @@
   </button>
 </nav>
 
-<div class="progress-bar-wrap" id="progressWrap">
+<div class="progress-bar-wrap" id="progressWrap" style="display:none">
   <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
   <div class="progress-label">
     <span><span class="done-count" id="progressDone">0</span> / <span id="progressTotal">0</span> tehty</span>
@@ -2347,7 +2474,9 @@
   <div id="mpDetail" style="display:none">
     <div class="mp-detail-header">
       <button class="mp-back-btn" onclick="closeProgramDetail()">← Takaisin</button>
-      <div class="mp-detail-name" id="mpDetailName"></div>
+      <div class="mp-detail-name-wrap">
+        <div class="mp-detail-name" id="mpDetailName" title="Napauta muokataksesi nimeä" onclick="startEditProgramName()"></div>
+      </div>
     </div>
     <div id="mpDetailExercises">
       <div class="mp-empty">Ei liikkeitä vielä.<br>Lisää ensimmäinen liike! 💪</div>
@@ -3924,11 +4053,8 @@
     if (id === 'calendar') loadAndRenderCalendar();
     else if (id === 'myprograms') renderProgramList();
     else if (id === 'history') loadAndRenderHistory();
-    else if (['prog1','prog2','prog3'].includes(id)) {
-      updateProgress();
-      renderProgPage(id);
-    }
-    else updateProgress();
+    else if (['prog1','prog2','prog3'].includes(id)) renderProgPage(id);
+    updateProgress(); // always — hides bar on calendar/history/myprograms, shows on workout tabs
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -4040,8 +4166,7 @@
     if (noProgressTabs.includes(currentTab)) {
       document.getElementById('progressWrap').style.display = 'none';
       return;
-    }
-    const all = page.querySelectorAll('.ex-checkbox');
+    }    const all = page.querySelectorAll('.ex-checkbox');
     const doneEls = page.querySelectorAll('.ex-checkbox:checked');
     const total = all.length, doneCount = doneEls.length;
     const pct = total > 0 ? Math.round((doneCount / total) * 100) : 0;
@@ -4489,38 +4614,104 @@
       el.innerHTML = `<div class="mp-empty">${t('mp.noExercisesYet').replace('\n','<br>')}</div>`;
       return;
     }
-    el.innerHTML = exercises.map((e, i) => {
+    el.innerHTML = '';
+    exercises.forEach((e, i) => {
       const lib = e.exercise_library || {};
-      const weight = e.target_weight ? `${e.target_weight} kg` : '— kg';
-      return `<div class="mp-ex-card" data-id="${e.id}">
+      const card = document.createElement('div');
+      card.className = 'mp-ex-card';
+      card.dataset.id = e.id;
+      card.innerHTML = `
         <div class="mp-ex-top">
+          <div class="mp-ex-reorder">
+            <button class="mp-ex-reorder-btn" data-action="up" title="Ylös" ${i === 0 ? 'disabled' : ''}>▲</button>
+            <button class="mp-ex-reorder-btn" data-action="down" title="Alas" ${i === exercises.length-1 ? 'disabled' : ''}>▼</button>
+          </div>
           <div class="mp-ex-info">
             <div class="mp-ex-name">${lib.name || 'Tuntematon'}</div>
             <div class="mp-ex-muscle">${lib.muscle_group || ''}</div>
           </div>
-          <button class="mp-ex-del" onclick="removeExerciseFromProgram('${e.id}', '${e.exercise_id}')">✕</button>
+          <button class="mp-ex-del" data-action="delete">✕</button>
         </div>
         <div class="mp-ex-fields">
           <div class="mp-ex-field">
-            <label>Sarjat</label>
-            <input type="number" class="mp-ex-input" inputmode="numeric" value="${e.sets}" min="1" max="20"
-              onchange="updateExerciseField('${e.id}', 'sets', this.value)" />
+            <label>${currentLang === 'en' ? 'Sets' : 'Sarjat'}</label>
+            <input type="number" class="mp-ex-input" inputmode="numeric" value="${e.sets}" min="1" max="20" data-field="sets" />
           </div>
           <div class="mp-ex-field">
-            <label>Toistot</label>
-            <input type="text" class="mp-ex-input" value="${e.reps}" maxlength="10"
-              placeholder="8-10"
-              onchange="updateExerciseField('${e.id}', 'reps', this.value)" />
+            <label>${currentLang === 'en' ? 'Reps' : 'Toistot'}</label>
+            <input type="text" class="mp-ex-input" value="${e.reps}" maxlength="10" placeholder="8-10" data-field="reps" />
           </div>
           <div class="mp-ex-field">
-            <label>Paino (kg)</label>
-            <input type="number" class="mp-ex-input" value="${e.target_weight || ''}"
-              placeholder="—" min="0" step="0.5"
-              onchange="updateExerciseField('${e.id}', 'target_weight', this.value || null)" />
+            <label>${currentLang === 'en' ? 'Weight (kg)' : 'Paino (kg)'}</label>
+            <input type="number" class="mp-ex-input" inputmode="decimal" value="${e.target_weight || ''}" placeholder="—" min="0" step="0.5" data-field="target_weight" />
           </div>
-        </div>
-      </div>`;
-    }).join('');
+        </div>`;
+
+      // Wire events directly — no inline onclick
+      card.querySelector('[data-action="delete"]').addEventListener('click', () =>
+        removeExerciseFromProgram(e.id, e.exercise_id));
+      card.querySelector('[data-action="up"]')?.addEventListener('click', () =>
+        reorderExercise(exercises, i, i - 1));
+      card.querySelector('[data-action="down"]')?.addEventListener('click', () =>
+        reorderExercise(exercises, i, i + 1));
+      card.querySelectorAll('.mp-ex-input').forEach(input => {
+        input.addEventListener('change', () => {
+          const field = input.dataset.field;
+          const val = field === 'target_weight' ? (input.value || null) : input.value;
+          updateExerciseField(e.id, field, val);
+        });
+      });
+
+      el.appendChild(card);
+    });
+  }
+
+  async function reorderExercise(exercises, fromIdx, toIdx) {
+    if (toIdx < 0 || toIdx >= exercises.length) return;
+    // Swap sort_order values
+    const a = exercises[fromIdx], b = exercises[toIdx];
+    await supa.from('workout_day_exercises')
+      .update({ sort_order: b.sort_order, updated_at: new Date().toISOString() })
+      .eq('user_id', currentUser.id).eq('id', a.id);
+    await supa.from('workout_day_exercises')
+      .update({ sort_order: a.sort_order, updated_at: new Date().toISOString() })
+      .eq('user_id', currentUser.id).eq('id', b.id);
+    // Reload
+    if (activeProgramId) loadAndRenderProgramExercises(activeProgramId);
+    // Also refresh prog page
+    const slot = Object.keys(progPageIdMap).find(k => progPageIdMap[k] === activeProgramId);
+    if (slot) renderProgPage(slot);
+  }
+
+  function startEditProgramName() {
+    const nameEl = document.getElementById('mpDetailName');
+    const currentName = nameEl.textContent;
+    const input = document.createElement('input');
+    input.className = 'mp-detail-name-input';
+    input.value = currentName;
+    input.maxLength = 40;
+    nameEl.replaceWith(input);
+    input.focus();
+    input.select();
+    const save = async () => {
+      const newName = input.value.trim() || currentName;
+      // Update in DB
+      if (newName !== currentName && activeProgramId) {
+        await supa.from('workout_programs')
+          .update({ name: newName }).eq('user_id', currentUser.id).eq('id', activeProgramId);
+        await loadUserPrograms();
+      }
+      // Restore to div
+      const div = document.createElement('div');
+      div.className = 'mp-detail-name';
+      div.id = 'mpDetailName';
+      div.title = 'Napauta muokataksesi nimeä';
+      div.textContent = newName;
+      div.addEventListener('click', startEditProgramName);
+      input.replaceWith(div);
+    };
+    input.addEventListener('blur', save);
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); save(); } });
   }
 
   async function removeExerciseFromProgram(rowId, exerciseId) {
@@ -4676,7 +4867,7 @@
 
     const html = Object.entries(grouped).map(([cat, exercises]) => `
       <div class="prog-category-title">${cat}</div>
-      ${exercises.map(e => `
+      ${exercises.map((e, ei) => `
         <div class="prog-ex-card" onclick="toggleCard(this)">
           <div class="card-header">
             <div class="card-header-left" style="flex:1">
@@ -4710,7 +4901,11 @@
                   onchange="updateExerciseField('${e.id}','target_weight',this.value||null); updateBadge('${e.id}',this.closest('.prog-ex-fields'))" />
               </div>
             </div>
-            <button class="mp-ex-del" style="width:100%;border-radius:8px;padding:10px;font-size:13px"
+            <div class="prog-ex-reorder">
+              <button class="prog-ex-reorder-btn" onclick="event.stopPropagation(); reorderProgExercise('${slot}','${e.id}','up')" ${e.sort_order === 0 ? 'disabled' : ''}>▲ ${currentLang === 'en' ? 'Up' : 'Ylös'}</button>
+              <button class="prog-ex-reorder-btn" onclick="event.stopPropagation(); reorderProgExercise('${slot}','${e.id}','down')" ${ei === enriched.length-1 ? 'disabled' : ''}>▼ ${currentLang === 'en' ? 'Down' : 'Alas'}</button>
+            </div>
+            <button class="mp-ex-del" style="width:100%;border-radius:8px;padding:10px;font-size:13px;margin-top:6px"
               onclick="event.stopPropagation(); removeProgExercise('${slot}','${e.id}','${e.exercise_id}')">
               ${removeLabel}
             </button>
@@ -4777,10 +4972,29 @@
     if (badge) badge.textContent = `${sets} × ${reps}${weight ? ' · ' + weight + ' kg' : ''}`;
   }
 
+  async function reorderProgExercise(slot, rowId, dir) {
+    if (!currentUser) return;
+    const programId = progPageIdMap[slot];
+    if (!programId) return;
+    const { data: rows } = await supa.from('workout_day_exercises')
+      .select('id, sort_order').eq('user_id', currentUser.id)
+      .eq('program_id', programId).order('sort_order');
+    if (!rows) return;
+    const idx = rows.findIndex(r => r.id === rowId);
+    const swapIdx = dir === 'up' ? idx - 1 : idx + 1;
+    if (swapIdx < 0 || swapIdx >= rows.length) return;
+    const a = rows[idx], b = rows[swapIdx];
+    await supa.from('workout_day_exercises')
+      .update({ sort_order: b.sort_order }).eq('user_id', currentUser.id).eq('id', a.id);
+    await supa.from('workout_day_exercises')
+      .update({ sort_order: a.sort_order }).eq('user_id', currentUser.id).eq('id', b.id);
+    renderProgPage(slot);
+    if (activeProgramId === programId) loadAndRenderProgramExercises(programId);
+  }
+
   async function removeProgExercise(slot, rowId, exerciseId) {
     await removeExerciseFromProgram(rowId, exerciseId);
     renderProgPage(slot);
-    // Also refresh detail view if open in My Programs
     if (activeProgramId === progPageIdMap[slot]) {
       loadAndRenderProgramExercises(activeProgramId);
     }
@@ -5487,9 +5701,9 @@
     document.getElementById('histDetailSheet').classList.add('active');
     document.body.style.overflow = 'hidden';
 
-    // Load exercises
+    // Load exercises with performed fields
     const { data: exercises, error } = await supa.from('workout_history_exercises')
-      .select('exercise_name, muscle_group, sort_order, planned_sets, planned_reps, planned_weight')
+      .select('id, exercise_name, muscle_group, sort_order, planned_sets, planned_reps, planned_weight, performed_sets, performed_reps, performed_weight')
       .eq('history_id', historyId)
       .order('sort_order');
 
@@ -5499,20 +5713,64 @@
       return;
     }
 
-    exEl.innerHTML = exercises.map((e, i) => {
+    exEl.innerHTML = '';
+    exercises.forEach((e, i) => {
       const weight = e.planned_weight ? ` · ${e.planned_weight} kg` : '';
-      return `<div class="hist-ex-row">
-        <div class="hist-ex-num">${i + 1}</div>
-        <div class="hist-ex-info">
-          <div class="hist-ex-name">${e.exercise_name}</div>
-          ${e.muscle_group ? `<div class="hist-ex-muscle">${e.muscle_group}</div>` : ''}
+      const row = document.createElement('div');
+      row.className = 'hist-ex-row';
+      row.innerHTML = `
+        <div class="hist-ex-top">
+          <div class="hist-ex-num">${i + 1}</div>
+          <div class="hist-ex-info">
+            <div class="hist-ex-name">${e.exercise_name}</div>
+            ${e.muscle_group ? `<div class="hist-ex-muscle">${e.muscle_group}</div>` : ''}
+          </div>
+          <div class="hist-ex-sets">
+            <div class="hist-ex-sets-val">${e.planned_sets || '—'} × ${e.planned_reps || '—'}${weight}</div>
+            <div class="hist-ex-sets-label">${currentLang === 'en' ? 'planned' : 'suunniteltu'}</div>
+          </div>
         </div>
-        <div class="hist-ex-sets">
-          <div class="hist-ex-sets-val">${e.planned_sets || '—'} × ${e.planned_reps || '—'}${weight}</div>
-          <div class="hist-ex-sets-label">${currentLang === 'en' ? 'planned' : 'suunniteltu'}</div>
-        </div>
-      </div>`;
-    }).join('');
+        <div class="hist-performed-label">✏️ ${currentLang === 'en' ? 'Performed' : 'Toteutunut'}</div>
+        <div class="hist-ex-performed">
+          <div class="hist-ex-field">
+            <label>${currentLang === 'en' ? 'Sets' : 'Sarjat'}</label>
+            <input type="number" class="hist-ex-input" inputmode="numeric"
+              value="${e.performed_sets || ''}" placeholder="${e.planned_sets || '—'}"
+              min="1" max="20" data-field="performed_sets" data-id="${e.id}" />
+          </div>
+          <div class="hist-ex-field">
+            <label>${currentLang === 'en' ? 'Reps' : 'Toistot'}</label>
+            <input type="text" class="hist-ex-input"
+              value="${e.performed_reps || ''}" placeholder="${e.planned_reps || '—'}"
+              maxlength="10" data-field="performed_reps" data-id="${e.id}" />
+          </div>
+          <div class="hist-ex-field">
+            <label>${currentLang === 'en' ? 'Weight (kg)' : 'Paino (kg)'}</label>
+            <input type="number" class="hist-ex-input" inputmode="decimal"
+              value="${e.performed_weight || ''}" placeholder="${e.planned_weight || '—'}"
+              min="0" step="0.5" data-field="performed_weight" data-id="${e.id}" />
+          </div>
+        </div>`;
+      // Wire save on change
+      row.querySelectorAll('.hist-ex-input').forEach(input => {
+        input.addEventListener('change', async () => {
+          const field = input.dataset.field;
+          const rowId = input.dataset.id;
+          let val = input.value || null;
+          if (field === 'performed_sets') val = val ? parseInt(val) : null;
+          if (field === 'performed_weight') val = val ? parseFloat(val) : null;
+          const update = {};
+          update[field] = val;
+          const { error } = await supa.from('workout_history_exercises')
+            .update(update).eq('id', rowId);
+          if (error) log.error('Performed update failed:', error.message);
+          else log.ok('Performed field saved:', field, '=', val);
+          // Invalidate analytics cache
+          cachedAnalyticsData = null;
+        });
+      });
+      exEl.appendChild(row);
+    });
   }
 
   function closeHistDetail() {

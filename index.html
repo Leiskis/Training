@@ -2470,7 +2470,7 @@
       <h2 class="mp-title">Omat ohjelmat</h2>
       <p class="mp-subtitle">Rakenna omat treeniohjelmat</p>
     </div>
-    <button class="mp-new-btn" onclick="showNewProgramInput()">+ Uusi</button>
+    <button class="mp-new-btn" id="mpNewBtn">+ Uusi</button>
   </div>
 
   <!-- New program input (hidden by default) -->
@@ -2481,11 +2481,10 @@
       class="mp-new-input"
       placeholder="Ohjelman nimi, esim. Push..."
       maxlength="40"
-      onkeydown="if(event.key==='Enter') saveNewProgram()"
     />
     <div class="mp-new-actions">
-      <button class="mp-new-cancel" onclick="hideNewProgramInput()">Peruuta</button>
-      <button class="mp-new-save" onclick="saveNewProgram()">Tallenna</button>
+      <button class="mp-new-cancel" id="mpNewCancel">Peruuta</button>
+      <button class="mp-new-save" id="mpNewSave">Tallenna</button>
     </div>
   </div>
 
@@ -2497,16 +2496,16 @@
   <!-- Program detail view -->
   <div id="mpDetail" style="display:none">
     <div class="mp-detail-header">
-      <button class="mp-back-btn" onclick="closeProgramDetail()">← Takaisin</button>
+      <button class="mp-back-btn" id="mpBackBtn">← Takaisin</button>
       <div class="mp-detail-name-wrap">
-        <div class="mp-detail-name" id="mpDetailName" title="Napauta muokataksesi nimeä" onclick="startEditProgramName()"></div>
+        <div class="mp-detail-name" id="mpDetailName" title="Napauta muokataksesi nimeä"></div>
       </div>
     </div>
     <div id="mpDetailExercises">
       <div class="mp-empty">Ei liikkeitä vielä.<br>Lisää ensimmäinen liike! 💪</div>
     </div>
     <div class="add-exercise-btn-wrap">
-      <button class="add-exercise-btn" id="mpAddExBtn" onclick="openExercisePickerForProgram()">
+      <button class="add-exercise-btn" id="mpAddExBtn">
         + Lisää liike
       </button>
     </div>
@@ -2523,8 +2522,8 @@
 
   <!-- Tab switcher -->
   <div class="hist-tab-row">
-    <button class="hist-tab-btn active" id="histTabLog" onclick="switchHistTab('log')">📋 Historia</button>
-    <button class="hist-tab-btn" id="histTabAnalytics" onclick="switchHistTab('analytics')">📈 Analytiikka</button>
+    <button class="hist-tab-btn active" id="histTabLog">📋 Historia</button>
+    <button class="hist-tab-btn" id="histTabAnalytics">📈 Analytiikka</button>
   </div>
 
   <!-- Log view -->
@@ -2540,7 +2539,7 @@
 </div>
 
 <!-- HISTORY DETAIL SHEET -->
-<div class="sheet-backdrop" id="histDetailBackdrop" onclick="closeHistDetail()"></div>
+<div class="sheet-backdrop" id="histDetailBackdrop"></div>
 <div class="bottom-sheet hist-detail-sheet" id="histDetailSheet">
   <div class="sheet-handle"></div>
   <div class="hist-detail-head">
@@ -2548,7 +2547,7 @@
       <div class="hist-detail-program" id="histDetailProgram"></div>
       <div class="hist-detail-date" id="histDetailDate"></div>
     </div>
-    <button class="picker-close" onclick="closeHistDetail()">✕</button>
+    <button class="picker-close" id="histDetailClose">✕</button>
   </div>
   <div class="hist-detail-feelings" id="histDetailFeelings"></div>
   <div class="hist-detail-note" id="histDetailNote" style="display:none"></div>
@@ -2634,7 +2633,7 @@
 </div>
 
 <!-- EXERCISE PICKER SHEET -->
-<div class="sheet-backdrop" id="pickerBackdrop" onclick="closeExercisePicker()"></div>
+<div class="sheet-backdrop" id="pickerBackdrop"></div>
 <div class="bottom-sheet picker-sheet" id="pickerSheet">
   <div class="sheet-handle"></div>
   <div class="picker-header">
@@ -2646,7 +2645,6 @@
       id="pickerSearch"
       class="picker-search"
       placeholder="Hae liikettä..."
-      oninput="debouncePickerSearch()"
       autocomplete="off"
       autocorrect="off"
     />
@@ -2655,7 +2653,7 @@
   <div class="picker-list" id="pickerList">
     <div class="picker-loading">Ladataan harjoituksia...</div>
   </div>
-  <button class="picker-close-bottom" onclick="closeExercisePicker()">✕ Sulje</button>
+  <button class="picker-close-bottom" id="pickerCloseBottom">✕ Sulje</button>
 </div>
 
 <footer>Lauri · Treeniohjelmat</footer>
@@ -2672,7 +2670,7 @@
   <div class="physio-section-title">🦵 Polven kuntoutus – Aktiiviset liikkuvuusharjoitteet</div>
   <div class="date-chip">Terveystalo · 4–5 x/vko</div>
 
-  <div class="physio-card" onclick="toggleCard(this)">
+  <div class="physio-card">
     <div class="card-header">
       <div class="card-header-left">
         <div class="exercise-name">Kyykky (useita variaatioita)</div>
@@ -2689,7 +2687,7 @@
     </div>
   </div>
 
-  <div class="physio-card" onclick="toggleCard(this)">
+  <div class="physio-card">
     <div class="card-header">
       <div class="card-header-left">
         <div class="exercise-name">Lonkan kierrot & koukistus</div>
@@ -2708,7 +2706,7 @@
     </div>
   </div>
 
-  <div class="physio-card" onclick="toggleCard(this)">
+  <div class="physio-card">
     <div class="card-header">
       <div class="card-header-left">
         <div class="exercise-name">Peilin edessä bulgarialainen askelkyykky</div>
@@ -2725,7 +2723,7 @@
     </div>
   </div>
 
-  <div class="physio-card" onclick="toggleCard(this)">
+  <div class="physio-card">
     <div class="card-header">
       <div class="card-header-left">
         <div class="exercise-name">Lonkan koukistus taljassa</div>
@@ -2741,7 +2739,7 @@
     </div>
   </div>
 
-  <div class="physio-card" onclick="toggleCard(this)">
+  <div class="physio-card">
     <div class="card-header">
       <div class="card-header-left">
         <div class="exercise-name">Lantionnosto / yhdellä jalalla</div>
@@ -2761,7 +2759,7 @@
   <div class="physio-section-title">🏥 Polven ohjelma 1</div>
   <div class="date-chip">Terveystalo · 10.8.2023</div>
 
-  <div class="physio-card" onclick="toggleCard(this)">
+  <div class="physio-card">
     <div class="card-header">
       <div class="card-header-left">
         <div class="exercise-name">Polviseisonta – pakaroiden aktivointi</div>
@@ -2778,7 +2776,7 @@
     </div>
   </div>
 
-  <div class="physio-card" onclick="toggleCard(this)">
+  <div class="physio-card">
     <div class="card-header">
       <div class="card-header-left">
         <div class="exercise-name">Lantionnosto selinmakuulla</div>
@@ -2795,7 +2793,7 @@
     </div>
   </div>
 
-  <div class="physio-card" onclick="toggleCard(this)">
+  <div class="physio-card">
     <div class="card-header">
       <div class="card-header-left">
         <div class="exercise-name">Lantionnosto lonkkien ulkokierrolla</div>
@@ -2813,7 +2811,7 @@
     </div>
   </div>
 
-  <div class="physio-card" onclick="toggleCard(this)">
+  <div class="physio-card">
     <div class="card-header">
       <div class="card-header-left">
         <div class="exercise-name">Kyykky kahdella ja yhdellä jalalla – linjaus</div>
@@ -2834,7 +2832,7 @@
   <div class="physio-section-title">🏥 Polven ohjelma 2</div>
   <div class="date-chip">Terveystalo · 7.9.2023</div>
 
-  <div class="physio-card" onclick="toggleCard(this)">
+  <div class="physio-card">
     <div class="card-header">
       <div class="card-header-left">
         <div class="exercise-name">Polven ojennus vastusnauhan kanssa</div>
@@ -2851,7 +2849,7 @@
     </div>
   </div>
 
-  <div class="physio-card" onclick="toggleCard(this)">
+  <div class="physio-card">
     <div class="card-header">
       <div class="card-header-left">
         <div class="exercise-name">Polven vastustettu loppuojennus seisten</div>
@@ -2869,7 +2867,7 @@
     </div>
   </div>
 
-  <div class="physio-card" onclick="toggleCard(this)">
+  <div class="physio-card">
     <div class="card-header">
       <div class="card-header-left">
         <div class="exercise-name">Pohjevenytys + varpaillannousu</div>
@@ -2886,7 +2884,7 @@
     </div>
   </div>
 
-  <div class="physio-card" onclick="toggleCard(this)">
+  <div class="physio-card">
     <div class="card-header">
       <div class="card-header-left">
         <div class="exercise-name">Askellus portaalle ja portaalta alas</div>
@@ -2901,7 +2899,7 @@
     </div>
   </div>
 
-  <div class="physio-card" onclick="toggleCard(this)">
+  <div class="physio-card">
     <div class="card-header">
       <div class="card-header-left">
         <div class="exercise-name">Kyykky</div>
@@ -2920,7 +2918,7 @@
     </div>
   </div>
 
-  <div class="physio-card" onclick="toggleCard(this)">
+  <div class="physio-card">
     <div class="card-header">
       <div class="card-header-left">
         <div class="exercise-name">Yhden jalan tasapaino tasapainolaudalla</div>
@@ -2941,7 +2939,7 @@
   <div class="physio-section-title">🏥 Polven ohjelma 3</div>
   <div class="date-chip">Terveystalo · 21.9.2023 · 4–5 x/vko</div>
 
-  <div class="physio-card" onclick="toggleCard(this)">
+  <div class="physio-card">
     <div class="card-header">
       <div class="card-header-left">
         <div class="exercise-name">Yhden jalan minikyykky</div>
@@ -2958,7 +2956,7 @@
     </div>
   </div>
 
-  <div class="physio-card" onclick="toggleCard(this)">
+  <div class="physio-card">
     <div class="card-header">
       <div class="card-header-left">
         <div class="exercise-name">Yhden jalan maastaveto, ilman painoa</div>
@@ -2977,7 +2975,7 @@
     </div>
   </div>
 
-  <div class="physio-card" onclick="toggleCard(this)">
+  <div class="physio-card">
     <div class="card-header">
       <div class="card-header-left">
         <div class="exercise-name">Pohkeen vahvistus askelkyykkyasennossa</div>
@@ -2994,7 +2992,7 @@
     </div>
   </div>
 
-  <div class="physio-card" onclick="toggleCard(this)">
+  <div class="physio-card">
     <div class="card-header">
       <div class="card-header-left">
         <div class="exercise-name">Lantionnosto + yhden jalan irrotus</div>
@@ -3009,7 +3007,7 @@
     </div>
   </div>
 
-  <div class="physio-card" onclick="toggleCard(this)">
+  <div class="physio-card">
     <div class="card-header">
       <div class="card-header-left">
         <div class="exercise-name">Päinmakuulla nauha nilkan ympärillä</div>
@@ -3026,7 +3024,7 @@
     </div>
   </div>
 
-  <div class="physio-card" onclick="toggleCard(this)">
+  <div class="physio-card">
     <div class="card-header">
       <div class="card-header-left">
         <div class="exercise-name">Kyykky pallolla</div>
@@ -3046,7 +3044,7 @@
   <div class="physio-section-title">🏥 Polven ohjelma 4</div>
   <div class="date-chip">Terveystalo · 12.10.2023</div>
 
-  <div class="physio-card" onclick="toggleCard(this)">
+  <div class="physio-card">
     <div class="card-header">
       <div class="card-header-left">
         <div class="exercise-name">Askelkyykky – linjaus (vastusnauha)</div>
@@ -3063,7 +3061,7 @@
     </div>
   </div>
 
-  <div class="physio-card" onclick="toggleCard(this)">
+  <div class="physio-card">
     <div class="card-header">
       <div class="card-header-left">
         <div class="exercise-name">Askelkyykky sivulle jalkaa liu'uttaen</div>
@@ -3081,7 +3079,7 @@
     </div>
   </div>
 
-  <div class="physio-card" onclick="toggleCard(this)">
+  <div class="physio-card">
     <div class="card-header">
       <div class="card-header-left">
         <div class="exercise-name">Lonkan loitontajien vahvistus seisten</div>
@@ -3098,7 +3096,7 @@
     </div>
   </div>
 
-  <div class="physio-card" onclick="toggleCard(this)">
+  <div class="physio-card">
     <div class="card-header">
       <div class="card-header-left">
         <div class="exercise-name">Jalan nosto konttausasennossa</div>
@@ -3117,7 +3115,7 @@
     </div>
   </div>
 
-  <div class="physio-card" onclick="toggleCard(this)">
+  <div class="physio-card">
     <div class="card-header">
       <div class="card-header-left">
         <div class="exercise-name">Vartalon kierron hallinta (vastusnauha)</div>
@@ -3135,7 +3133,7 @@
     </div>
   </div>
 
-  <div class="physio-card" onclick="toggleCard(this)">
+  <div class="physio-card">
     <div class="card-header">
       <div class="card-header-left">
         <div class="exercise-name">Nordic curl</div>
@@ -3151,7 +3149,7 @@
     </div>
   </div>
 
-  <div class="physio-card" onclick="toggleCard(this)">
+  <div class="physio-card">
     <div class="card-header">
       <div class="card-header-left">
         <div class="exercise-name">Lantionnosto + jalan liu'utus suoraksi</div>
@@ -3167,7 +3165,7 @@
     </div>
   </div>
 
-  <div class="physio-card" onclick="toggleCard(this)">
+  <div class="physio-card">
     <div class="card-header">
       <div class="card-header-left">
         <div class="exercise-name">Kahden jalan mini hyppelyt pehmeällä</div>
@@ -3185,7 +3183,7 @@
   <!-- LINJAUS / TASAPAINO -->
   <div class="physio-section-title">⚖️ Linjaus & Tasapaino</div>
 
-  <div class="physio-card" onclick="toggleCard(this)">
+  <div class="physio-card">
     <div class="card-header">
       <div class="card-header-left">
         <div class="exercise-name">Yhdellä jalalla seisonta – linjaus</div>
@@ -3202,7 +3200,7 @@
     </div>
   </div>
 
-  <div class="physio-card" onclick="toggleCard(this)">
+  <div class="physio-card">
     <div class="card-header">
       <div class="card-header-left">
         <div class="exercise-name">Vatsanmakuulla polvien koukistus + jalannosto</div>
@@ -3222,7 +3220,7 @@
   <!-- CORE & SELKÄ -->
   <div class="physio-section-title">🔧 Core & Selkä</div>
 
-  <div class="physio-card" onclick="toggleCard(this)">
+  <div class="physio-card">
     <div class="card-header">
       <div class="card-header-left">
         <div class="exercise-name">Takaketjun pumpaus</div>
@@ -3238,7 +3236,7 @@
     </div>
   </div>
 
-  <div class="physio-card" onclick="toggleCard(this)">
+  <div class="physio-card">
     <div class="card-header">
       <div class="card-header-left">
         <div class="exercise-name">Pakaran pumpaus</div>
@@ -3255,7 +3253,7 @@
     </div>
   </div>
 
-  <div class="physio-card" onclick="toggleCard(this)">
+  <div class="physio-card">
     <div class="card-header">
       <div class="card-header-left">
         <div class="exercise-name">Pallean ja syvien lihasten aktivointi</div>
@@ -3273,7 +3271,7 @@
     </div>
   </div>
 
-  <div class="physio-card" onclick="toggleCard(this)">
+  <div class="physio-card">
     <div class="card-header">
       <div class="card-header-left">
         <div class="exercise-name">Hallinta – kierto</div>
@@ -3291,7 +3289,7 @@
     </div>
   </div>
 
-  <div class="physio-card" onclick="toggleCard(this)">
+  <div class="physio-card">
     <div class="card-header">
       <div class="card-header-left">
         <div class="exercise-name">Hallintaliike / vatsalihakset</div>
@@ -3312,7 +3310,7 @@
   <div class="physio-section-title">🔧 Selkä & Lonkankoukistajat</div>
   <div class="date-chip">Eira Sairaala · 2018</div>
 
-  <div class="physio-card" onclick="toggleCard(this)">
+  <div class="physio-card">
     <div class="card-header">
       <div class="card-header-left">
         <div class="exercise-name">Selän taaksetaivutus seisten (McKenzie)</div>
@@ -3330,7 +3328,7 @@
     </div>
   </div>
 
-  <div class="physio-card" onclick="toggleCard(this)">
+  <div class="physio-card">
     <div class="card-header">
       <div class="card-header-left">
         <div class="exercise-name">Lonkankoukistajat – venytys</div>
@@ -3346,7 +3344,7 @@
     </div>
   </div>
 
-  <div class="physio-card" onclick="toggleCard(this)">
+  <div class="physio-card">
     <div class="card-header">
       <div class="card-header-left">
         <div class="exercise-name">Lantion kierto selinmakuulla</div>
@@ -3366,7 +3364,7 @@
   <div class="physio-section-title">💪 Olkapää & Lapa</div>
   <div class="date-chip">Terveystalo · 2016</div>
 
-  <div class="physio-card" onclick="toggleCard(this)">
+  <div class="physio-card">
     <div class="card-header">
       <div class="card-header-left">
         <div class="exercise-name">Olkapään mobilisointi – seinävieritys</div>
@@ -3382,7 +3380,7 @@
     </div>
   </div>
 
-  <div class="physio-card" onclick="toggleCard(this)">
+  <div class="physio-card">
     <div class="card-header">
       <div class="card-header-left">
         <div class="exercise-name">Käsien nosto sivukautta ylös</div>
@@ -3398,7 +3396,7 @@
     </div>
   </div>
 
-  <div class="physio-card" onclick="toggleCard(this)">
+  <div class="physio-card">
     <div class="card-header">
       <div class="card-header-left">
         <div class="exercise-name">Keppi / pyyhe selän taakse</div>
@@ -3415,7 +3413,7 @@
     </div>
   </div>
 
-  <div class="physio-card" onclick="toggleCard(this)">
+  <div class="physio-card">
     <div class="card-header">
       <div class="card-header-left">
         <div class="exercise-name">Olkapään ulkokierto kuminauhalla</div>
@@ -3431,7 +3429,7 @@
     </div>
   </div>
 
-  <div class="physio-card" onclick="toggleCard(this)">
+  <div class="physio-card">
     <div class="card-header">
       <div class="card-header-left">
         <div class="exercise-name">Olkavarren ulko- ja sisäkierto kuminauhalla</div>
@@ -3450,7 +3448,7 @@
 
   <div class="physio-section-title">💪 Olkapää & Lapa – vahvistus</div>
 
-  <div class="physio-card" onclick="toggleCard(this)">
+  <div class="physio-card">
     <div class="card-header">
       <div class="card-header-left">
         <div class="exercise-name">Vipunosto sivulle (deltoideus)</div>
@@ -3467,7 +3465,7 @@
     </div>
   </div>
 
-  <div class="physio-card" onclick="toggleCard(this)">
+  <div class="physio-card">
     <div class="card-header">
       <div class="card-header-left">
         <div class="exercise-name">Pystypunnerrus käsipainoilla (deltoideus)</div>
@@ -3482,7 +3480,7 @@
     </div>
   </div>
 
-  <div class="physio-card" onclick="toggleCard(this)">
+  <div class="physio-card">
     <div class="card-header">
       <div class="card-header-left">
         <div class="exercise-name">Seinäpunnerrus – lavan neutraaliasento</div>
@@ -3498,7 +3496,7 @@
     </div>
   </div>
 
-  <div class="physio-card" onclick="toggleCard(this)">
+  <div class="physio-card">
     <div class="card-header">
       <div class="card-header-left">
         <div class="exercise-name">Soutuliike istuen kuminauhalla</div>
@@ -3524,6 +3522,13 @@
   ══════════════════════════════════════ */
   const SUPA_URL = 'https://azgraotogacudqpuahrz.supabase.co';
   const SUPA_KEY = 'sb_publishable_RoeDClj0q0LC6T4A3AGkmQ_rWjYtvDk';
+
+  // ── HTML escape utility (XSS protection) ──
+  function esc(s) {
+    const d = document.createElement('div');
+    d.textContent = s ?? '';
+    return d.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
 
   // ── Logger utility ──
   const log = {
@@ -4102,13 +4107,45 @@
         calNav(dir);
       }
     });
+
+    // Card toggle delegation (physio-card and exercise-card)
+    document.addEventListener('click', (e) => {
+      const header = e.target.closest('.physio-card > .card-header, .exercise-card > .card-header');
+      if (header) {
+        const card = header.closest('.physio-card, .exercise-card');
+        if (card) toggleCard(card, e);
+      }
+    });
+
+    // My Programs page — static buttons
+    document.getElementById('mpNewBtn')?.addEventListener('click', showNewProgramInput);
+    document.getElementById('mpNewCancel')?.addEventListener('click', hideNewProgramInput);
+    document.getElementById('mpNewSave')?.addEventListener('click', saveNewProgram);
+    document.getElementById('mpBackBtn')?.addEventListener('click', closeProgramDetail);
+    document.getElementById('mpDetailName')?.addEventListener('click', startEditProgramName);
+    document.getElementById('mpAddExBtn')?.addEventListener('click', openExercisePickerForProgram);
+    document.getElementById('mpNewInput')?.addEventListener('keydown', (e) => { if (e.key === 'Enter') saveNewProgram(); });
+
+    // History tab buttons
+    document.getElementById('histTabLog')?.addEventListener('click', () => switchHistTab('log'));
+    document.getElementById('histTabAnalytics')?.addEventListener('click', () => switchHistTab('analytics'));
+
+    // History detail sheet
+    document.getElementById('histDetailBackdrop')?.addEventListener('click', closeHistDetail);
+    document.getElementById('histDetailClose')?.addEventListener('click', closeHistDetail);
+
+    // Exercise picker
+    document.getElementById('pickerBackdrop')?.addEventListener('click', closeExercisePicker);
+    document.getElementById('pickerCloseBottom')?.addEventListener('click', closeExercisePicker);
+    document.getElementById('pickerSearch')?.addEventListener('input', debouncePickerSearch);
   }
 
   /* ══════════════════════════════════════
      CARDS
   ══════════════════════════════════════ */
-  function toggleCard(card) {
-    if (event.target.classList.contains('ex-checkbox')) return;
+  function toggleCard(card, e) {
+    if (e && e.target.classList.contains('ex-checkbox')) return;
+    if (e && e.target.closest('.ex-checkbox, .mp-ex-input, .prog-ex-reorder-btn, .mp-ex-del, button')) return;
     card.classList.toggle('open');
   }
 
@@ -4190,7 +4227,8 @@
     if (noProgressTabs.includes(currentTab)) {
       document.getElementById('progressWrap').style.display = 'none';
       return;
-    }    const all = page.querySelectorAll('.ex-checkbox');
+    }
+    const all = page.querySelectorAll('.ex-checkbox');
     const doneEls = page.querySelectorAll('.ex-checkbox:checked');
     const total = all.length, doneCount = doneEls.length;
     const pct = total > 0 ? Math.round((doneCount / total) * 100) : 0;
@@ -4409,14 +4447,18 @@
       return `<div class="session-item">
         <div class="session-icon">${TYPE_ICONS[s.type]||'⚡'}</div>
         <div class="session-info">
-          <div class="session-type" style="color:${TYPE_COLORS[s.type]||'#3dba6e'}">${s.type}</div>
+          <div class="session-type" style="color:${TYPE_COLORS[s.type]||'#3dba6e'}">${esc(s.type)}</div>
           <div class="session-date">${dateLabel}</div>
           ${feelings ? `<div class="session-chips">${feelings}</div>` : ''}
-          ${s.note ? `<div class="session-note">"${s.note}"</div>` : ''}
+          ${s.note ? `<div class="session-note">"${esc(s.note)}"</div>` : ''}
         </div>
-        <button class="session-del" onclick="deleteSession('${s.id}')">Poista</button>
+        <button class="session-del" data-session-id="${esc(s.id)}">Poista</button>
       </div>`;
     }).join('');
+    // Wire delete buttons
+    el.querySelectorAll('.session-del[data-session-id]').forEach(btn => {
+      btn.addEventListener('click', () => deleteSession(btn.dataset.sessionId));
+    });
   }
 
   function renderInsights() {
@@ -4475,7 +4517,7 @@
       if (pct >= 40) {
         tiredTypeHtml = `<div class="insight-card">
           <div class="insight-card-title">Palautuminen</div>
-          <div class="insight-trend">😴 <span>${worstType}</span> jälkeen tunnet itsesi väsyneeksi ${pct}% ajasta — muista palautuminen!</div>
+          <div class="insight-trend">😴 <span>${esc(worstType)}</span> jälkeen tunnet itsesi väsyneeksi ${pct}% ajasta — muista palautuminen!</div>
         </div>`;
       }
     }
@@ -4569,16 +4611,29 @@
       const exCount = countMap[p.id] || 0;
       const meta = exCount > 0 ? `${exCount} ${t('mp.exercises')}` : t('mp.noExercises');
       return `
-        <div class="mp-program-card" onclick="openProgramDetail('${p.id}', '${p.name.replace(/'/g,"\\'")}')">
+        <div class="mp-program-card" data-prog-id="${esc(p.id)}" data-prog-name="${esc(p.name)}">
           <div class="mp-program-icon">${getProgramEmoji(i)}</div>
           <div class="mp-program-info">
-            <div class="mp-program-name">${p.name}</div>
+            <div class="mp-program-name">${esc(p.name)}</div>
             <div class="mp-program-meta">${meta}</div>
           </div>
           <div class="mp-program-arrow">›</div>
-          <button class="mp-program-del" onclick="event.stopPropagation(); confirmDeleteProgram('${p.id}', '${p.name.replace(/'/g,"\\'")}')">${t('mp.delete')}</button>
+          <button class="mp-program-del" data-del-id="${esc(p.id)}" data-del-name="${esc(p.name)}">${t('mp.delete')}</button>
         </div>`;
     }).join('');
+    // Wire program card clicks
+    listEl.querySelectorAll('.mp-program-card').forEach(card => {
+      card.addEventListener('click', (e) => {
+        if (e.target.closest('.mp-program-del')) return;
+        openProgramDetail(card.dataset.progId, card.dataset.progName);
+      });
+    });
+    listEl.querySelectorAll('.mp-program-del').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        confirmDeleteProgram(btn.dataset.delId, btn.dataset.delName);
+      });
+    });
   }
 
   function openProgramDetail(id, name) {
@@ -4840,10 +4895,11 @@
     if (!programId) {
       container.innerHTML = `<div class="prog-empty">${currentLang === 'en' ? 'Program not found. Go to My Programs to set it up.' : 'Ohjelmaa ei löydy. Mene Omat ohjelmat -sivulle lisätäksesi liikkeitä.'}</div>
         <div class="prog-add-wrap">
-          <button class="add-exercise-btn" onclick="showTab('myprograms')" style="border-style:solid;border-color:var(--gold);color:var(--gold)">
+          <button class="add-exercise-btn prog-goto-mp" style="border-style:solid;border-color:var(--gold);color:var(--gold)">
             ${currentLang === 'en' ? '→ Go to My Programs' : '→ Siirry Omat ohjelmat'}
           </button>
         </div>`;
+      container.querySelector('.prog-goto-mp')?.addEventListener('click', () => showTab('myprograms'));
       return;
     }
 
@@ -4865,8 +4921,9 @@
       container.innerHTML = `
         <div class="prog-empty">${currentLang === 'en' ? 'No exercises yet.\nTap below to add some! 💪' : 'Ei liikkeitä vielä.\nLisää liikkeitä alta! 💪'}</div>
         <div class="prog-add-wrap">
-          <button class="add-exercise-btn" onclick="openProgPicker('${slot}')">+ ${currentLang === 'en' ? 'Add exercise' : 'Lisää liike'}</button>
+          <button class="add-exercise-btn prog-add-btn">+ ${currentLang === 'en' ? 'Add exercise' : 'Lisää liike'}</button>
         </div>`;
+      container.querySelector('.prog-add-btn')?.addEventListener('click', () => openProgPicker(slot));
       return;
     }
 
@@ -4876,7 +4933,7 @@
       lib: exerciseLibrary.find(e => e.id === r.exercise_id) || {}
     }));
 
-    // Group by category
+    // Group by category — track global index for up/down disabled state
     const grouped = {};
     enriched.forEach(e => {
       const cat = e.lib.category || '—';
@@ -4889,58 +4946,89 @@
     const wLabel = currentLang === 'en' ? 'Weight (kg)' : 'Paino (kg)';
     const removeLabel = currentLang === 'en' ? 'Remove exercise' : 'Poista liike';
 
+    let globalIdx = 0;
     const html = Object.entries(grouped).map(([cat, exercises]) => `
-      <div class="prog-category-title">${cat}</div>
-      ${exercises.map((e, ei) => `
-        <div class="prog-ex-card" onclick="toggleCard(this)">
+      <div class="prog-category-title">${esc(cat)}</div>
+      ${exercises.map((e) => {
+        const isFirst = globalIdx === 0;
+        const isLast = globalIdx === enriched.length - 1;
+        globalIdx++;
+        return `
+        <div class="prog-ex-card" data-row-id="${esc(e.id)}" data-ex-id="${esc(e.exercise_id)}">
           <div class="card-header">
             <div class="card-header-left" style="flex:1">
-              <div class="exercise-name">${e.lib.name || 'Tuntematon'}</div>
-              <span class="prog-ex-sets" id="badge-${e.id}">${e.sets} × ${e.reps}${e.target_weight ? ' · ' + e.target_weight + ' kg' : ''}</span>
+              <div class="exercise-name">${esc(e.lib.name || 'Tuntematon')}</div>
+              <span class="prog-ex-sets" id="badge-${esc(e.id)}">${e.sets} × ${esc(e.reps)}${e.target_weight ? ' · ' + e.target_weight + ' kg' : ''}</span>
             </div>
             <div class="chevron">⌄</div>
-            <div class="cb-wrap" onclick="event.stopPropagation()">
-              <input type="checkbox" class="ex-checkbox" data-tab="${slot}" data-name="${e.lib.name || ''}" />
+            <div class="cb-wrap">
+              <input type="checkbox" class="ex-checkbox" data-tab="${slot}" data-name="${esc(e.lib.name || '')}" />
             </div>
           </div>
           <div class="card-body">
-            ${e.lib.instructions ? `<div class="prog-ex-instructions">▸ ${e.lib.instructions}</div>` : ''}
+            ${e.lib.instructions ? `<div class="prog-ex-instructions">▸ ${esc(e.lib.instructions)}</div>` : ''}
             <div class="prog-ex-fields">
               <div class="prog-ex-field">
                 <label>${sLabel}</label>
-                <input type="number" class="mp-ex-input" inputmode="numeric" value="${e.sets}" min="1" max="20"
-                  onclick="event.stopPropagation()"
-                  onchange="updateExerciseField('${e.id}','sets',this.value); updateBadge('${e.id}',this.closest('.prog-ex-fields'))" />
+                <input type="number" class="mp-ex-input" inputmode="numeric" value="${e.sets}" min="1" max="20" data-field="sets" />
               </div>
               <div class="prog-ex-field">
                 <label>${rLabel}</label>
-                <input type="text" class="mp-ex-input" value="${e.reps}" maxlength="10"
-                  onclick="event.stopPropagation()"
-                  onchange="updateExerciseField('${e.id}','reps',this.value); updateBadge('${e.id}',this.closest('.prog-ex-fields'))" />
+                <input type="text" class="mp-ex-input" value="${esc(e.reps)}" maxlength="10" data-field="reps" />
               </div>
               <div class="prog-ex-field">
                 <label>${wLabel}</label>
-                <input type="number" class="mp-ex-input" inputmode="decimal" value="${e.target_weight || ''}" placeholder="—" min="0" step="0.5"
-                  onclick="event.stopPropagation()"
-                  onchange="updateExerciseField('${e.id}','target_weight',this.value||null); updateBadge('${e.id}',this.closest('.prog-ex-fields'))" />
+                <input type="number" class="mp-ex-input" inputmode="decimal" value="${e.target_weight || ''}" placeholder="—" min="0" step="0.5" data-field="target_weight" />
               </div>
             </div>
             <div class="prog-ex-reorder">
-              <button class="prog-ex-reorder-btn" onclick="event.stopPropagation(); reorderProgExercise('${slot}','${e.id}','up')" ${e.sort_order === 0 ? 'disabled' : ''}>▲ ${currentLang === 'en' ? 'Up' : 'Ylös'}</button>
-              <button class="prog-ex-reorder-btn" onclick="event.stopPropagation(); reorderProgExercise('${slot}','${e.id}','down')" ${ei === enriched.length-1 ? 'disabled' : ''}>▼ ${currentLang === 'en' ? 'Down' : 'Alas'}</button>
+              <button class="prog-ex-reorder-btn" data-dir="up" ${isFirst ? 'disabled' : ''}>▲ ${currentLang === 'en' ? 'Up' : 'Ylös'}</button>
+              <button class="prog-ex-reorder-btn" data-dir="down" ${isLast ? 'disabled' : ''}>▼ ${currentLang === 'en' ? 'Down' : 'Alas'}</button>
             </div>
-            <button class="mp-ex-del" style="width:100%;border-radius:8px;padding:10px;font-size:13px;margin-top:6px"
-              onclick="event.stopPropagation(); removeProgExercise('${slot}','${e.id}','${e.exercise_id}')">
+            <button class="mp-ex-del prog-remove-btn" style="width:100%;border-radius:8px;padding:10px;font-size:13px;margin-top:6px">
               ${removeLabel}
             </button>
           </div>
-        </div>`).join('')}
+        </div>`;
+      }).join('')}
     `).join('');
 
     container.innerHTML = html + `
       <div class="prog-add-wrap">
-        <button class="add-exercise-btn" onclick="openProgPicker('${slot}')">+ ${currentLang === 'en' ? 'Add exercise' : 'Lisää liike'}</button>
+        <button class="add-exercise-btn prog-add-btn">+ ${currentLang === 'en' ? 'Add exercise' : 'Lisää liike'}</button>
       </div>`;
+
+    // Wire up event listeners (no inline onclick)
+    container.querySelectorAll('.prog-ex-card').forEach(card => {
+      const rowId = card.dataset.rowId;
+      const exId = card.dataset.exId;
+      // Card toggle
+      card.querySelector('.card-header').addEventListener('click', (e) => toggleCard(card, e));
+      // Input fields
+      card.querySelectorAll('.mp-ex-input').forEach(input => {
+        input.addEventListener('click', (e) => e.stopPropagation());
+        input.addEventListener('change', () => {
+          const field = input.dataset.field;
+          const val = field === 'target_weight' ? (input.value || null) : input.value;
+          updateExerciseField(rowId, field, val);
+          updateBadge(rowId, input.closest('.prog-ex-fields'));
+        });
+      });
+      // Reorder buttons
+      card.querySelectorAll('.prog-ex-reorder-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          reorderProgExercise(slot, rowId, btn.dataset.dir);
+        });
+      });
+      // Remove button
+      card.querySelector('.prog-remove-btn')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        removeProgExercise(slot, rowId, exId);
+      });
+    });
+    // Add exercise button
+    container.querySelector('.prog-add-btn')?.addEventListener('click', () => openProgPicker(slot));
 
     // Wire up checkboxes for this prog page
     initProgCheckboxes(slot, container);
@@ -5024,10 +5112,15 @@
     }
   }
 
-  function openProgPicker(slot) {
+  async function openProgPicker(slot) {
     const programId = progPageIdMap[slot];
     if (!programId) return;
-    pickerAddedIds = new Set();
+    // Load existing exercises so picker shows them as already added
+    const { data: existing } = await supa.from('workout_day_exercises')
+      .select('exercise_id')
+      .eq('user_id', currentUser.id)
+      .eq('program_id', programId);
+    pickerAddedIds = new Set((existing || []).map(e => e.exercise_id));
     openExercisePicker(programId);
   }
 
@@ -5258,7 +5351,12 @@
     if (resolvedBtn) resolvedBtn.textContent = '…';
     if (resolvedItem) { resolvedItem.style.borderColor = 'var(--gold)'; resolvedItem.style.background = 'var(--gold-dim)'; }
 
-    const sort_order = pickerAddedIds.size;
+    // Get actual count from DB for correct sort_order (avoids conflicts)
+    const { data: existingRows } = await supa.from('workout_day_exercises')
+      .select('id')
+      .eq('user_id', currentUser.id)
+      .eq('program_id', pickerActiveDay);
+    const sort_order = existingRows ? existingRows.length : pickerAddedIds.size;
     const { error } = await supa.from('workout_day_exercises').insert({
       user_id: currentUser.id,
       program_id: pickerActiveDay,
@@ -5392,13 +5490,17 @@
         const feelings = [s.effort_feeling ? effortMap[s.effort_feeling] : null, s.post_workout_mood ? moodMap[s.post_workout_mood] : null].filter(Boolean).join(' · ');
         return `<div class="sheet-existing-item">
           <div>
-            <span class="sheet-existing-type" style="color:${TYPE_COLORS[s.type]||'#3dba6e'}">${TYPE_ICONS[s.type]||'⚡'} ${s.type}</span>
+            <span class="sheet-existing-type" style="color:${TYPE_COLORS[s.type]||'#3dba6e'}">${TYPE_ICONS[s.type]||'⚡'} ${esc(s.type)}</span>
             ${feelings ? `<div style="font-size:11px;color:var(--muted);margin-top:2px">${feelings}</div>` : ''}
-            ${s.note ? `<div style="font-size:11px;color:var(--muted);margin-top:2px;font-style:italic">"${s.note}"</div>` : ''}
+            ${s.note ? `<div style="font-size:11px;color:var(--muted);margin-top:2px;font-style:italic">"${esc(s.note)}"</div>` : ''}
           </div>
-          <button class="sheet-existing-del" onclick="deleteSheetSession('${s.id}')">Poista</button>
+          <button class="sheet-existing-del" data-del-session="${esc(s.id)}">Poista</button>
         </div>`;
       }).join('');
+      // Wire delete buttons
+      existingEl.querySelectorAll('.sheet-existing-del[data-del-session]').forEach(btn => {
+        btn.addEventListener('click', () => deleteSheetSession(btn.dataset.delSession));
+      });
     } else {
       existingEl.innerHTML = '';
     }
@@ -5674,10 +5776,10 @@
         const chips = [effortLabel, moodLabel].filter(Boolean).map(c =>
           `<span class="hist-chip">${c}</span>`).join('');
         const icon = TYPE_ICONS[h.program_name] || '💪';
-        return `<div class="hist-card" onclick="openHistDetail('${h.id}')">
+        return `<div class="hist-card" data-hist-id="${esc(h.id)}">
           <div class="hist-card-icon">${icon}</div>
           <div class="hist-card-info">
-            <div class="hist-card-program">${h.program_name}</div>
+            <div class="hist-card-program">${esc(h.program_name)}</div>
             <div class="hist-card-date">${dateStr}</div>
             ${chips ? `<div class="hist-card-meta">${chips}</div>` : ''}
           </div>
@@ -5687,6 +5789,10 @@
     `).join('');
 
     listEl.innerHTML = html;
+    // Wire history card clicks
+    listEl.querySelectorAll('.hist-card[data-hist-id]').forEach(card => {
+      card.addEventListener('click', () => openHistDetail(card.dataset.histId));
+    });
   }
 
   async function openHistDetail(historyId) {

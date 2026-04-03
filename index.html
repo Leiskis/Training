@@ -662,23 +662,8 @@
   .timer-btn:hover { border-color: #3dba6e; color: #3dba6e; }
   .timer-btn-stop { border-color: #e0a030; color: #e0a030; }
   .timer-btn-stop:hover { border-color: #e05555; color: #e05555; }
-  .timer-btn-reset { border-color: var(--border); color: var(--muted); font-size: 10px; margin-right: 4px; }
+  .timer-btn-reset { border-color: var(--border); color: var(--muted); font-size: 10px; }
   .timer-btn-reset:hover { border-color: #e05555; color: #e05555; }
-  .timer-btn-reset.holding {
-    background: rgba(224, 85, 85, 0.15);
-    border-color: #e05555;
-    color: #e05555;
-    transform: scale(1.15);
-    transition: all 0.6s ease;
-  }
-  .timer-btn-reset.hint {
-    animation: hintShake 0.4s ease;
-  }
-  @keyframes hintShake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-2px); }
-    75% { transform: translateX(2px); }
-  }
   .reset-btn {
     background: none;
     border: 1px solid var(--border);
@@ -2459,10 +2444,10 @@
     <span><span class="done-count" id="progressDone">0</span> / <span id="progressTotal">0</span> tehty</span>
     <div class="progress-right">
       <span class="workout-timer" id="workoutTimer">
-        <button class="timer-btn timer-btn-reset" id="timerResetBtn" title="Nollaa ajastin (paina pitkään)" style="display:none">✕</button>
         <span class="timer-display" id="timerDisplay">00:00</span>
         <button class="timer-btn" id="timerStartBtn" title="Aloita ajastin">▶</button>
         <button class="timer-btn timer-btn-stop" id="timerStopBtn" title="Pysäytä ajastin" style="display:none">⏸</button>
+        <button class="timer-btn timer-btn-reset" id="timerResetBtn" title="Nollaa ajastin" style="display:none">✕</button>
       </span>
       <button class="reset-btn" id="resetBtn">Nollaa</button>
     </div>
@@ -4409,34 +4394,10 @@
       e.stopPropagation();
       stopTimer();
     });
-    // Reset requires long press (600ms) to prevent accidental taps
-    const resetBtn = document.getElementById('timerResetBtn');
-    let resetHoldTimer = null;
-    let resetTriggered = false;
-    resetBtn.addEventListener('pointerdown', (e) => {
+    document.getElementById('timerResetBtn').addEventListener('click', (e) => {
       e.stopPropagation();
-      resetTriggered = false;
-      resetBtn.classList.add('holding');
-      resetHoldTimer = setTimeout(() => {
-        resetTriggered = true;
-        resetBtn.classList.remove('holding');
-        resetTimer();
-      }, 600);
+      resetTimer();
     });
-    resetBtn.addEventListener('pointerup', (e) => {
-      e.stopPropagation();
-      clearTimeout(resetHoldTimer);
-      resetBtn.classList.remove('holding');
-      if (!resetTriggered) {
-        resetBtn.classList.add('hint');
-        setTimeout(() => resetBtn.classList.remove('hint'), 800);
-      }
-    });
-    resetBtn.addEventListener('pointerleave', () => {
-      clearTimeout(resetHoldTimer);
-      resetBtn.classList.remove('holding');
-    });
-    resetBtn.addEventListener('click', (e) => e.stopPropagation());
   }
 
   /* ══════════════════════════════════════

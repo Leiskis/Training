@@ -620,6 +620,50 @@
     margin-bottom: 10px;
   }
   .progress-label .done-count { color: #3dba6e; font-weight: 600; }
+  .progress-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .workout-timer {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .timer-display {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+    min-width: 40px;
+    text-align: right;
+    letter-spacing: 0.5px;
+    transition: color 0.2s;
+  }
+  .timer-display.running {
+    color: #3dba6e;
+  }
+  .timer-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 50%;
+    width: 26px;
+    height: 26px;
+    font-size: 11px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: all 0.2s;
+    line-height: 1;
+  }
+  .timer-btn:hover { border-color: #3dba6e; color: #3dba6e; }
+  .timer-btn-stop { border-color: #e0a030; color: #e0a030; }
+  .timer-btn-stop:hover { border-color: #e05555; color: #e05555; }
+  .timer-btn-reset { border-color: var(--border); color: var(--muted); font-size: 10px; }
+  .timer-btn-reset:hover { border-color: #e05555; color: #e05555; }
   .reset-btn {
     background: none;
     border: 1px solid var(--border);
@@ -2398,7 +2442,15 @@
   <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
   <div class="progress-label">
     <span><span class="done-count" id="progressDone">0</span> / <span id="progressTotal">0</span> tehty</span>
-    <button class="reset-btn" id="resetBtn">Nollaa</button>
+    <div class="progress-right">
+      <span class="workout-timer" id="workoutTimer">
+        <span class="timer-display" id="timerDisplay">00:00</span>
+        <button class="timer-btn" id="timerStartBtn" title="Aloita ajastin">▶</button>
+        <button class="timer-btn timer-btn-stop" id="timerStopBtn" title="Pysäytä ajastin" style="display:none">⏸</button>
+        <button class="timer-btn timer-btn-reset" id="timerResetBtn" title="Nollaa ajastin" style="display:none">✕</button>
+      </span>
+      <button class="reset-btn" id="resetBtn">Nollaa</button>
+    </div>
   </div>
 </div>
 
@@ -4260,6 +4312,95 @@
   }
 
   /* ══════════════════════════════════════
+     WORKOUT TIMER
+  ══════════════════════════════════════ */
+  let timerInterval = null;
+  let timerStartTime = null;
+  let timerElapsed = 0; // seconds accumulated before pause
+  let timerRunning = false;
+
+  function formatTimer(totalSeconds) {
+    const h = Math.floor(totalSeconds / 3600);
+    const m = Math.floor((totalSeconds % 3600) / 60);
+    const s = totalSeconds % 60;
+    if (h > 0) return String(h) + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+    return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+  }
+
+  function updateTimerDisplay() {
+    const display = document.getElementById('timerDisplay');
+    if (!display) return;
+    let total = timerElapsed;
+    if (timerRunning && timerStartTime) {
+      total += Math.floor((Date.now() - timerStartTime) / 1000);
+    }
+    display.textContent = formatTimer(total);
+  }
+
+  function startTimer() {
+    if (timerRunning) return;
+    timerRunning = true;
+    timerStartTime = Date.now();
+    const display = document.getElementById('timerDisplay');
+    if (display) display.classList.add('running');
+    document.getElementById('timerStartBtn').style.display = 'none';
+    document.getElementById('timerStopBtn').style.display = 'flex';
+    document.getElementById('timerResetBtn').style.display = 'flex';
+    updateTimerDisplay();
+    timerInterval = setInterval(updateTimerDisplay, 1000);
+    log.info('Workout timer started');
+  }
+
+  function stopTimer() {
+    if (!timerRunning) return;
+    timerRunning = false;
+    if (timerStartTime) {
+      timerElapsed += Math.floor((Date.now() - timerStartTime) / 1000);
+      timerStartTime = null;
+    }
+    clearInterval(timerInterval);
+    timerInterval = null;
+    const display = document.getElementById('timerDisplay');
+    if (display) display.classList.remove('running');
+    document.getElementById('timerStartBtn').style.display = 'flex';
+    document.getElementById('timerStopBtn').style.display = 'none';
+    updateTimerDisplay();
+    log.info('Workout timer stopped at', timerElapsed, 'seconds');
+  }
+
+  function resetTimer() {
+    stopTimer();
+    timerElapsed = 0;
+    timerStartTime = null;
+    document.getElementById('timerResetBtn').style.display = 'none';
+    updateTimerDisplay();
+    log.info('Workout timer reset');
+  }
+
+  function getTimerSeconds() {
+    let total = timerElapsed;
+    if (timerRunning && timerStartTime) {
+      total += Math.floor((Date.now() - timerStartTime) / 1000);
+    }
+    return total;
+  }
+
+  function initTimerButtons() {
+    document.getElementById('timerStartBtn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      startTimer();
+    });
+    document.getElementById('timerStopBtn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      stopTimer();
+    });
+    document.getElementById('timerResetBtn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      resetTimer();
+    });
+  }
+
+  /* ══════════════════════════════════════
      CALENDAR
   ══════════════════════════════════════ */
   const TYPE_COLORS = {
@@ -5530,7 +5671,7 @@
   /* ══════════════════════════════════════
      WORKOUT HISTORY SNAPSHOT
   ══════════════════════════════════════ */
-  async function logWorkoutWithSnapshot(programId, date, effortFeeling, postWorkoutMood, note, calendarSessionId) {
+  async function logWorkoutWithSnapshot(programId, date, effortFeeling, postWorkoutMood, note, calendarSessionId, durationSeconds) {
     if (!currentUser) return null;
     log.group('logWorkoutWithSnapshot');
 
@@ -5568,7 +5709,8 @@
         logged_date: date,
         effort_feeling: effortFeeling || null,
         post_workout_mood: postWorkoutMood || null,
-        note: note || null
+        note: note || null,
+        duration_seconds: durationSeconds || null
       });
 
     if (hErr) { log.error('Failed to create history row:', hErr.message); log.end(); return null; }
@@ -5616,6 +5758,7 @@
       alert('This workout type is already logged for this day!'); return;
     }
     const note = document.getElementById('sheetNote').value.trim() || null;
+    const duration = getTimerSeconds() || null;
     const btn = document.getElementById('sheetSaveBtn');
     btn.disabled = true; btn.textContent = t('sheet.saving');
 
@@ -5627,7 +5770,8 @@
       ts: Date.now(),
       effort_feeling: sheetEffort,
       post_workout_mood: sheetMood,
-      note: note
+      note: note,
+      duration_seconds: duration
     });
     if (error) {
       alert('Error: ' + error.message);
@@ -5650,13 +5794,15 @@
         sheetEffort,
         sheetMood,
         note,
-        newSession?.id
+        newSession?.id,
+        duration
       );
     } else {
       log.info('No matching program for type:', sheetSelectedType, '— skipping snapshot');
     }
 
     btn.textContent = t('sheet.saved');
+    if (duration) resetTimer();
     setTimeout(() => {
       btn.disabled = false; btn.textContent = t('sheet.save');
       closeSheet();
@@ -5731,7 +5877,7 @@
     listEl.innerHTML = `<div class="hist-loading">${t('hist.loading')}</div>`;
 
     const { data, error } = await supa.from('workout_history')
-      .select('id, program_name, logged_date, effort_feeling, post_workout_mood, note, created_at')
+      .select('id, program_name, logged_date, effort_feeling, post_workout_mood, note, duration_seconds, created_at')
       .eq('user_id', currentUser.id)
       .order('logged_date', { ascending: false });
 
@@ -5773,7 +5919,8 @@
         const dateStr = d.toLocaleDateString(currentLang === 'fi' ? 'fi-FI' : 'en-US', { weekday: 'short', day: 'numeric', month: 'short' });
         const effortLabel = h.effort_feeling ? EFFORT_LABELS_MAP[h.effort_feeling] : '';
         const moodLabel = h.post_workout_mood ? MOOD_LABELS_MAP[h.post_workout_mood] : '';
-        const chips = [effortLabel, moodLabel].filter(Boolean).map(c =>
+        const durationChip = h.duration_seconds ? '⏱ ' + formatTimer(h.duration_seconds) : '';
+        const chips = [effortLabel, moodLabel, durationChip].filter(Boolean).map(c =>
           `<span class="hist-chip">${c}</span>`).join('');
         const icon = TYPE_ICONS[h.program_name] || '💪';
         return `<div class="hist-card" data-hist-id="${esc(h.id)}">
@@ -5812,6 +5959,7 @@
     const chips = [];
     if (entry.effort_feeling) chips.push(`<span class="hist-feeling-chip">${EFFORT_LABELS_MAP[entry.effort_feeling] || entry.effort_feeling}</span>`);
     if (entry.post_workout_mood) chips.push(`<span class="hist-feeling-chip mood">${MOOD_LABELS_MAP[entry.post_workout_mood] || entry.post_workout_mood}</span>`);
+    if (entry.duration_seconds) chips.push(`<span class="hist-feeling-chip">⏱ ${formatTimer(entry.duration_seconds)}</span>`);
     feelingsEl.innerHTML = chips.join('');
     feelingsEl.style.display = chips.length ? 'flex' : 'none';
 
@@ -6309,6 +6457,9 @@
       'picker.search': 'Hae liikettä...',
       'picker.empty': 'Ei tuloksia haulle',
       'picker.tap': 'Napauta muokataksesi',
+      'timer.start': 'Aloita ajastin',
+      'timer.stop': 'Pysäytä ajastin',
+      'timer.reset': 'Nollaa ajastin',
     },
     en: {
       headerSub: '3 programs · Mobility · Stretching',
@@ -6382,6 +6533,9 @@
       'picker.search': 'Search exercises...',
       'picker.empty': 'No results for',
       'picker.tap': 'Tap to edit',
+      'timer.start': 'Start timer',
+      'timer.stop': 'Stop timer',
+      'timer.reset': 'Reset timer',
     }
   };
 
@@ -6428,6 +6582,13 @@
     }
     const resetBtn = document.querySelector('.reset-btn');
     if (resetBtn) resetBtn.textContent = t('resetBtn');
+    // Timer titles
+    const timerStart = document.getElementById('timerStartBtn');
+    const timerStop = document.getElementById('timerStopBtn');
+    const timerReset = document.getElementById('timerResetBtn');
+    if (timerStart) timerStart.title = t('timer.start');
+    if (timerStop) timerStop.title = t('timer.stop');
+    if (timerReset) timerReset.title = t('timer.reset');
 
     // Auth overlay
     document.querySelectorAll('.auth-tab').forEach((btn, i) => {
@@ -6519,6 +6680,7 @@
     initPickerDelegation();
     initTabDelegation();
     initAuthDelegation();
+    initTimerButtons();
     log.info('Event delegation initialized');
     updateProgress();
     applyTranslations();

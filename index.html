@@ -5784,11 +5784,11 @@
       .eq('user_id', currentUser.id).order('created_at', { ascending: false });
     if (reloaded) cachedSessions = reloaded;
 
-    // 3. Snapshot the program if session type matches a user program
+    // 3. Create workout history entry
+    const newSession = cachedSessions[0]; // most recent = just inserted
     const matchingProgram = userPrograms.find(p => p.name === sheetSelectedType);
     if (matchingProgram) {
-      const newSession = cachedSessions[0]; // most recent = just inserted
-      await logWorkoutWithSnapshot(
+      const histId = await logWorkoutWithSnapshot(
         matchingProgram.id,
         sheetDate,
         sheetEffort,
@@ -5797,8 +5797,27 @@
         newSession?.id,
         duration
       );
+      if (!histId) {
+        log.warn('Snapshot failed but session was saved');
+      }
     } else {
-      log.info('No matching program for type:', sheetSelectedType, '— skipping snapshot');
+      // Save history entry without exercise snapshot (e.g. "Muu" type)
+      const { error: hErr } = await supa.from('workout_history').insert({
+        user_id: currentUser.id,
+        session_id: newSession?.id || null,
+        program_id: null,
+        program_name: sheetSelectedType,
+        logged_date: sheetDate,
+        effort_feeling: sheetEffort || null,
+        post_workout_mood: sheetMood || null,
+        note: note,
+        duration_seconds: duration
+      });
+      if (hErr) {
+        log.error('Failed to create history for non-program workout:', hErr.message);
+      } else {
+        log.ok('History created for non-program workout:', sheetSelectedType);
+      }
     }
 
     btn.textContent = t('sheet.saved');

@@ -5037,6 +5037,7 @@
     if (!_dragCard) return;
     if (_dragRAF) cancelAnimationFrame(_dragRAF);
     _dragRAF = requestAnimationFrame(() => {
+      if (!_dragCard) { _dragRAF = null; return; }
       const dy = y - _dragStartY;
       _dragCard.style.transform = `translateY(${dy}px) scale(1.03)`;
 

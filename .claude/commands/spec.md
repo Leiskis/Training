@@ -63,6 +63,16 @@ Käy läpi jokainen UI-interaktio ja tunnista sudenkuopat:
 - Onko closure joka kaappaa muuttujan arvon luontihetkellä (stale closure)?
 - Null vs tyhjä string vs undefined: miten DB-sarake ja UI-logiikka käsittelevät näitä?
 
+**Drag & Drop (jos feature sisältää raahattavia elementtejä):**
+- Document-tason listenerit (touchmove/touchend/mousemove/mouseup) KERRAN moduulitasolla — ei renderöintifunktion sisällä
+- Drop vs Click: tarvitaan `_dragJustEnded` flag + setTimeout estämään click dropin jälkeen
+- CSS: `transition: none` + `will-change: transform` dragging-luokassa. EI `transition: all` — käytä spesifisiä propertyjä
+- Drop-hetkellä: `transition: none` → transform nollaus → force reflow → transition palautus
+- requestAnimationFrame moveDrag:ssa (ei suoria DOM-päivityksiä joka touch-eventillä)
+- Body scroll lock: `overflow: hidden` dragin aikana + visibilitychange handler turvaverkoksi
+- Drop-indikaattori: vain LÄHIN kohde (closest distance), ei kaikkia ohitettuja
+- `_dragSaving` flag estää uuden dragin tallennuksen aikana
+
 ### 5. Riskit ja riippuvuudet
 | Riski | Todennäköisyys | Vaikutus | Mitigaatio |
 
@@ -94,6 +104,11 @@ Kokoa kaikki yhteen selkeäksi dokumentiksi:
 - [ ] stopPropagation lisätty X nappiin
 - [ ] Re-render ei tuhoa Y
 - [ ] const/let tarkistettu Z muuttujalle
+- [ ] Drag: document-listenerit moduulitasolla (ei renderissä)
+- [ ] Drag: transition:none dragging-luokassa
+- [ ] Drag: rAF moveDrag:ssa
+- [ ] Drag: _dragJustEnded estää click
+- [ ] Drag: body overflow lock + visibilitychange
 
 ### UX-virta
 1. ...

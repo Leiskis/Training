@@ -3770,7 +3770,7 @@
       this._body = body;
       this._method = 'POST';
       const conflict = opts.onConflict || '';
-      this._prefer = `resolution=merge-duplicates,return=representation`;
+      this._prefer = `resolution=merge-duplicates,return=minimal`;
       if (conflict) this._onConflict = conflict;
       return this;
     }
@@ -4252,7 +4252,7 @@
     log.group('syncChecksFromCloud');
     log.info('Fetching checks for user:', currentUser.id);
     const { data, error } = await supa.from('exercise_checks')
-      .select('tab_id, exercise_name, done').eq('user_id', currentUser.id);
+      .select('tab_id, exercise_name, done, checked_at_seconds').eq('user_id', currentUser.id);
     if (error) { log.error('Failed to fetch checks:', error.message); log.end(); return; }
     if (!data) { log.warn('No data returned'); log.end(); return; }
     log.ok('Fetched', data.length, 'exercise check rows');

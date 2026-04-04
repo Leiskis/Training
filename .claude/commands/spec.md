@@ -41,7 +41,29 @@ Kuvaa käyttökokemus mobiili-ensin:
 - **Palaute**: miten käyttäjä tietää että toiminto onnistui/epäonnistui
 - **Sijainti**: mihin välilehteen/näkymään feature tulee
 
-### 4. Riskit ja riippuvuudet
+### 4. Interaktioanalyysi (KRIITTINEN)
+
+Käy läpi jokainen UI-interaktio ja tunnista sudenkuopat:
+
+**Popup/Overlay-elementit:**
+- Mihin DOM-elementtiin popup liitetään? Jos se liitetään elementtiin joka renderöidään uudelleen (innerHTML), popup katoaa.
+- Ratkaisu: liitä popupit `document.body`:iin, ei parent-elementtiin.
+
+**Click-propagaatio:**
+- Tarvitseeko jokin nappi `e.stopPropagation()`? Jos popup on kortin sisällä, kortin click-handler voi sulkea popupin.
+- Listaa kaikki napit jotka tarvitsevat stopPropagation.
+
+**Re-render lifecycle:**
+- Mitkä funktiot kutsuvat `renderXxx()` joka korvaa innerHTML:n? Tämä tuhoaa event listenerit.
+- Tarkista: luodaanko uudet event listenerit renderöinnin jälkeen?
+- Onko ketjutusriski: funktio A kutsuu renderXxx → se kutsuu loadData → data vanhentuu?
+
+**Muuttujan lifecycle:**
+- Onko `const` jota yritetään uudelleenmäärittää?
+- Onko closure joka kaappaa muuttujan arvon luontihetkellä (stale closure)?
+- Null vs tyhjä string vs undefined: miten DB-sarake ja UI-logiikka käsittelevät näitä?
+
+### 5. Riskit ja riippuvuudet
 | Riski | Todennäköisyys | Vaikutus | Mitigaatio |
 
 - Voiko muutos rikkoa olemassa olevaa toimintoa?
@@ -66,6 +88,12 @@ Kokoa kaikki yhteen selkeäksi dokumentiksi:
 - Muutettavat funktiot: X kpl
 - Uudet funktiot: X kpl
 - DB-muutokset: kyllä/ei
+
+### Interaktiosudenkuopat
+- [ ] Popup liitetään body:iin (ei parent-elementtiin)
+- [ ] stopPropagation lisätty X nappiin
+- [ ] Re-render ei tuhoa Y
+- [ ] const/let tarkistettu Z muuttujalle
 
 ### UX-virta
 1. ...

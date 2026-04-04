@@ -157,6 +157,9 @@
     cursor: pointer;
     transition: all 0.2s;
     white-space: nowrap;
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .tab-btn.active {
     background: var(--gold);
@@ -1321,6 +1324,26 @@
     transform: scale(0.98);
     border-color: var(--gold);
   }
+  .mp-program-card.mp-inactive {
+    opacity: 0.5;
+  }
+  .mp-active-toggle {
+    background: none;
+    border: 1.5px solid var(--border);
+    border-radius: 20px;
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .mp-active-toggle.active {
+    border-color: #3dba6e;
+    color: #3dba6e;
+  }
   .mp-program-icon {
     width: 44px; height: 44px;
     background: var(--gold-dim);
@@ -2468,9 +2491,9 @@
 
 <nav class="tab-bar">
   <button class="tab-btn active" data-tab="warmup" data-i18n-tab="warmup">🔥 Alkulämmittely</button>
-  <button class="tab-btn" data-tab="prog1">Ohjelma 1</button>
-  <button class="tab-btn" data-tab="prog2">Ohjelma 2</button>
-  <button class="tab-btn" data-tab="prog3">Ohjelma 3</button>
+  <button class="tab-btn" data-tab="prog1" id="tab-prog1">Ohjelma 1</button>
+  <button class="tab-btn" data-tab="prog2" id="tab-prog2">Ohjelma 2</button>
+  <button class="tab-btn" data-tab="prog3" id="tab-prog3">Ohjelma 3</button>
   <button class="tab-btn" data-tab="physio" id="physio-tab" data-i18n-tab="physio">🏥 Fysioterapia</button>
   <button class="tab-btn" data-tab="myprograms" data-i18n-tab="myprograms">✏️ Omat</button>
   <button class="tab-btn" data-tab="calendar" data-i18n-tab="calendar">📅 Kalenteri</button>
@@ -4008,7 +4031,7 @@
     if (!currentUser) return [];
     log.group('loadUserPrograms');
     const { data, error } = await supa.from('workout_programs')
-      .select('id, name, sort_order, created_at')
+      .select('id, name, sort_order, created_at, is_active')
       .eq('user_id', currentUser.id)
       .order('sort_order');
     if (error) { log.error('Failed to load programs:', error.message); log.end(); return []; }
@@ -4803,16 +4826,22 @@
       countMap[r.program_id] = (countMap[r.program_id] || 0) + 1;
     });
 
+    const activeCount = userPrograms.filter(p => p.is_active !== false).length;
     listEl.innerHTML = userPrograms.map((p, i) => {
       const exCount = countMap[p.id] || 0;
       const meta = exCount > 0 ? `${exCount} ${t('mp.exercises')}` : t('mp.noExercises');
+      const isActive = p.is_active !== false;
+      const toggleLabel = isActive
+        ? (currentLang === 'en' ? '✓ Active' : '✓ Aktiivinen')
+        : (currentLang === 'en' ? '○ Hidden' : '○ Piilotettu');
       return `
-        <div class="mp-program-card" data-prog-id="${esc(p.id)}" data-prog-name="${esc(p.name)}">
+        <div class="mp-program-card ${isActive ? '' : 'mp-inactive'}" data-prog-id="${esc(p.id)}" data-prog-name="${esc(p.name)}">
           <div class="mp-program-icon">${getProgramEmoji(i)}</div>
           <div class="mp-program-info">
             <div class="mp-program-name">${esc(p.name)}</div>
             <div class="mp-program-meta">${meta}</div>
           </div>
+          <button class="mp-active-toggle ${isActive ? 'active' : ''}" data-toggle-id="${esc(p.id)}" data-active="${isActive}">${toggleLabel}</button>
           <div class="mp-program-arrow">›</div>
           <button class="mp-program-del" data-del-id="${esc(p.id)}" data-del-name="${esc(p.name)}">${t('mp.delete')}</button>
         </div>`;
@@ -4820,7 +4849,7 @@
     // Wire program card clicks
     listEl.querySelectorAll('.mp-program-card').forEach(card => {
       card.addEventListener('click', (e) => {
-        if (e.target.closest('.mp-program-del')) return;
+        if (e.target.closest('.mp-program-del') || e.target.closest('.mp-active-toggle')) return;
         openProgramDetail(card.dataset.progId, card.dataset.progName);
       });
     });
@@ -4828,6 +4857,26 @@
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         confirmDeleteProgram(btn.dataset.delId, btn.dataset.delName);
+      });
+    });
+    listEl.querySelectorAll('.mp-active-toggle').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const id = btn.dataset.toggleId;
+        const wasActive = btn.dataset.active === 'true';
+        const newActive = !wasActive;
+        // Max 3 check
+        if (newActive && activeCount >= 3) {
+          alert(currentLang === 'en' ? 'Max 3 active programs. Deactivate one first.' : 'Max 3 aktiivista ohjelmaa. Poista ensin jokin käytöstä.');
+          return;
+        }
+        const { error } = await supa.from('workout_programs')
+          .update({ is_active: newActive }).eq('user_id', currentUser.id).eq('id', id);
+        if (error) { log.error('Toggle active failed:', error.message); return; }
+        log.ok('Program active toggled:', id, '→', newActive);
+        await loadUserPrograms();
+        updateProgTabs();
+        renderProgramList();
       });
     });
   }
@@ -5071,18 +5120,32 @@
     if (!currentUser) return;
     await loadUserPrograms();
     await loadExerciseLibrary();
-    // Map Ohjelma 1/2/3 to their UUIDs
-    const nameMap = { prog1: 'Ohjelma 1', prog2: 'Ohjelma 2', prog3: 'Ohjelma 3' };
-    for (const [slot, name] of Object.entries(nameMap)) {
-      const prog = userPrograms.find(p => p.name === name);
-      if (prog) progPageIdMap[slot] = prog.id;
-    }
+    updateProgTabs();
     // Render whichever is currently visible
     for (const slot of ['prog1','prog2','prog3']) {
       if (document.getElementById(slot)?.classList.contains('active')) {
         await renderProgPage(slot);
       }
     }
+  }
+
+  function updateProgTabs() {
+    const slots = ['prog1', 'prog2', 'prog3'];
+    const activeProgs = userPrograms.filter(p => p.is_active !== false).slice(0, 3);
+    progPageIdMap = {};
+    slots.forEach((slot, i) => {
+      const tabBtn = document.getElementById('tab-' + slot);
+      if (!tabBtn) return;
+      if (i < activeProgs.length) {
+        const prog = activeProgs[i];
+        progPageIdMap[slot] = prog.id;
+        tabBtn.style.display = '';
+        tabBtn.textContent = (getProgramEmoji(i) || '💪') + ' ' + prog.name;
+      } else {
+        tabBtn.style.display = 'none';
+        delete progPageIdMap[slot];
+      }
+    });
   }
 
   async function renderProgPage(slot) {
@@ -5656,8 +5719,9 @@
     // Build type buttons from user's programs + Muu
     const typeRow = document.getElementById('sheetTypeRow');
     typeRow.innerHTML = '';
+    const activeProgs = userPrograms.filter(p => p.is_active !== false);
     const types = [
-      ...userPrograms.map((p, i) => ({ label: (getProgramEmoji(i) || '💪') + ' ' + p.name, type: p.name })),
+      ...activeProgs.map((p, i) => ({ label: (getProgramEmoji(i) || '💪') + ' ' + p.name, type: p.name })),
       { label: '⚡ Muu', type: 'Muu' }
     ];
     const firstType = types[0]?.type || 'Muu';

@@ -5345,6 +5345,7 @@
           .update({ name: newName }).eq('user_id', currentUser.id).eq('id', activeProgramId);
         if (nameErr) log.error('Rename program failed:', nameErr.message);
         await loadUserPrograms();
+        updateProgTabs();
       }
       // Restore to div
       const div = document.createElement('div');

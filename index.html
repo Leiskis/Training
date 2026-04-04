@@ -5386,8 +5386,7 @@
 
   function closeProgramDetail() {
     activeProgramId = null;
-    document.getElementById('mpProgramList').style.display = 'block';
-    document.getElementById('mpDetail').style.display = 'none';
+    renderProgramList();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 

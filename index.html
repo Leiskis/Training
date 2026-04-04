@@ -90,8 +90,9 @@
 
   /* HEADER */
   header {
-    background: linear-gradient(160deg, var(--header-bg1) 0%, var(--header-bg2) 60%);
+    background: var(--header-bg1);
     padding: 48px 20px 36px;
+    padding-top: calc(env(safe-area-inset-top, 20px) + 36px);
     text-align: center;
     border-bottom: 1px solid var(--tab-border);
     position: relative;

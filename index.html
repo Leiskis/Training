@@ -5030,13 +5030,15 @@
   async function saveEmoji(programId, emoji, popup) {
     if (popup._closeHandler) document.removeEventListener('click', popup._closeHandler);
     popup.remove();
+    log.info('Saving emoji:', programId, '→', JSON.stringify(emoji));
     const { error } = await supa.from('workout_programs')
       .update({ emoji: emoji }).eq('user_id', currentUser.id).eq('id', programId);
     if (error) { log.error('Save emoji failed:', error.message); return; }
-    log.ok('Emoji saved:', programId, '→', emoji);
+    log.ok('Emoji saved successfully');
     await loadUserPrograms();
+    log.info('Programs after reload:', userPrograms.map(p => p.name + ':' + JSON.stringify(p.emoji)));
     updateProgTabs();
-    renderProgramList();
+    await renderProgramList();
   }
 
   function openProgramDetail(id, name) {

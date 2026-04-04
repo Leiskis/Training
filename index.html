@@ -1525,6 +1525,13 @@
     border-top: 1px solid var(--border);
   }
   .prog-ex-card.open .card-body { display: block; }
+  .check-timestamp {
+    display: inline-block;
+    font-size: 11px;
+    color: #3dba6e;
+    font-weight: 600;
+    margin-left: 8px;
+  }
   .prog-ex-category {
     display: block;
     font-size: 11px;
@@ -4230,12 +4237,19 @@
         e.stopPropagation();
         const done = cb.checked;
         card.classList.toggle('done', done);
+        // Show/hide timestamp
+        const seconds = done && timerRunning ? getTimerSeconds() : null;
+        let tsEl = card.querySelector('.check-timestamp');
+        if (done && seconds) {
+          if (!tsEl) { tsEl = document.createElement('span'); tsEl.className = 'check-timestamp'; card.querySelector('.card-header-left')?.appendChild(tsEl); }
+          tsEl.textContent = '⏱ ' + formatTimer(seconds);
+        } else if (tsEl) { tsEl.remove(); }
         updateProgress();
         if (!currentUser) { log.warn('Checkbox changed but no user logged in — not saved to cloud'); return; }
         log.info('Saving checkbox:', tabId, '|', name, '|', done);
         const { error } = await supa.from('exercise_checks').upsert({
           user_id: currentUser.id, tab_id: tabId, exercise_name: name,
-          done: done, checked_at_seconds: done && timerRunning ? getTimerSeconds() : null,
+          done: done, checked_at_seconds: seconds,
           updated_at: new Date().toISOString()
         }, { onConflict: 'user_id,tab_id,exercise_name' });
         if (error) log.error('Checkbox save failed:', error.message);
@@ -5203,6 +5217,13 @@
         e.stopPropagation();
         const done = cb.checked;
         card?.classList.toggle('done', done);
+        // Show/hide timestamp
+        const seconds = done && timerRunning ? getTimerSeconds() : null;
+        let tsEl = card?.querySelector('.check-timestamp');
+        if (done && seconds) {
+          if (!tsEl) { tsEl = document.createElement('span'); tsEl.className = 'check-timestamp'; card?.querySelector('.card-header-left')?.appendChild(tsEl); }
+          tsEl.textContent = '⏱ ' + formatTimer(seconds);
+        } else if (tsEl) { tsEl.remove(); }
         updateProgress();
         if (!currentUser) return;
         const { error } = await supa.from('exercise_checks').upsert({
@@ -5210,7 +5231,7 @@
           tab_id: slot,
           exercise_name: name,
           done,
-          checked_at_seconds: done && timerRunning ? getTimerSeconds() : null,
+          checked_at_seconds: seconds,
           updated_at: new Date().toISOString()
         }, { onConflict: 'user_id,tab_id,exercise_name' });
         if (error) log.error('Prog checkbox save failed:', error.message);

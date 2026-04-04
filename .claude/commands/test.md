@@ -22,6 +22,40 @@ Testaa `index.html`:n toiminnallisuus staattisella analyysillä.
 - Funktiot jotka kutsuvat `renderXxx()` sisällään: tarkista ettei kutsuja ketjuteta niin että edellinen renderöinti ylikirjoittaa seuraavan
 - Click handlerit popupissa: `e.stopPropagation()` JOKAISESSA napissa, muuten parent-handler sulkee popupin
 
+### Drag & Drop (KRIITTINEN)
+Tässä projektissa on touch-pohjainen drag & drop. Tarkista nämä yleiset sudenkuopat:
+
+**Listener-rekisteröinti:**
+- Document-tason listenerit (touchmove, touchend, mousemove, mouseup) PITÄÄ rekisteröidä KERRAN moduulitasolla
+- Jos ne rekisteröidään renderöintifunktion sisällä, ne kasautuvat joka renderöinnillä → memory leak + moninkertainen laukeaminen
+- innerHTML-korvauksessa luodut element-tason listenerit (esim. drag-handle touchstart) ovat OK — ne katoavat vanhojen elementtien mukana
+
+**Drop vs Click -konflikti:**
+- touchend/mouseup laukaisee sekä endDrag:n että click-eventin → tarvitaan `_dragJustEnded` flag + setTimeout(300ms)
+- Card-click handlerin pitää tarkistaa flag ennen openDetail-kutsua
+
+**CSS-animaatiot dragin aikana:**
+- `transition: all` on VAARALLINEN — se animoi myös transform:ia dragin aikana → tökkivä liike
+- Dragging-luokan PITÄÄ sisältää `transition: none` ja `will-change: transform`
+- Drop-hetkellä: aseta `transition: none` ENNEN transform-nollausta, force reflow (`offsetHeight`), sitten palauta transition
+- CSS transition: käytä spesifisiä propertyjä (`border-color 0.15s, opacity 0.15s, margin 0.2s`) eikä `all`
+
+**Drop-indikaattori:**
+- Näytä VAIN lähimmässä kohteessa (closest distance), ei kaikissa ohitetuissa
+- Käytä `::before`/`::after` pseudo-elementtejä indikaattorina
+- Margin-transition tekee siirtymästä sulavan
+
+**requestAnimationFrame:**
+- _moveDrag PITÄÄ käyttää rAF:ia — muuten joka touch-event tekee suoran DOM-päivityksen → jankkaus
+- Muista `cancelAnimationFrame` edelliselle ennen uutta
+
+**Body scroll lock:**
+- `document.body.style.overflow = 'hidden'` dragin aikana
+- PITÄÄ palauttaa endDrag:ssa — myös jos endDrag ei normaalisti laukea (visibilitychange handler)
+
+**Saving race condition:**
+- `_dragSaving` flag estää uuden dragin aloituksen kun edellinen tallentuu DB:hen
+
 ### Muuttujien Lifecycle (KRIITTINEN)
 - `const` vs `let`: jos muuttuja uudelleenmäärätään (`x = {}`) jossakin funktiossa, sen PITÄÄ olla `let`
 - Closure stale values: jos handler luodaan renderöintifunktiossa ja käyttää ulkopuolista muuttujaa (esim. `activeCount`), arvo jäädytetään luontihetkeen → laske uudelleen handlerissa

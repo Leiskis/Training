@@ -1381,7 +1381,7 @@
     -webkit-touch-callout: none;
     touch-action: none;
   }
-  .mp-program-card.dragging {
+  .mp-program-card.dragging, .mp-ex-card.dragging, .prog-ex-card.dragging {
     opacity: 0.9;
     box-shadow: 0 8px 24px rgba(0,0,0,0.3);
     z-index: 100;
@@ -1389,7 +1389,7 @@
     transition: none;
     will-change: transform;
   }
-  .mp-program-card.drag-over-above {
+  .mp-program-card.drag-over-above, .mp-ex-card.drag-over-above, .prog-ex-card.drag-over-above {
     margin-top: 14px;
     position: relative;
   }
@@ -1404,7 +1404,7 @@
     border-radius: 2px;
     box-shadow: 0 0 8px rgba(200,168,75,0.4);
   }
-  .mp-program-card.drag-over-below {
+  .mp-program-card.drag-over-below, .mp-ex-card.drag-over-below, .prog-ex-card.drag-over-below {
     margin-bottom: 14px;
     position: relative;
   }
@@ -4361,7 +4361,8 @@
   ══════════════════════════════════════ */
   function toggleCard(card, e) {
     if (e && e.target.classList.contains('ex-checkbox')) return;
-    if (e && e.target.closest('.ex-checkbox, .mp-ex-input, .prog-ex-reorder-btn, .mp-ex-del, button')) return;
+    if (e && e.target.closest('.ex-checkbox, .mp-ex-input, .mp-drag-handle, .mp-ex-del, button')) return;
+    if (_dragJustEnded) return;
     card.classList.toggle('open');
   }
 
@@ -4993,6 +4994,8 @@
   let _dragRects = [];
   let _dragSaving = false;
   let _dragJustEnded = false;
+  let _dragSaveCallback = null; // function(fromIdx, toIdx) called on drop
+  let _dragListEl = null;
 
   function _onTouchMove(e) {
     if (!_dragCard) return;
@@ -5015,11 +5018,13 @@
   document.addEventListener('mouseup', _onMouseUp);
   document.addEventListener('visibilitychange', _onVisibilityChange);
 
-  function _startDrag(card, y, listEl) {
+  function _startDrag(card, y, listEl, cardSelector, saveCallback) {
     if (!card || _dragSaving) return;
-    _dragCards = [...listEl.querySelectorAll('.mp-program-card')];
+    _dragCards = [...listEl.querySelectorAll(cardSelector || '.mp-program-card')];
     _dragIdx = _dragCards.indexOf(card);
     if (_dragIdx < 0) return;
+    _dragSaveCallback = saveCallback || null;
+    _dragListEl = listEl;
     _dragCard = card;
     _dragStartY = y;
     _dragRects = _dragCards.map(c => c.getBoundingClientRect());
@@ -5078,38 +5083,45 @@
 
     if (dropIdx !== _dragIdx && dropIdx >= 0) {
       _dragSaving = true;
-      const moved = userPrograms.splice(_dragIdx, 1)[0];
-      userPrograms.splice(dropIdx, 0, moved);
-
-      // Save new sort_order with error handling
-      for (let i = 0; i < userPrograms.length; i++) {
-        if (userPrograms[i].sort_order !== i) {
-          userPrograms[i].sort_order = i;
-          const { error } = await supa.from('workout_programs')
-            .update({ sort_order: i }).eq('user_id', currentUser.id).eq('id', userPrograms[i].id);
-          if (error) log.error('Reorder save failed:', error.message);
+      if (_dragSaveCallback) {
+        await _dragSaveCallback(_dragIdx, dropIdx);
+      } else {
+        // Default: reorder userPrograms
+        const moved = userPrograms.splice(_dragIdx, 1)[0];
+        userPrograms.splice(dropIdx, 0, moved);
+        for (let i = 0; i < userPrograms.length; i++) {
+          if (userPrograms[i].sort_order !== i) {
+            userPrograms[i].sort_order = i;
+            const { error } = await supa.from('workout_programs')
+              .update({ sort_order: i }).eq('user_id', currentUser.id).eq('id', userPrograms[i].id);
+            if (error) log.error('Reorder save failed:', error.message);
+          }
         }
+        log.ok('Programs reordered via drag');
+        updateProgTabs();
+        renderProgramList();
       }
       _dragSaving = false;
-      log.ok('Programs reordered via drag');
-      updateProgTabs();
-      renderProgramList();
     }
     _dragIdx = -1;
   }
 
   function initProgramDrag(listEl) {
-    listEl.querySelectorAll('.mp-drag-handle').forEach(handle => {
+    initDragHandles(listEl, '.mp-drag-handle', '.mp-program-card');
+  }
+
+  function initDragHandles(listEl, handleSelector, cardSelector, saveCallback) {
+    listEl.querySelectorAll(handleSelector).forEach(handle => {
       handle.addEventListener('touchstart', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        _startDrag(handle.closest('.mp-program-card'), e.touches[0].clientY, listEl);
+        _startDrag(handle.closest(cardSelector), e.touches[0].clientY, listEl, cardSelector, saveCallback);
       }, { passive: false });
 
       handle.addEventListener('mousedown', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        _startDrag(handle.closest('.mp-program-card'), e.clientY, listEl);
+        _startDrag(handle.closest(cardSelector), e.clientY, listEl, cardSelector, saveCallback);
       });
     });
   }
@@ -5241,10 +5253,7 @@
       card.dataset.id = e.id;
       card.innerHTML = `
         <div class="mp-ex-top">
-          <div class="mp-ex-reorder">
-            <button class="mp-ex-reorder-btn" data-action="up" title="Ylös" ${i === 0 ? 'disabled' : ''}>▲</button>
-            <button class="mp-ex-reorder-btn" data-action="down" title="Alas" ${i === exercises.length-1 ? 'disabled' : ''}>▼</button>
-          </div>
+          <div class="mp-drag-handle ex-drag-handle">≡</div>
           <div class="mp-ex-info">
             <div class="mp-ex-name">${lib.name || 'Tuntematon'}</div>
             <div class="mp-ex-muscle">${lib.muscle_group || ''}</div>
@@ -5269,10 +5278,6 @@
       // Wire events directly — no inline onclick
       card.querySelector('[data-action="delete"]')?.addEventListener('click', () =>
         removeExerciseFromProgram(e.id, e.exercise_id));
-      card.querySelector('[data-action="up"]')?.addEventListener('click', () =>
-        reorderExercise(exercises, i, i - 1));
-      card.querySelector('[data-action="down"]')?.addEventListener('click', () =>
-        reorderExercise(exercises, i, i + 1));
       card.querySelectorAll('.mp-ex-input').forEach(input => {
         input.addEventListener('change', () => {
           const field = input.dataset.field;
@@ -5283,24 +5288,25 @@
 
       el.appendChild(card);
     });
-  }
-
-  async function reorderExercise(exercises, fromIdx, toIdx) {
-    if (toIdx < 0 || toIdx >= exercises.length) return;
-    // Swap sort_order values
-    const a = exercises[fromIdx], b = exercises[toIdx];
-    const { error: e1 } = await supa.from('workout_day_exercises')
-      .update({ sort_order: b.sort_order, updated_at: new Date().toISOString() })
-      .eq('user_id', currentUser.id).eq('id', a.id);
-    const { error: e2 } = await supa.from('workout_day_exercises')
-      .update({ sort_order: a.sort_order, updated_at: new Date().toISOString() })
-      .eq('user_id', currentUser.id).eq('id', b.id);
-    if (e1 || e2) log.error('reorderExercise failed:', e1?.message || e2?.message);
-    // Reload
-    if (activeProgramId) loadAndRenderProgramExercises(activeProgramId);
-    // Also refresh prog page
-    const slot = Object.keys(progPageIdMap).find(k => progPageIdMap[k] === activeProgramId);
-    if (slot) renderProgPage(slot);
+    // Init drag for exercise cards
+    initDragHandles(el, '.ex-drag-handle', '.mp-ex-card', async (fromIdx, toIdx) => {
+      const cards = [...el.querySelectorAll('.mp-ex-card')];
+      const ids = cards.map(c => c.dataset.id);
+      // Reorder locally
+      const moved = ids.splice(fromIdx, 1)[0];
+      ids.splice(toIdx, 0, moved);
+      // Save all sort_orders
+      for (let i = 0; i < ids.length; i++) {
+        const { error } = await supa.from('workout_day_exercises')
+          .update({ sort_order: i, updated_at: new Date().toISOString() })
+          .eq('user_id', currentUser.id).eq('id', ids[i]);
+        if (error) log.error('Exercise reorder save failed:', error.message);
+      }
+      log.ok('Exercises reordered via drag');
+      if (activeProgramId) loadAndRenderProgramExercises(activeProgramId);
+      const slot = Object.keys(progPageIdMap).find(k => progPageIdMap[k] === activeProgramId);
+      if (slot) renderProgPage(slot);
+    });
   }
 
   function startEditProgramName() {
@@ -5530,10 +5536,7 @@
                 <input type="number" class="mp-ex-input" inputmode="decimal" value="${e.target_weight || ''}" placeholder="—" min="0" step="0.5" data-field="target_weight" />
               </div>
             </div>
-            <div class="prog-ex-reorder">
-              <button class="prog-ex-reorder-btn" data-dir="up" ${isFirst ? 'disabled' : ''}>▲ ${currentLang === 'en' ? 'Up' : 'Ylös'}</button>
-              <button class="prog-ex-reorder-btn" data-dir="down" ${isLast ? 'disabled' : ''}>▼ ${currentLang === 'en' ? 'Down' : 'Alas'}</button>
-            </div>
+            <div class="mp-drag-handle prog-ex-drag-handle" style="font-size:16px;padding:10px;text-align:center">≡ ${currentLang === 'en' ? 'Drag to reorder' : 'Raahaa järjestääksesi'}</div>
             <button class="mp-ex-del prog-remove-btn" style="width:100%;border-radius:8px;padding:10px;font-size:13px;margin-top:6px">
               ${removeLabel}
             </button>
@@ -5562,12 +5565,9 @@
           updateBadge(rowId, input.closest('.prog-ex-fields'));
         });
       });
-      // Reorder buttons
-      card.querySelectorAll('.prog-ex-reorder-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          reorderProgExercise(slot, rowId, btn.dataset.dir);
-        });
+      // Drag handle — stopPropagation to prevent card toggle
+      card.querySelectorAll('.prog-ex-drag-handle').forEach(h => {
+        h.addEventListener('click', (e) => e.stopPropagation());
       });
       // Remove button
       card.querySelector('.prog-remove-btn')?.addEventListener('click', (e) => {
@@ -5581,6 +5581,23 @@
     // Wire up checkboxes for this prog page
     initProgCheckboxes(slot, container);
     updateProgress();
+
+    // Init drag for prog exercise cards
+    const programId = progPageIdMap[slot];
+    initDragHandles(container, '.prog-ex-drag-handle', '.prog-ex-card', async (fromIdx, toIdx) => {
+      const cards = [...container.querySelectorAll('.prog-ex-card')];
+      const ids = cards.map(c => c.dataset.rowId);
+      const moved = ids.splice(fromIdx, 1)[0];
+      ids.splice(toIdx, 0, moved);
+      for (let i = 0; i < ids.length; i++) {
+        const { error } = await supa.from('workout_day_exercises')
+          .update({ sort_order: i }).eq('user_id', currentUser.id).eq('id', ids[i]);
+        if (error) log.error('Prog exercise reorder failed:', error.message);
+      }
+      log.ok('Prog exercises reordered via drag');
+      renderProgPage(slot);
+      if (activeProgramId === programId) loadAndRenderProgramExercises(programId);
+    });
   }
 
   function initProgCheckboxes(slot, container) {
@@ -5640,26 +5657,6 @@
     if (badge) badge.textContent = `${sets} × ${reps}${weight ? ' · ' + weight + ' kg' : ''}`;
   }
 
-  async function reorderProgExercise(slot, rowId, dir) {
-    if (!currentUser) return;
-    const programId = progPageIdMap[slot];
-    if (!programId) return;
-    const { data: rows } = await supa.from('workout_day_exercises')
-      .select('id, sort_order').eq('user_id', currentUser.id)
-      .eq('program_id', programId).order('sort_order');
-    if (!rows) return;
-    const idx = rows.findIndex(r => r.id === rowId);
-    const swapIdx = dir === 'up' ? idx - 1 : idx + 1;
-    if (swapIdx < 0 || swapIdx >= rows.length) return;
-    const a = rows[idx], b = rows[swapIdx];
-    const { error: e1 } = await supa.from('workout_day_exercises')
-      .update({ sort_order: b.sort_order }).eq('user_id', currentUser.id).eq('id', a.id);
-    const { error: e2 } = await supa.from('workout_day_exercises')
-      .update({ sort_order: a.sort_order }).eq('user_id', currentUser.id).eq('id', b.id);
-    if (e1 || e2) log.error('reorderProgExercise failed:', e1?.message || e2?.message);
-    renderProgPage(slot);
-    if (activeProgramId === programId) loadAndRenderProgramExercises(programId);
-  }
 
   async function removeProgExercise(slot, rowId, exerciseId) {
     await removeExerciseFromProgram(rowId, exerciseId);

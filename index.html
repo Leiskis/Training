@@ -1370,28 +1370,30 @@
     background: var(--gold-dim);
     border-color: var(--gold);
   }
-  .mp-reorder-btns {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    flex-shrink: 0;
-  }
-  .mp-reorder-btn {
-    background: none;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    width: 28px;
-    height: 22px;
-    font-size: 10px;
-    cursor: pointer;
+  .mp-drag-handle {
+    font-size: 18px;
     color: var(--muted);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    -webkit-tap-highlight-color: transparent;
+    cursor: grab;
+    padding: 8px 4px;
+    flex-shrink: 0;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    touch-action: none;
   }
-  .mp-reorder-btn:disabled { opacity: 0.2; cursor: default; }
-  .mp-reorder-btn:not(:disabled):active { border-color: var(--gold); color: var(--gold); }
+  .mp-program-card.dragging {
+    opacity: 0.9;
+    transform: scale(1.03);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    z-index: 100;
+    position: relative;
+  }
+  .mp-program-card.drag-over-above {
+    border-top: 3px solid var(--gold);
+  }
+  .mp-program-card.drag-over-below {
+    border-bottom: 3px solid var(--gold);
+  }
   .mp-active-toggle {
     background: none;
     border: 1.5px solid var(--border);
@@ -4910,10 +4912,7 @@
             <div class="mp-program-meta">${meta}</div>
           </div>
           <button class="mp-active-toggle ${isActive ? 'active' : ''}" data-toggle-id="${esc(p.id)}" data-active="${isActive}">${toggleLabel}</button>
-          <div class="mp-reorder-btns">
-            <button class="mp-reorder-btn" data-reorder-id="${esc(p.id)}" data-dir="up" ${i === 0 ? 'disabled' : ''}>▲</button>
-            <button class="mp-reorder-btn" data-reorder-id="${esc(p.id)}" data-dir="down" ${i === userPrograms.length - 1 ? 'disabled' : ''}>▼</button>
-          </div>
+          <div class="mp-drag-handle">≡</div>
           <div class="mp-program-arrow">›</div>
           <button class="mp-program-del" data-del-id="${esc(p.id)}" data-del-name="${esc(p.name)}">${t('mp.delete')}</button>
         </div>`;
@@ -4921,7 +4920,7 @@
     // Wire program card clicks
     listEl.querySelectorAll('.mp-program-card').forEach(card => {
       card.addEventListener('click', (e) => {
-        if (e.target.closest('.mp-program-del') || e.target.closest('.mp-active-toggle') || e.target.closest('.mp-emoji-btn') || e.target.closest('.mp-reorder-btn')) return;
+        if (e.target.closest('.mp-program-del') || e.target.closest('.mp-active-toggle') || e.target.closest('.mp-emoji-btn') || e.target.closest('.mp-drag-handle')) return;
         openProgramDetail(card.dataset.progId, card.dataset.progName);
       });
     });
@@ -4958,29 +4957,117 @@
         openEmojiPicker(btn.dataset.emojiId, btn);
       });
     });
-    listEl.querySelectorAll('.mp-reorder-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        reorderProgram(btn.dataset.reorderId, btn.dataset.dir);
-      });
-    });
+    initProgramDrag(listEl);
   }
 
-  async function reorderProgram(id, dir) {
-    const idx = userPrograms.findIndex(p => p.id === id);
-    if (idx < 0) return;
-    const swapIdx = dir === 'up' ? idx - 1 : idx + 1;
-    if (swapIdx < 0 || swapIdx >= userPrograms.length) return;
-    const a = userPrograms[idx], b = userPrograms[swapIdx];
-    const { error: e1 } = await supa.from('workout_programs')
-      .update({ sort_order: b.sort_order }).eq('user_id', currentUser.id).eq('id', a.id);
-    const { error: e2 } = await supa.from('workout_programs')
-      .update({ sort_order: a.sort_order }).eq('user_id', currentUser.id).eq('id', b.id);
-    if (e1 || e2) log.error('reorderProgram failed:', e1?.message || e2?.message);
-    else log.ok('Program reordered:', a.name, dir);
-    await loadUserPrograms();
-    updateProgTabs();
-    renderProgramList();
+  function initProgramDrag(listEl) {
+    let dragCard = null;
+    let dragIdx = -1;
+    let startY = 0;
+    let currentY = 0;
+    let cards = [];
+    let cardRects = [];
+
+    function getCards() { return [...listEl.querySelectorAll('.mp-program-card')]; }
+
+    function startDrag(card, y) {
+      cards = getCards();
+      dragIdx = cards.indexOf(card);
+      if (dragIdx < 0) return;
+      dragCard = card;
+      startY = y;
+      currentY = y;
+      cardRects = cards.map(c => c.getBoundingClientRect());
+      card.classList.add('dragging');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function moveDrag(y) {
+      if (!dragCard) return;
+      currentY = y;
+      const dy = currentY - startY;
+      dragCard.style.transform = `translateY(${dy}px) scale(1.03)`;
+
+      // Show drop indicators
+      cards.forEach((c, i) => {
+        c.classList.remove('drag-over-above', 'drag-over-below');
+        if (c === dragCard) return;
+        const rect = cardRects[i];
+        const mid = rect.top + rect.height / 2;
+        if (i < dragIdx && currentY < mid) c.classList.add('drag-over-above');
+        else if (i > dragIdx && currentY > mid) c.classList.add('drag-over-below');
+      });
+    }
+
+    async function endDrag() {
+      if (!dragCard) return;
+      // Find drop target
+      let dropIdx = dragIdx;
+      for (let i = 0; i < cards.length; i++) {
+        if (cards[i].classList.contains('drag-over-above')) { dropIdx = i; break; }
+        if (cards[i].classList.contains('drag-over-below')) { dropIdx = i; break; }
+      }
+
+      // Cleanup visual state
+      dragCard.classList.remove('dragging');
+      dragCard.style.transform = '';
+      cards.forEach(c => c.classList.remove('drag-over-above', 'drag-over-below'));
+      document.body.style.overflow = '';
+
+      if (dropIdx !== dragIdx && dropIdx >= 0) {
+        // Reorder userPrograms locally
+        const moved = userPrograms.splice(dragIdx, 1)[0];
+        userPrograms.splice(dropIdx, 0, moved);
+
+        // Save new sort_order for all programs
+        for (let i = 0; i < userPrograms.length; i++) {
+          if (userPrograms[i].sort_order !== i) {
+            userPrograms[i].sort_order = i;
+            await supa.from('workout_programs')
+              .update({ sort_order: i }).eq('user_id', currentUser.id).eq('id', userPrograms[i].id);
+          }
+        }
+        log.ok('Programs reordered via drag');
+        updateProgTabs();
+        renderProgramList();
+      }
+
+      dragCard = null;
+      dragIdx = -1;
+    }
+
+    // Touch events on drag handles
+    listEl.querySelectorAll('.mp-drag-handle').forEach(handle => {
+      handle.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const card = handle.closest('.mp-program-card');
+        startDrag(card, e.touches[0].clientY);
+      }, { passive: false });
+
+      handle.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const card = handle.closest('.mp-program-card');
+        startDrag(card, e.clientY);
+      });
+    });
+
+    document.addEventListener('touchmove', (e) => {
+      if (!dragCard) return;
+      e.preventDefault();
+      moveDrag(e.touches[0].clientY);
+    }, { passive: false });
+
+    document.addEventListener('touchend', () => endDrag());
+
+    document.addEventListener('mousemove', (e) => {
+      if (!dragCard) return;
+      e.preventDefault();
+      moveDrag(e.clientY);
+    });
+
+    document.addEventListener('mouseup', () => endDrag());
   }
 
   const EMOJI_OPTIONS = ['💪','🔥','⚡','🏋️','🦵','🔙','🎯','🏃','⚽','🥊','🧘','🚴','🏊','🤸','💥','⭐','❤️','🏆','🌟','👊'];

@@ -1317,7 +1317,7 @@
     align-items: center;
     gap: 14px;
     cursor: pointer;
-    transition: all 0.15s, margin 0.2s ease;
+    transition: border-color 0.15s, opacity 0.15s, margin 0.2s ease;
     -webkit-tap-highlight-color: transparent;
   }
   .mp-program-card:active {
@@ -5044,8 +5044,10 @@
         if (c === _dragCard) return;
         const mid = _dragRects[i].top + _dragRects[i].height / 2;
         const dist = Math.abs(y - mid);
-        if (i < _dragIdx && y < mid && dist < closestDist) { closestIdx = i; closestDist = dist; closestDir = 'above'; }
-        else if (i > _dragIdx && y > mid && dist < closestDist) { closestIdx = i; closestDist = dist; closestDir = 'below'; }
+        if (dist < closestDist) {
+          if (i < _dragIdx && y < mid) { closestIdx = i; closestDist = dist; closestDir = 'above'; }
+          else if (i > _dragIdx && y > mid) { closestIdx = i; closestDist = dist; closestDir = 'below'; }
+        }
       });
       if (closestIdx >= 0) _dragCards[closestIdx].classList.add('drag-over-' + closestDir);
       _dragRAF = null;
@@ -5061,8 +5063,12 @@
     }
 
     // Cleanup visual state — always runs
+    _dragCard.style.transition = 'none';
     _dragCard.classList.remove('dragging');
     _dragCard.style.transform = '';
+    // Force reflow then restore transition
+    _dragCard.offsetHeight;
+    _dragCard.style.transition = '';
     _dragCards.forEach(c => c.classList.remove('drag-over-above', 'drag-over-below'));
     document.body.style.overflow = '';
     _dragCard = null;

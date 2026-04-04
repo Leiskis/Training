@@ -1390,10 +1390,34 @@
     will-change: transform;
   }
   .mp-program-card.drag-over-above {
-    border-top: 3px solid var(--gold);
+    border-top: none;
+    margin-top: 8px;
+    position: relative;
+  }
+  .mp-program-card.drag-over-above::before {
+    content: '';
+    position: absolute;
+    top: -6px;
+    left: 12px;
+    right: 12px;
+    height: 4px;
+    background: var(--gold);
+    border-radius: 2px;
   }
   .mp-program-card.drag-over-below {
-    border-bottom: 3px solid var(--gold);
+    border-bottom: none;
+    margin-bottom: 8px;
+    position: relative;
+  }
+  .mp-program-card.drag-over-below::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 12px;
+    right: 12px;
+    height: 4px;
+    background: var(--gold);
+    border-radius: 2px;
   }
   .mp-active-toggle {
     background: none;
@@ -4921,7 +4945,7 @@
     // Wire program card clicks
     listEl.querySelectorAll('.mp-program-card').forEach(card => {
       card.addEventListener('click', (e) => {
-        if (e.target.closest('.mp-program-del') || e.target.closest('.mp-active-toggle') || e.target.closest('.mp-emoji-btn') || e.target.closest('.mp-drag-handle')) return;
+        if (_dragJustEnded || e.target.closest('.mp-program-del') || e.target.closest('.mp-active-toggle') || e.target.closest('.mp-emoji-btn') || e.target.closest('.mp-drag-handle')) return;
         openProgramDetail(card.dataset.progId, card.dataset.progName);
       });
     });
@@ -4968,6 +4992,7 @@
   let _dragCards = [];
   let _dragRects = [];
   let _dragSaving = false;
+  let _dragJustEnded = false;
 
   function _onTouchMove(e) {
     if (!_dragCard) return;
@@ -5035,6 +5060,9 @@
     _dragCards.forEach(c => c.classList.remove('drag-over-above', 'drag-over-below'));
     document.body.style.overflow = '';
     _dragCard = null;
+    // Prevent card click from firing after drop
+    _dragJustEnded = true;
+    setTimeout(() => { _dragJustEnded = false; }, 300);
 
     if (dropIdx !== _dragIdx && dropIdx >= 0) {
       _dragSaving = true;

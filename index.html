@@ -1383,10 +1383,11 @@
   }
   .mp-program-card.dragging {
     opacity: 0.9;
-    transform: scale(1.03);
     box-shadow: 0 8px 24px rgba(0,0,0,0.3);
     z-index: 100;
     position: relative;
+    transition: none;
+    will-change: transform;
   }
   .mp-program-card.drag-over-above {
     border-top: 3px solid var(--gold);
@@ -4906,13 +4907,13 @@
         : (currentLang === 'en' ? '○ Hidden' : '○ Piilotettu');
       return `
         <div class="mp-program-card ${isActive ? '' : 'mp-inactive'}" data-prog-id="${esc(p.id)}" data-prog-name="${esc(p.name)}">
+          <div class="mp-drag-handle">≡</div>
           <div class="mp-program-icon mp-emoji-btn" data-emoji-id="${esc(p.id)}">${p.emoji != null ? p.emoji : getProgramEmoji(i)}</div>
           <div class="mp-program-info">
             <div class="mp-program-name">${esc(p.name)}</div>
             <div class="mp-program-meta">${meta}</div>
           </div>
           <button class="mp-active-toggle ${isActive ? 'active' : ''}" data-toggle-id="${esc(p.id)}" data-active="${isActive}">${toggleLabel}</button>
-          <div class="mp-drag-handle">≡</div>
           <div class="mp-program-arrow">›</div>
           <button class="mp-program-del" data-del-id="${esc(p.id)}" data-del-name="${esc(p.name)}">${t('mp.delete')}</button>
         </div>`;
@@ -5001,17 +5002,22 @@
     document.body.style.overflow = 'hidden';
   }
 
+  let _dragRAF = null;
   function _moveDrag(y) {
     if (!_dragCard) return;
-    const dy = y - _dragStartY;
-    _dragCard.style.transform = `translateY(${dy}px) scale(1.03)`;
+    if (_dragRAF) cancelAnimationFrame(_dragRAF);
+    _dragRAF = requestAnimationFrame(() => {
+      const dy = y - _dragStartY;
+      _dragCard.style.transform = `translateY(${dy}px) scale(1.03)`;
 
-    _dragCards.forEach((c, i) => {
-      c.classList.remove('drag-over-above', 'drag-over-below');
-      if (c === _dragCard) return;
-      const mid = _dragRects[i].top + _dragRects[i].height / 2;
-      if (i < _dragIdx && y < mid) c.classList.add('drag-over-above');
-      else if (i > _dragIdx && y > mid) c.classList.add('drag-over-below');
+      _dragCards.forEach((c, i) => {
+        c.classList.remove('drag-over-above', 'drag-over-below');
+        if (c === _dragCard) return;
+        const mid = _dragRects[i].top + _dragRects[i].height / 2;
+        if (i < _dragIdx && y < mid) c.classList.add('drag-over-above');
+        else if (i > _dragIdx && y > mid) c.classList.add('drag-over-below');
+      });
+      _dragRAF = null;
     });
   }
 

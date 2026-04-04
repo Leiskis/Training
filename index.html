@@ -5583,7 +5583,6 @@
     updateProgress();
 
     // Init drag for prog exercise cards
-    const programId = progPageIdMap[slot];
     initDragHandles(container, '.prog-ex-drag-handle', '.prog-ex-card', async (fromIdx, toIdx) => {
       const cards = [...container.querySelectorAll('.prog-ex-card')];
       const ids = cards.map(c => c.dataset.rowId);

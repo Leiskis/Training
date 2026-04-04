@@ -1199,7 +1199,6 @@
 
   /* History performed fields */
   /* hist-ex-row, hist-ex-top and hist-ex-performed defined below in detail sheet CSS */
-    display: grid;
   /* ── MY PROGRAMS ── */
   .mp-header {
     display: flex;
@@ -1525,6 +1524,12 @@
     border-top: 1px solid var(--border);
   }
   .prog-ex-card.open .card-body { display: block; }
+  .prog-ex-category {
+    display: block;
+    font-size: 11px;
+    color: var(--text-secondary, #888);
+    margin-top: 2px;
+  }
   .prog-ex-sets {
     display: inline-block;
     margin-top: 4px;
@@ -5076,31 +5081,21 @@
       lib: exerciseLibrary.find(e => e.id === r.exercise_id) || {}
     }));
 
-    // Group by category — track global index for up/down disabled state
-    const grouped = {};
-    enriched.forEach(e => {
-      const cat = e.lib.category || '—';
-      if (!grouped[cat]) grouped[cat] = [];
-      grouped[cat].push(e);
-    });
-
     const sLabel = currentLang === 'en' ? 'Sets' : 'Sarjat';
     const rLabel = currentLang === 'en' ? 'Reps' : 'Toistot';
     const wLabel = currentLang === 'en' ? 'Weight (kg)' : 'Paino (kg)';
     const removeLabel = currentLang === 'en' ? 'Remove exercise' : 'Poista liike';
 
-    let globalIdx = 0;
-    const html = Object.entries(grouped).map(([cat, exercises]) => `
-      <div class="prog-category-title">${esc(cat)}</div>
-      ${exercises.map((e) => {
-        const isFirst = globalIdx === 0;
-        const isLast = globalIdx === enriched.length - 1;
-        globalIdx++;
-        return `
+    const html = enriched.map((e, i) => {
+      const isFirst = i === 0;
+      const isLast = i === enriched.length - 1;
+      const cat = e.lib.category || '';
+      return `
         <div class="prog-ex-card" data-row-id="${esc(e.id)}" data-ex-id="${esc(e.exercise_id)}">
           <div class="card-header">
             <div class="card-header-left" style="flex:1">
               <div class="exercise-name">${esc(e.lib.name || 'Tuntematon')}</div>
+              ${cat ? `<span class="prog-ex-category">${esc(cat)}</span>` : ''}
               <span class="prog-ex-sets" id="badge-${esc(e.id)}">${e.sets} × ${esc(e.reps)}${e.target_weight ? ' · ' + e.target_weight + ' kg' : ''}</span>
             </div>
             <div class="chevron">⌄</div>
@@ -5133,8 +5128,7 @@
             </button>
           </div>
         </div>`;
-      }).join('')}
-    `).join('');
+    }).join('');
 
     container.innerHTML = html + `
       <div class="prog-add-wrap">

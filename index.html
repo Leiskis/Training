@@ -4960,114 +4960,112 @@
     initProgramDrag(listEl);
   }
 
-  function initProgramDrag(listEl) {
-    let dragCard = null;
-    let dragIdx = -1;
-    let startY = 0;
-    let currentY = 0;
-    let cards = [];
-    let cardRects = [];
+  // Drag state — module-level to avoid listener leaks
+  let _dragCard = null;
+  let _dragIdx = -1;
+  let _dragStartY = 0;
+  let _dragCards = [];
+  let _dragRects = [];
+  let _dragSaving = false;
 
-    function getCards() { return [...listEl.querySelectorAll('.mp-program-card')]; }
+  function _onTouchMove(e) {
+    if (!_dragCard) return;
+    e.preventDefault();
+    _moveDrag(e.touches[0].clientY);
+  }
+  function _onTouchEnd() { _endDrag(); }
+  function _onMouseMove(e) {
+    if (!_dragCard) return;
+    e.preventDefault();
+    _moveDrag(e.clientY);
+  }
+  function _onMouseUp() { _endDrag(); }
+  function _onVisibilityChange() { if (document.hidden) _endDrag(); }
 
-    function startDrag(card, y) {
-      cards = getCards();
-      dragIdx = cards.indexOf(card);
-      if (dragIdx < 0) return;
-      dragCard = card;
-      startY = y;
-      currentY = y;
-      cardRects = cards.map(c => c.getBoundingClientRect());
-      card.classList.add('dragging');
-      document.body.style.overflow = 'hidden';
+  // Register document listeners ONCE
+  document.addEventListener('touchmove', _onTouchMove, { passive: false });
+  document.addEventListener('touchend', _onTouchEnd);
+  document.addEventListener('mousemove', _onMouseMove);
+  document.addEventListener('mouseup', _onMouseUp);
+  document.addEventListener('visibilitychange', _onVisibilityChange);
+
+  function _startDrag(card, y, listEl) {
+    if (!card || _dragSaving) return;
+    _dragCards = [...listEl.querySelectorAll('.mp-program-card')];
+    _dragIdx = _dragCards.indexOf(card);
+    if (_dragIdx < 0) return;
+    _dragCard = card;
+    _dragStartY = y;
+    _dragRects = _dragCards.map(c => c.getBoundingClientRect());
+    card.classList.add('dragging');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function _moveDrag(y) {
+    if (!_dragCard) return;
+    const dy = y - _dragStartY;
+    _dragCard.style.transform = `translateY(${dy}px) scale(1.03)`;
+
+    _dragCards.forEach((c, i) => {
+      c.classList.remove('drag-over-above', 'drag-over-below');
+      if (c === _dragCard) return;
+      const mid = _dragRects[i].top + _dragRects[i].height / 2;
+      if (i < _dragIdx && y < mid) c.classList.add('drag-over-above');
+      else if (i > _dragIdx && y > mid) c.classList.add('drag-over-below');
+    });
+  }
+
+  async function _endDrag() {
+    if (!_dragCard) return;
+    let dropIdx = _dragIdx;
+    for (let i = 0; i < _dragCards.length; i++) {
+      if (_dragCards[i].classList.contains('drag-over-above')) { dropIdx = i; break; }
+      if (_dragCards[i].classList.contains('drag-over-below')) { dropIdx = i; break; }
     }
 
-    function moveDrag(y) {
-      if (!dragCard) return;
-      currentY = y;
-      const dy = currentY - startY;
-      dragCard.style.transform = `translateY(${dy}px) scale(1.03)`;
+    // Cleanup visual state — always runs
+    _dragCard.classList.remove('dragging');
+    _dragCard.style.transform = '';
+    _dragCards.forEach(c => c.classList.remove('drag-over-above', 'drag-over-below'));
+    document.body.style.overflow = '';
+    _dragCard = null;
 
-      // Show drop indicators
-      cards.forEach((c, i) => {
-        c.classList.remove('drag-over-above', 'drag-over-below');
-        if (c === dragCard) return;
-        const rect = cardRects[i];
-        const mid = rect.top + rect.height / 2;
-        if (i < dragIdx && currentY < mid) c.classList.add('drag-over-above');
-        else if (i > dragIdx && currentY > mid) c.classList.add('drag-over-below');
-      });
-    }
+    if (dropIdx !== _dragIdx && dropIdx >= 0) {
+      _dragSaving = true;
+      const moved = userPrograms.splice(_dragIdx, 1)[0];
+      userPrograms.splice(dropIdx, 0, moved);
 
-    async function endDrag() {
-      if (!dragCard) return;
-      // Find drop target
-      let dropIdx = dragIdx;
-      for (let i = 0; i < cards.length; i++) {
-        if (cards[i].classList.contains('drag-over-above')) { dropIdx = i; break; }
-        if (cards[i].classList.contains('drag-over-below')) { dropIdx = i; break; }
-      }
-
-      // Cleanup visual state
-      dragCard.classList.remove('dragging');
-      dragCard.style.transform = '';
-      cards.forEach(c => c.classList.remove('drag-over-above', 'drag-over-below'));
-      document.body.style.overflow = '';
-
-      if (dropIdx !== dragIdx && dropIdx >= 0) {
-        // Reorder userPrograms locally
-        const moved = userPrograms.splice(dragIdx, 1)[0];
-        userPrograms.splice(dropIdx, 0, moved);
-
-        // Save new sort_order for all programs
-        for (let i = 0; i < userPrograms.length; i++) {
-          if (userPrograms[i].sort_order !== i) {
-            userPrograms[i].sort_order = i;
-            await supa.from('workout_programs')
-              .update({ sort_order: i }).eq('user_id', currentUser.id).eq('id', userPrograms[i].id);
-          }
+      // Save new sort_order with error handling
+      for (let i = 0; i < userPrograms.length; i++) {
+        if (userPrograms[i].sort_order !== i) {
+          userPrograms[i].sort_order = i;
+          const { error } = await supa.from('workout_programs')
+            .update({ sort_order: i }).eq('user_id', currentUser.id).eq('id', userPrograms[i].id);
+          if (error) log.error('Reorder save failed:', error.message);
         }
-        log.ok('Programs reordered via drag');
-        updateProgTabs();
-        renderProgramList();
       }
-
-      dragCard = null;
-      dragIdx = -1;
+      _dragSaving = false;
+      log.ok('Programs reordered via drag');
+      updateProgTabs();
+      renderProgramList();
     }
+    _dragIdx = -1;
+  }
 
-    // Touch events on drag handles
+  function initProgramDrag(listEl) {
     listEl.querySelectorAll('.mp-drag-handle').forEach(handle => {
       handle.addEventListener('touchstart', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        const card = handle.closest('.mp-program-card');
-        startDrag(card, e.touches[0].clientY);
+        _startDrag(handle.closest('.mp-program-card'), e.touches[0].clientY, listEl);
       }, { passive: false });
 
       handle.addEventListener('mousedown', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        const card = handle.closest('.mp-program-card');
-        startDrag(card, e.clientY);
+        _startDrag(handle.closest('.mp-program-card'), e.clientY, listEl);
       });
     });
-
-    document.addEventListener('touchmove', (e) => {
-      if (!dragCard) return;
-      e.preventDefault();
-      moveDrag(e.touches[0].clientY);
-    }, { passive: false });
-
-    document.addEventListener('touchend', () => endDrag());
-
-    document.addEventListener('mousemove', (e) => {
-      if (!dragCard) return;
-      e.preventDefault();
-      moveDrag(e.clientY);
-    });
-
-    document.addEventListener('mouseup', () => endDrag());
   }
 
   const EMOJI_OPTIONS = ['💪','🔥','⚡','🏋️','🦵','🔙','🎯','🏃','⚽','🥊','🧘','🚴','🏊','🤸','💥','⭐','❤️','🏆','🌟','👊'];

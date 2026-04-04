@@ -1317,7 +1317,7 @@
     align-items: center;
     gap: 14px;
     cursor: pointer;
-    transition: all 0.15s;
+    transition: all 0.15s, margin 0.2s ease;
     -webkit-tap-highlight-color: transparent;
   }
   .mp-program-card:active {
@@ -1390,34 +1390,34 @@
     will-change: transform;
   }
   .mp-program-card.drag-over-above {
-    border-top: none;
-    margin-top: 8px;
+    margin-top: 14px;
     position: relative;
   }
   .mp-program-card.drag-over-above::before {
     content: '';
     position: absolute;
-    top: -6px;
+    top: -9px;
     left: 12px;
     right: 12px;
     height: 4px;
     background: var(--gold);
     border-radius: 2px;
+    box-shadow: 0 0 8px rgba(200,168,75,0.4);
   }
   .mp-program-card.drag-over-below {
-    border-bottom: none;
-    margin-bottom: 8px;
+    margin-bottom: 14px;
     position: relative;
   }
   .mp-program-card.drag-over-below::after {
     content: '';
     position: absolute;
-    bottom: -6px;
+    bottom: -9px;
     left: 12px;
     right: 12px;
     height: 4px;
     background: var(--gold);
     border-radius: 2px;
+    box-shadow: 0 0 8px rgba(200,168,75,0.4);
   }
   .mp-active-toggle {
     background: none;
@@ -5035,13 +5035,19 @@
       const dy = y - _dragStartY;
       _dragCard.style.transform = `translateY(${dy}px) scale(1.03)`;
 
+      // Find closest drop target — only one indicator at a time
+      let closestIdx = -1;
+      let closestDist = Infinity;
+      let closestDir = '';
       _dragCards.forEach((c, i) => {
         c.classList.remove('drag-over-above', 'drag-over-below');
         if (c === _dragCard) return;
         const mid = _dragRects[i].top + _dragRects[i].height / 2;
-        if (i < _dragIdx && y < mid) c.classList.add('drag-over-above');
-        else if (i > _dragIdx && y > mid) c.classList.add('drag-over-below');
+        const dist = Math.abs(y - mid);
+        if (i < _dragIdx && y < mid && dist < closestDist) { closestIdx = i; closestDist = dist; closestDir = 'above'; }
+        else if (i > _dragIdx && y > mid && dist < closestDist) { closestIdx = i; closestDist = dist; closestDir = 'below'; }
       });
+      if (closestIdx >= 0) _dragCards[closestIdx].classList.add('drag-over-' + closestDir);
       _dragRAF = null;
     });
   }

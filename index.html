@@ -4880,7 +4880,7 @@
         : (currentLang === 'en' ? '○ Hidden' : '○ Piilotettu');
       return `
         <div class="mp-program-card ${isActive ? '' : 'mp-inactive'}" data-prog-id="${esc(p.id)}" data-prog-name="${esc(p.name)}">
-          <div class="mp-program-icon mp-emoji-btn" data-emoji-id="${esc(p.id)}">${p.emoji || getProgramEmoji(i)}</div>
+          <div class="mp-program-icon mp-emoji-btn" data-emoji-id="${esc(p.id)}">${p.emoji != null ? p.emoji : getProgramEmoji(i)}</div>
           <div class="mp-program-info">
             <div class="mp-program-name">${esc(p.name)}</div>
             <div class="mp-program-meta">${meta}</div>
@@ -4946,17 +4946,17 @@
 
     // "No emoji" option
     const noneBtn = document.createElement('button');
-    noneBtn.className = 'emoji-pick-btn';
+    noneBtn.className = 'emoji-pick-btn emoji-pick-none';
     noneBtn.textContent = '✕';
     noneBtn.title = currentLang === 'en' ? 'No emoji' : 'Ei emojia';
-    noneBtn.addEventListener('click', () => saveEmoji(programId, null, popup));
+    noneBtn.addEventListener('click', (e) => { e.stopPropagation(); saveEmoji(programId, '', popup); });
     grid.appendChild(noneBtn);
 
     EMOJI_OPTIONS.forEach(em => {
       const btn = document.createElement('button');
       btn.className = 'emoji-pick-btn';
       btn.textContent = em;
-      btn.addEventListener('click', () => saveEmoji(programId, em, popup));
+      btn.addEventListener('click', (e) => { e.stopPropagation(); saveEmoji(programId, em, popup); });
       grid.appendChild(btn);
     });
 
@@ -5249,7 +5249,7 @@
         const prog = activeProgs[i];
         progPageIdMap[slot] = prog.id;
         tabBtn.style.display = '';
-        const em = prog.emoji || getProgramEmoji(i);
+        const em = prog.emoji != null ? prog.emoji : getProgramEmoji(i);
         tabBtn.textContent = em ? em + ' ' + prog.name : prog.name;
       } else {
         tabBtn.style.display = 'none';
@@ -5832,7 +5832,7 @@
     const activeProgs = userPrograms.filter(p => p.is_active !== false);
     const types = [
       ...activeProgs.map((p, i) => {
-        const em = p.emoji || getProgramEmoji(i);
+        const em = p.emoji != null ? p.emoji : getProgramEmoji(i);
         return { label: (em ? em + ' ' : '') + p.name, type: p.name };
       }),
       { label: '⚡ Muu', type: 'Muu' }

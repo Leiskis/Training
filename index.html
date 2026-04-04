@@ -4128,6 +4128,7 @@
     currentUser = user;
     log.ok('onSignedIn — user:', user.email, '| id:', user.id);
     document.getElementById('authOverlay').style.display = 'none';
+    window.scrollTo({ top: 0 });
     const email = user.email || '';
     const initial = email.charAt(0).toUpperCase();
     document.getElementById('userAvatar').textContent = initial;

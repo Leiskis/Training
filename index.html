@@ -6352,6 +6352,14 @@
       return;
     }
 
+    // Ensure sessions are loaded (may not be if user goes to history before calendar)
+    if (!cachedSessions.length && currentUser) {
+      const { data: sessData } = await supa.from('sessions')
+        .select('id,date,type,ts,created_at,effort_feeling,post_workout_mood,note')
+        .eq('user_id', currentUser.id).order('created_at', { ascending: false });
+      if (sessData) cachedSessions = sessData;
+    }
+
     // Also load sessions that have no workout_history entry
     const histSessionIds = new Set((data || []).map(h => h.session_id).filter(Boolean));
     const orphanSessions = cachedSessions.filter(s => !histSessionIds.has(s.id));

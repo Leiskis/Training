@@ -628,14 +628,14 @@
   .workout-timer {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 8px;
   }
   .timer-display {
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 600;
     color: var(--muted);
     font-variant-numeric: tabular-nums;
-    min-width: 40px;
+    min-width: 44px;
     text-align: right;
     letter-spacing: 0.5px;
     transition: color 0.2s;
@@ -645,12 +645,12 @@
   }
   .timer-btn {
     background: none;
-    border: 1px solid var(--border);
+    border: 2px solid var(--border);
     color: var(--muted);
     border-radius: 50%;
-    width: 26px;
-    height: 26px;
-    font-size: 11px;
+    width: 36px;
+    height: 36px;
+    font-size: 14px;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -658,11 +658,12 @@
     padding: 0;
     transition: all 0.2s;
     line-height: 1;
+    -webkit-tap-highlight-color: transparent;
   }
   .timer-btn:hover { border-color: #3dba6e; color: #3dba6e; }
-  .timer-btn-stop { border-color: #e0a030; color: #e0a030; }
+  .timer-btn-stop { border-color: #e0a030; color: #e0a030; width: 38px; height: 38px; font-size: 16px; }
   .timer-btn-stop:hover { border-color: #e05555; color: #e05555; }
-  .timer-btn-reset { border-color: var(--border); color: var(--muted); font-size: 10px; }
+  .timer-btn-reset { border-color: var(--border); color: var(--muted); font-size: 12px; width: 30px; height: 30px; }
   .timer-btn-reset:hover { border-color: #e05555; color: #e05555; }
   .reset-btn {
     background: none;
@@ -4350,7 +4351,7 @@
     if (display) display.classList.add('running');
     document.getElementById('timerStartBtn').style.display = 'none';
     document.getElementById('timerStopBtn').style.display = 'flex';
-    document.getElementById('timerResetBtn').style.display = 'flex';
+    document.getElementById('timerResetBtn').style.display = 'none';
     updateTimerDisplay();
     timerInterval = setInterval(updateTimerDisplay, 1000);
     log.info('Workout timer started');
@@ -4369,6 +4370,7 @@
     if (display) display.classList.remove('running');
     document.getElementById('timerStartBtn').style.display = 'flex';
     document.getElementById('timerStopBtn').style.display = 'none';
+    document.getElementById('timerResetBtn').style.display = 'flex';
     updateTimerDisplay();
     log.info('Workout timer stopped at', timerElapsed, 'seconds');
   }

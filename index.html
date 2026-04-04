@@ -412,8 +412,9 @@
     .session-date { font-size: 13px; }
 
     /* Auth box */
-    .auth-box { padding: 28px 20px; }
-    .auth-logo { font-size: 26px; }
+    .auth-box { padding: 28px 20px; max-width: 100%; border: none; box-shadow: none; background: var(--bg); }
+    .auth-logo { font-size: 28px; }
+    .auth-overlay { padding: 16px; padding-top: max(env(safe-area-inset-top, 16px), 40px); }
 
     /* User pill — shorter on mobile */
     .user-pill { padding: 5px 8px 5px 6px; font-size: 12px; }
@@ -2177,9 +2178,12 @@
     background: var(--bg);
     z-index: 1000;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
     padding: 24px;
+    padding-top: max(env(safe-area-inset-top, 20px), 60px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
   .auth-box {
     background: var(--surface);
@@ -2247,12 +2251,13 @@
     background: var(--surface2);
     border: 1.5px solid var(--border);
     border-radius: 10px;
-    padding: 11px 14px;
+    padding: 12px 14px;
     font-family: 'DM Sans', sans-serif;
-    font-size: 14px;
+    font-size: 16px;
     color: var(--text);
     outline: none;
     transition: border-color 0.2s;
+    -webkit-appearance: none;
   }
   .auth-field input:focus { border-color: var(--gold); }
   .auth-submit {

@@ -58,6 +58,7 @@ Tässä projektissa on touch-pohjainen drag & drop. Tarkista nämä yleiset sude
 
 ### Muuttujien Lifecycle (KRIITTINEN)
 - `const` vs `let`: jos muuttuja uudelleenmäärätään (`x = {}`) jossakin funktiossa, sen PITÄÄ olla `let`
+- **Duplikaatti-deklaraatiot**: jos funktioon lisätään `const x = ...`, tarkista AINA etteikö samassa funktiossa ole jo `const x` aiemmin. Tämä on SyntaxError joka kaataa KOKO sovelluksen — mikään JS ei suoritu. Erityisen yleistä pitkissä funktioissa (renderProgPage, renderProgramList) joihin lisätään koodia loppuun.
 - Closure stale values: jos handler luodaan renderöintifunktiossa ja käyttää ulkopuolista muuttujaa (esim. `activeCount`), arvo jäädytetään luontihetkeen → laske uudelleen handlerissa
 - Falsy-arvot: `null`, `''`, `0`, `false`, `undefined` käyttäytyvät eri tavoin `||` vs `!= null` kanssa. Tarkista erityisesti DB-sarakkeet jotka voivat olla null TAI tyhjä string
 

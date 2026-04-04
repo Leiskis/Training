@@ -6608,10 +6608,14 @@
         weight: parseFloat(weight),
         sets, reps, volume: Math.round(volume)
       });
-      // Aggregate by muscle group
-      const mg = ex.muscle_group || '—';
-      if (!byMuscleGroup[mg]) byMuscleGroup[mg] = 0;
-      byMuscleGroup[mg] += volume;
+      // Aggregate by muscle group — split combined groups like "Selkä, Hauikset"
+      const mgRaw = ex.muscle_group || '—';
+      const mgParts = mgRaw.split(/[,\/&]/).map(s => s.trim()).filter(Boolean);
+      const groups = mgParts.length > 0 ? mgParts : ['—'];
+      groups.forEach(mg => {
+        if (!byMuscleGroup[mg]) byMuscleGroup[mg] = 0;
+        byMuscleGroup[mg] += volume;
+      });
     });
 
     const exercises = Object.entries(byExercise)

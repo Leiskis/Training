@@ -4197,6 +4197,9 @@
     });
     const page = document.getElementById(id);
     if (!page) { log.warn('showTab: page not found:', id); return; }
+    // Block navigation to hidden prog tabs
+    const tabBtn = document.getElementById('tab-' + id);
+    if (tabBtn && tabBtn.style.display === 'none') { log.warn('showTab: tab hidden:', id); return; }
     page.classList.add('active');
     if (triggerEl && triggerEl.classList?.contains('tab-btn')) triggerEl.classList.add('active');
     currentTab = id;
@@ -4865,8 +4868,9 @@
         const id = btn.dataset.toggleId;
         const wasActive = btn.dataset.active === 'true';
         const newActive = !wasActive;
-        // Max 3 check
-        if (newActive && activeCount >= 3) {
+        // Max 3 check (count live from current data)
+        const currentActiveCount = userPrograms.filter(p => p.is_active !== false).length;
+        if (newActive && currentActiveCount >= 3) {
           alert(currentLang === 'en' ? 'Max 3 active programs. Deactivate one first.' : 'Max 3 aktiivista ohjelmaa. Poista ensin jokin käytöstä.');
           return;
         }
@@ -5114,7 +5118,7 @@
   /* ══════════════════════════════════════
      DYNAMIC PROGRAM PAGES (prog1/2/3)
   ══════════════════════════════════════ */
-  const progPageIdMap = {}; // slot → UUID
+  let progPageIdMap = {}; // slot → UUID
 
   async function loadAllProgPages() {
     if (!currentUser) return;

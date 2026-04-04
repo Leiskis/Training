@@ -5086,16 +5086,18 @@
     const wLabel = currentLang === 'en' ? 'Weight (kg)' : 'Paino (kg)';
     const removeLabel = currentLang === 'en' ? 'Remove exercise' : 'Poista liike';
 
+    let prevCat = null;
     const html = enriched.map((e, i) => {
       const isFirst = i === 0;
       const isLast = i === enriched.length - 1;
       const cat = e.lib.category || '';
-      return `
+      const catHeader = cat && cat !== prevCat ? `<div class="prog-category-title">${esc(cat)}</div>` : '';
+      prevCat = cat;
+      return `${catHeader}
         <div class="prog-ex-card" data-row-id="${esc(e.id)}" data-ex-id="${esc(e.exercise_id)}">
           <div class="card-header">
             <div class="card-header-left" style="flex:1">
               <div class="exercise-name">${esc(e.lib.name || 'Tuntematon')}</div>
-              ${cat ? `<span class="prog-ex-category">${esc(cat)}</span>` : ''}
               <span class="prog-ex-sets" id="badge-${esc(e.id)}">${e.sets} × ${esc(e.reps)}${e.target_weight ? ' · ' + e.target_weight + ' kg' : ''}</span>
             </div>
             <div class="chevron">⌄</div>

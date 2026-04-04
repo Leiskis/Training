@@ -6684,7 +6684,7 @@
     btnWeight.textContent = currentLang === 'en' ? '⚖️ Weight' : '⚖️ Painot';
     const btnLoad = document.createElement('button');
     btnLoad.className = 'chart-mode-btn';
-    btnLoad.textContent = currentLang === 'en' ? '🔥 Load' : '🔥 Kuormitus';
+    btnLoad.textContent = currentLang === 'en' ? '💪 Intensity' : '💪 Intensiteetti';
     const btnVolume = document.createElement('button');
     btnVolume.className = 'chart-mode-btn';
     btnVolume.textContent = currentLang === 'en' ? '📊 Volume' : '📊 Volyymi';
@@ -6712,11 +6712,13 @@
     stats.className = 'chart-stats';
     card.appendChild(stats);
 
-    // Compute load and volume points
-    const loadPoints = points.map(p => {
+    // Compute intensity and volume points
+    const maxWeight = Math.max(...points.map(p => p.weight)) || 1;
+    const computedPoints = points.map(p => {
       const repsNum = parseReps(p.reps);
-      const load = (p.sets || 3) * repsNum * p.weight;
-      return { ...p, load: Math.round(load), volume: p.volume || Math.round(load) };
+      const volume = (p.sets || 3) * repsNum * p.weight;
+      const intensity = Math.round(p.weight / maxWeight * 100);
+      return { ...p, intensity, volume: p.volume || Math.round(volume) };
     });
 
     // Draw helpers
@@ -6744,11 +6746,11 @@
         drawLineChart(canvas, points, DPR, W, H, 'weight');
         renderStats(points.map(p => p.weight), 'kg');
       } else if (mode === 'volume') {
-        drawLineChart(canvas, loadPoints, DPR, W, H, 'volume');
-        renderStats(loadPoints.map(p => p.volume), 'kg');
+        drawLineChart(canvas, computedPoints, DPR, W, H, 'volume');
+        renderStats(computedPoints.map(p => p.volume), 'kg');
       } else {
-        drawLineChart(canvas, loadPoints, DPR, W, H, 'load');
-        renderStats(loadPoints.map(p => p.load), '');
+        drawLineChart(canvas, computedPoints, DPR, W, H, 'load');
+        renderStats(computedPoints.map(p => p.intensity), '%');
       }
     }
 
@@ -6796,7 +6798,7 @@
     const chartH = H - PAD.top - PAD.bottom;
 
     // Use correct value field
-    const getValue = p => mode === 'volume' ? p.volume : mode === 'load' ? p.load : p.weight;
+    const getValue = p => mode === 'volume' ? p.volume : mode === 'load' ? p.intensity : p.weight;
     const values = points.map(getValue);
     const minV = Math.min(...values);
     const maxV = Math.max(...values);

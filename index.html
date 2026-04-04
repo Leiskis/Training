@@ -6507,8 +6507,8 @@
         <div class="hist-ex-top">
           <div class="hist-ex-num">${i + 1}</div>
           <div class="hist-ex-info">
-            <div class="hist-ex-name">${e.exercise_name}</div>
-            ${e.muscle_group ? `<div class="hist-ex-muscle">${e.muscle_group}</div>` : ''}
+            <div class="hist-ex-name">${esc(e.exercise_name)}</div>
+            ${e.muscle_group ? `<div class="hist-ex-muscle">${esc(e.muscle_group)}</div>` : ''}
           </div>
           <div class="hist-ex-sets">
             <div class="hist-ex-sets-val">${e.planned_sets || '—'} × ${e.planned_reps || '—'}${weight}</div>

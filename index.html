@@ -6344,7 +6344,8 @@
     const { data, error } = await supa.from('workout_history')
       .select('id, program_name, logged_date, effort_feeling, post_workout_mood, note, duration_seconds, created_at, session_id')
       .eq('user_id', currentUser.id)
-      .order('logged_date', { ascending: false });
+      .order('logged_date', { ascending: false })
+      .order('created_at', { ascending: false });
 
     if (error) {
       log.error('Failed to load history:', error.message);
@@ -6377,7 +6378,11 @@
     }));
 
     cachedHistory = [...(data || []), ...orphanHistory]
-      .sort((a, b) => new Date(b.logged_date) - new Date(a.logged_date));
+      .sort((a, b) => {
+        const dateDiff = new Date(b.logged_date) - new Date(a.logged_date);
+        if (dateDiff !== 0) return dateDiff;
+        return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+      });
     log.ok('History loaded:', cachedHistory.length, 'sessions');
     renderHistoryList();
   }

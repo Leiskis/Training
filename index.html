@@ -1901,6 +1901,7 @@
     color: var(--gold);
   }
   .hist-ex-sets-label { font-size: 10px; color: var(--muted); margin-top: 1px; }
+  .hist-ex-timestamp { font-size: 10px; color: #3dba6e; margin-top: 2px; font-weight: 600; }
   .hist-performed-label {
     font-size: 11px;
     color: var(--gold);
@@ -4234,7 +4235,8 @@
         log.info('Saving checkbox:', tabId, '|', name, '|', done);
         const { error } = await supa.from('exercise_checks').upsert({
           user_id: currentUser.id, tab_id: tabId, exercise_name: name,
-          done: done, updated_at: new Date().toISOString()
+          done: done, checked_at_seconds: done && timerRunning ? getTimerSeconds() : null,
+          updated_at: new Date().toISOString()
         }, { onConflict: 'user_id,tab_id,exercise_name' });
         if (error) log.error('Checkbox save failed:', error.message);
         else log.ok('Checkbox saved:', name, '=', done);
@@ -4311,7 +4313,7 @@
     updateProgress();
     if (!currentUser || !names.length) return;
     const { error: resetErr } = await supa.from('exercise_checks')
-      .update({ done: false, updated_at: new Date().toISOString() })
+      .update({ done: false, checked_at_seconds: null, updated_at: new Date().toISOString() })
       .eq('user_id', currentUser.id).eq('tab_id', currentTab).in('exercise_name', names);
     if (resetErr) log.error('Reset progress failed:', resetErr.message);
     else log.ok('Progress reset in cloud for tab:', currentTab);
@@ -5208,6 +5210,7 @@
           tab_id: slot,
           exercise_name: name,
           done,
+          checked_at_seconds: done && timerRunning ? getTimerSeconds() : null,
           updated_at: new Date().toISOString()
         }, { onConflict: 'user_id,tab_id,exercise_name' });
         if (error) log.error('Prog checkbox save failed:', error.message);
@@ -5727,13 +5730,23 @@
     const historyId = histRows?.[0]?.id;
     if (!historyId) { log.error('Could not find newly created history row'); log.end(); return null; }
 
-    // 4. Insert snapshot exercises one by one (bulk insert not supported in custom client)
+    // 4. Fetch exercise check timestamps for this program's tab
+    const progSlot = Object.keys(progPageIdMap).find(k => progPageIdMap[k] === programId);
+    const { data: checks } = progSlot ? await supa.from('exercise_checks')
+      .select('exercise_name, checked_at_seconds')
+      .eq('user_id', currentUser.id)
+      .eq('tab_id', progSlot) : { data: [] };
+    const checkMap = {};
+    (checks || []).forEach(c => { checkMap[c.exercise_name] = c.checked_at_seconds; });
+
+    // 5. Insert snapshot exercises one by one (bulk insert not supported in custom client)
     let snapshotOk = 0;
     for (const e of enriched) {
+      const exName = e.lib.name || 'Unknown';
       const { error: eiErr } = await supa.from('workout_history_exercises').insert({
         history_id: historyId,
         user_id: currentUser.id,
-        exercise_name: e.lib.name || 'Unknown',
+        exercise_name: exName,
         category: e.lib.category || null,
         muscle_group: e.lib.muscle_group || null,
         sort_order: e.sort_order,
@@ -5742,7 +5755,8 @@
         planned_weight: e.target_weight || null,
         performed_sets: null,
         performed_reps: null,
-        performed_weight: null
+        performed_weight: null,
+        checked_at_seconds: checkMap[exName] || null
       });
       if (eiErr) log.error('Failed to snapshot exercise:', e.lib.name, eiErr.message);
       else snapshotOk++;
@@ -6002,7 +6016,7 @@
 
     // Load exercises with performed fields
     const { data: exercises, error } = await supa.from('workout_history_exercises')
-      .select('id, exercise_name, muscle_group, sort_order, planned_sets, planned_reps, planned_weight, performed_sets, performed_reps, performed_weight')
+      .select('id, exercise_name, muscle_group, sort_order, planned_sets, planned_reps, planned_weight, performed_sets, performed_reps, performed_weight, checked_at_seconds')
       .eq('history_id', historyId)
       .order('sort_order');
 
@@ -6027,6 +6041,7 @@
           <div class="hist-ex-sets">
             <div class="hist-ex-sets-val">${e.planned_sets || '—'} × ${e.planned_reps || '—'}${weight}</div>
             <div class="hist-ex-sets-label">${currentLang === 'en' ? 'planned' : 'suunniteltu'}</div>
+            ${e.checked_at_seconds ? `<div class="hist-ex-timestamp">⏱ ${formatTimer(e.checked_at_seconds)}</div>` : ''}
           </div>
         </div>
         <div class="hist-performed-label">✏️ ${currentLang === 'en' ? 'Performed' : 'Toteutunut'}</div>

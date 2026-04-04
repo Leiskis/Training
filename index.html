@@ -1334,15 +1334,17 @@
   .mp-emoji-btn:active {
     transform: scale(1.2);
   }
+  .emoji-picker-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 199;
+  }
   .emoji-picker-popup {
-    position: absolute;
-    top: 50px;
-    left: 0;
-    z-index: 100;
     background: var(--surface);
     border: 1.5px solid var(--border);
     border-radius: var(--radius);
-    padding: 10px;
+    padding: 14px;
     box-shadow: 0 8px 24px rgba(0,0,0,0.3);
   }
   .emoji-picker-grid {
@@ -5011,32 +5013,34 @@
 
     popup.appendChild(grid);
 
-    // Position near anchor
-    anchorEl.style.position = 'relative';
-    anchorEl.appendChild(popup);
+    // Position: fixed overlay centered on screen
+    popup.style.position = 'fixed';
+    popup.style.top = '50%';
+    popup.style.left = '50%';
+    popup.style.transform = 'translate(-50%, -50%)';
+    popup.style.zIndex = '200';
+    document.body.appendChild(popup);
 
-    // Close on backdrop click
-    let closeHandler;
-    closeHandler = (e) => {
-      if (!popup.contains(e.target) && e.target !== anchorEl) {
-        popup.remove();
-        document.removeEventListener('click', closeHandler);
-      }
-    };
-    popup._closeHandler = closeHandler;
-    setTimeout(() => document.addEventListener('click', closeHandler), 0);
+    // Backdrop
+    const backdrop = document.createElement('div');
+    backdrop.className = 'emoji-picker-backdrop';
+    document.body.appendChild(backdrop);
+    backdrop.addEventListener('click', () => {
+      popup.remove();
+      backdrop.remove();
+    });
+
+    popup._backdrop = backdrop;
   }
 
   async function saveEmoji(programId, emoji, popup) {
-    if (popup._closeHandler) document.removeEventListener('click', popup._closeHandler);
+    if (popup._backdrop) popup._backdrop.remove();
     popup.remove();
-    log.info('Saving emoji:', programId, '→', JSON.stringify(emoji));
     const { error } = await supa.from('workout_programs')
       .update({ emoji: emoji }).eq('user_id', currentUser.id).eq('id', programId);
     if (error) { log.error('Save emoji failed:', error.message); return; }
-    log.ok('Emoji saved successfully');
+    log.ok('Emoji saved:', programId, '→', emoji);
     await loadUserPrograms();
-    log.info('Programs after reload:', userPrograms.map(p => p.name + ':' + JSON.stringify(p.emoji)));
     updateProgTabs();
     await renderProgramList();
   }

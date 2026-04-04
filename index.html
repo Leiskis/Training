@@ -2441,7 +2441,7 @@
 <div class="progress-bar-wrap" id="progressWrap" style="display:none">
   <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
   <div class="progress-label">
-    <span><span class="done-count" id="progressDone">0</span> / <span id="progressTotal">0</span> tehty</span>
+    <span><span class="done-count" id="progressDone">0</span> / <span id="progressTotal">0</span> <span id="progressLabelText">tehty</span></span>
     <div class="progress-right">
       <span class="workout-timer" id="workoutTimer">
         <span class="timer-display" id="timerDisplay">00:00</span>
@@ -4141,7 +4141,7 @@
 
   function initTabDelegation() {
     // Tab buttons
-    document.querySelector('.tab-bar').addEventListener('click', (e) => {
+    document.querySelector('.tab-bar')?.addEventListener('click', (e) => {
       const btn = e.target.closest('.tab-btn[data-tab]');
       if (btn) { showTab(btn.dataset.tab, btn); return; }
     });
@@ -4456,7 +4456,7 @@
     if (cachedSessions.find(s => s.date === today && s.type === typeToLog)) {
       log.warn('Already logged today for type:', typeToLog);
       log.end();
-      alert('This workout is already logged for today!'); return;
+      alert(currentLang === 'en' ? 'This workout is already logged for today!' : 'Tämä treeni on jo kirjattu tälle päivälle!'); return;
     }
     const btn = document.querySelector('.log-save-btn');
     btn.disabled = true; btn.textContent = t('sheet.saving');
@@ -4868,7 +4868,7 @@
         </div>`;
 
       // Wire events directly — no inline onclick
-      card.querySelector('[data-action="delete"]').addEventListener('click', () =>
+      card.querySelector('[data-action="delete"]')?.addEventListener('click', () =>
         removeExerciseFromProgram(e.id, e.exercise_id));
       card.querySelector('[data-action="up"]')?.addEventListener('click', () =>
         reorderExercise(exercises, i, i - 1));
@@ -4890,12 +4890,13 @@
     if (toIdx < 0 || toIdx >= exercises.length) return;
     // Swap sort_order values
     const a = exercises[fromIdx], b = exercises[toIdx];
-    await supa.from('workout_day_exercises')
+    const { error: e1 } = await supa.from('workout_day_exercises')
       .update({ sort_order: b.sort_order, updated_at: new Date().toISOString() })
       .eq('user_id', currentUser.id).eq('id', a.id);
-    await supa.from('workout_day_exercises')
+    const { error: e2 } = await supa.from('workout_day_exercises')
       .update({ sort_order: a.sort_order, updated_at: new Date().toISOString() })
       .eq('user_id', currentUser.id).eq('id', b.id);
+    if (e1 || e2) log.error('reorderExercise failed:', e1?.message || e2?.message);
     // Reload
     if (activeProgramId) loadAndRenderProgramExercises(activeProgramId);
     // Also refresh prog page
@@ -4917,8 +4918,9 @@
       const newName = input.value.trim() || currentName;
       // Update in DB
       if (newName !== currentName && activeProgramId) {
-        await supa.from('workout_programs')
+        const { error: nameErr } = await supa.from('workout_programs')
           .update({ name: newName }).eq('user_id', currentUser.id).eq('id', activeProgramId);
+        if (nameErr) log.error('Rename program failed:', nameErr.message);
         await loadUserPrograms();
       }
       // Restore to div
@@ -4989,7 +4991,7 @@
       hideNewProgramInput();
       renderProgramList();
     } else {
-      alert('Ohjelman luominen epäonnistui — tarkista konsoli.');
+      alert(currentLang === 'en' ? 'Failed to create program — check console.' : 'Ohjelman luominen epäonnistui — tarkista konsoli.');
     }
   }
 
@@ -5194,7 +5196,7 @@
               card?.classList.toggle('done', data[0].done);
               updateProgress();
             }
-          });
+          }).catch(err => log.error('initProgCheckboxes restore failed:', err.message));
       }
 
       cb.addEventListener('change', async (e) => {
@@ -5237,10 +5239,11 @@
     const swapIdx = dir === 'up' ? idx - 1 : idx + 1;
     if (swapIdx < 0 || swapIdx >= rows.length) return;
     const a = rows[idx], b = rows[swapIdx];
-    await supa.from('workout_day_exercises')
+    const { error: e1 } = await supa.from('workout_day_exercises')
       .update({ sort_order: b.sort_order }).eq('user_id', currentUser.id).eq('id', a.id);
-    await supa.from('workout_day_exercises')
+    const { error: e2 } = await supa.from('workout_day_exercises')
       .update({ sort_order: a.sort_order }).eq('user_id', currentUser.id).eq('id', b.id);
+    if (e1 || e2) log.error('reorderProgExercise failed:', e1?.message || e2?.message);
     renderProgPage(slot);
     if (activeProgramId === programId) loadAndRenderProgramExercises(programId);
   }
@@ -5254,6 +5257,7 @@
   }
 
   async function openProgPicker(slot) {
+    if (!currentUser) { log.warn('openProgPicker: no user'); return; }
     const programId = progPageIdMap[slot];
     if (!programId) return;
     // Load existing exercises so picker shows them as already added
@@ -5354,7 +5358,6 @@
     });
   }
 
-  // Keep old names as aliases so other code still works
   function renderPickerCategories() { buildPickerCategories(); }
   function setPickerCategory(cat) { pickerActiveCategory = cat; buildPickerCategories(); buildPickerList(); }
   function initPickerDelegation() { /* no-op — not needed anymore */ }
@@ -5387,7 +5390,7 @@
     if (filtered.length === 0) {
       const empty = document.createElement('div');
       empty.className = 'picker-empty';
-      empty.innerHTML = `${t('picker.empty')} "<strong>${query}</strong>"`;
+      empty.textContent = `${t('picker.empty')} "${query}"`;
       el.appendChild(empty);
       return;
     }
@@ -5755,7 +5758,7 @@
   async function saveSheetSession() {
     if (!currentUser || !sheetDate) return;
     if (cachedSessions.find(s => s.date === sheetDate && s.type === sheetSelectedType)) {
-      alert('This workout type is already logged for this day!'); return;
+      alert(currentLang === 'en' ? 'This workout type is already logged for this day!' : 'Tämä treenityyppi on jo kirjattu tälle päivälle!'); return;
     }
     const note = document.getElementById('sheetNote').value.trim() || null;
     const duration = getTimerSeconds() || null;
@@ -5902,7 +5905,8 @@
 
     if (error) {
       log.error('Failed to load history:', error.message);
-      listEl.innerHTML = `<div class="hist-empty"><strong>Virhe</strong>${error.message}</div>`;
+      listEl.innerHTML = `<div class="hist-empty"><strong>Virhe</strong></div>`;
+      listEl.querySelector('.hist-empty').appendChild(document.createTextNode(error.message));
       return;
     }
 
@@ -6055,11 +6059,12 @@
           const rowId = input.dataset.id;
           let val = input.value || null;
           if (field === 'performed_sets') val = val ? parseInt(val) : null;
+          if (field === 'performed_reps') val = val ? parseInt(val) : null;
           if (field === 'performed_weight') val = val ? parseFloat(val) : null;
           const update = {};
           update[field] = val;
           const { error } = await supa.from('workout_history_exercises')
-            .update(update).eq('id', rowId);
+            .update(update).eq('user_id', currentUser.id).eq('id', rowId);
           if (error) log.error('Performed update failed:', error.message);
           else log.ok('Performed field saved:', field, '=', val);
           // Invalidate analytics cache
@@ -6596,9 +6601,8 @@
     const progDone = document.getElementById('progressDone');
     const progTotal = document.getElementById('progressTotal');
     const progLabel = document.querySelector('.progress-label span:first-child');
-    if (progLabel && progDone && progTotal) {
-      progLabel.innerHTML = `<span class="done-count" id="progressDone">${progDone.textContent}</span> / <span id="progressTotal">${progTotal.textContent}</span> ${t('progressLabel')}`;
-    }
+    const progLabelText = document.getElementById('progressLabelText');
+    if (progLabelText) progLabelText.textContent = t('progressLabel');
     const resetBtn = document.querySelector('.reset-btn');
     if (resetBtn) resetBtn.textContent = t('resetBtn');
     // Timer titles

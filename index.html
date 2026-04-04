@@ -1651,6 +1651,38 @@
     padding: 16px;
     margin-bottom: 16px;
   }
+  .mg-vol-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .mg-vol-label {
+    font-size: 12px;
+    font-weight: 600;
+    min-width: 80px;
+    color: var(--text);
+  }
+  .mg-vol-bar-track {
+    flex: 1;
+    height: 12px;
+    background: var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .mg-vol-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #c8a84b, #e8864a);
+    border-radius: 6px;
+    transition: width 0.3s;
+  }
+  .mg-vol-value {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    min-width: 70px;
+    text-align: right;
+  }
   .chart-title {
     font-size: 15px;
     font-weight: 700;
@@ -6151,7 +6183,7 @@
     for (let i = 0; i < histIds.length; i += 50) {
       const batch = histIds.slice(i, i + 50);
       const { data: exRows } = await supa.from('workout_history_exercises')
-        .select('history_id, exercise_name, planned_weight, performed_weight, planned_sets, planned_reps')
+        .select('history_id, exercise_name, muscle_group, planned_weight, performed_weight, planned_sets, planned_reps, performed_sets, performed_reps')
         .in('history_id', batch)
         .order('exercise_name');
       if (exRows) allExercises = allExercises.concat(exRows);
@@ -6161,16 +6193,24 @@
 
     // Group by exercise name — only include exercises with weight data
     const byExercise = {};
+    const byMuscleGroup = {};
     allExercises.forEach(ex => {
       const weight = ex.performed_weight || ex.planned_weight;
       if (!weight || weight <= 0) return;
+      const sets = ex.performed_sets || ex.planned_sets || 3;
+      const reps = ex.performed_reps || ex.planned_reps || '10';
+      const repsNum = parseInt(String(reps).match(/(\d+)/)?.[1]) || 10;
+      const volume = sets * repsNum * parseFloat(weight);
       if (!byExercise[ex.exercise_name]) byExercise[ex.exercise_name] = [];
       byExercise[ex.exercise_name].push({
         date: histDateMap[ex.history_id],
         weight: parseFloat(weight),
-        sets: ex.planned_sets,
-        reps: ex.planned_reps
+        sets, reps, volume: Math.round(volume)
       });
+      // Aggregate by muscle group
+      const mg = ex.muscle_group || '—';
+      if (!byMuscleGroup[mg]) byMuscleGroup[mg] = 0;
+      byMuscleGroup[mg] += volume;
     });
 
     const exercises = Object.entries(byExercise)
@@ -6183,6 +6223,33 @@
         ${currentLang === 'en' ? 'Start logging performed weights to track progression.' : 'Aloita kirjaamaan toteuttamasi painot seurataksesi kehitystä.'}
       </div>`;
       return;
+    }
+
+    // Muscle group volume summary card
+    const mgEntries = Object.entries(byMuscleGroup).filter(([,v]) => v > 0).sort((a,b) => b[1] - a[1]);
+    if (mgEntries.length > 0) {
+      const mgCard = document.createElement('div');
+      mgCard.className = 'chart-card';
+      const mgTitle = document.createElement('div');
+      mgTitle.className = 'chart-title';
+      mgTitle.textContent = currentLang === 'en' ? '💪 Volume by muscle group' : '💪 Volyymi lihasryhmittäin';
+      mgCard.appendChild(mgTitle);
+      const mgSub = document.createElement('div');
+      mgSub.className = 'chart-subtitle';
+      mgSub.textContent = currentLang === 'en' ? 'Total volume (sets × reps × weight)' : 'Kokonaisvolyymi (sarjat × toistot × paino)';
+      mgCard.appendChild(mgSub);
+      const maxVol = mgEntries[0][1];
+      mgEntries.forEach(([name, vol]) => {
+        const row = document.createElement('div');
+        row.className = 'mg-vol-row';
+        const pct = Math.round(vol / maxVol * 100);
+        row.innerHTML = `
+          <div class="mg-vol-label">${esc(name)}</div>
+          <div class="mg-vol-bar-track"><div class="mg-vol-bar-fill" style="width:${pct}%"></div></div>
+          <div class="mg-vol-value">${Math.round(vol).toLocaleString()} kg</div>`;
+        mgCard.appendChild(row);
+      });
+      chartsEl.appendChild(mgCard);
     }
 
     exercises.forEach(([name, points]) => {
@@ -6217,8 +6284,12 @@
     const btnLoad = document.createElement('button');
     btnLoad.className = 'chart-mode-btn';
     btnLoad.textContent = currentLang === 'en' ? '🔥 Load' : '🔥 Kuormitus';
+    const btnVolume = document.createElement('button');
+    btnVolume.className = 'chart-mode-btn';
+    btnVolume.textContent = currentLang === 'en' ? '📊 Volume' : '📊 Volyymi';
     toggle.appendChild(btnWeight);
     toggle.appendChild(btnLoad);
+    toggle.appendChild(btnVolume);
     card.appendChild(toggle);
 
     // Canvas
@@ -6240,11 +6311,11 @@
     stats.className = 'chart-stats';
     card.appendChild(stats);
 
-    // Compute load points: sets × reps_parsed × weight
+    // Compute load and volume points
     const loadPoints = points.map(p => {
       const repsNum = parseReps(p.reps);
       const load = (p.sets || 3) * repsNum * p.weight;
-      return { ...p, load: Math.round(load) };
+      return { ...p, load: Math.round(load), volume: p.volume || Math.round(load) };
     });
 
     // Draw helpers
@@ -6261,6 +6332,7 @@
       currentMode = mode;
       btnWeight.classList.toggle('active', mode === 'weight');
       btnLoad.classList.toggle('active', mode === 'load');
+      btnVolume.classList.toggle('active', mode === 'volume');
 
       // Clear and redraw canvas
       const ctx = canvas.getContext('2d');
@@ -6270,6 +6342,9 @@
       if (mode === 'weight') {
         drawLineChart(canvas, points, DPR, W, H, 'weight');
         renderStats(points.map(p => p.weight), 'kg');
+      } else if (mode === 'volume') {
+        drawLineChart(canvas, loadPoints, DPR, W, H, 'volume');
+        renderStats(loadPoints.map(p => p.volume), 'kg');
       } else {
         drawLineChart(canvas, loadPoints, DPR, W, H, 'load');
         renderStats(loadPoints.map(p => p.load), '');
@@ -6303,6 +6378,7 @@
     // Wire toggle buttons
     btnWeight.addEventListener('click', () => renderMode('weight'));
     btnLoad.addEventListener('click', () => renderMode('load'));
+    btnVolume.addEventListener('click', () => renderMode('volume'));
 
     // Initial render
     renderMode('weight');
@@ -6319,7 +6395,7 @@
     const chartH = H - PAD.top - PAD.bottom;
 
     // Use correct value field
-    const getValue = p => mode === 'load' ? p.load : p.weight;
+    const getValue = p => mode === 'volume' ? p.volume : mode === 'load' ? p.load : p.weight;
     const values = points.map(getValue);
     const minV = Math.min(...values);
     const maxV = Math.max(...values);
@@ -6332,7 +6408,7 @@
     const isLight = document.documentElement.classList.contains('light');
     const gridColor = isLight ? 'rgba(0,0,0,0.07)' : 'rgba(255,255,255,0.07)';
     const labelColor = isLight ? '#888' : '#666';
-    const lineColor = mode === 'load' ? '#e8864a' : '#c8a84b';
+    const lineColor = mode === 'volume' ? '#3dba6e' : mode === 'load' ? '#e8864a' : '#c8a84b';
     const dotFill = isLight ? '#fff' : '#1a1a1a';
     const areaTop = mode === 'load'
       ? (isLight ? 'rgba(232,134,74,0.18)' : 'rgba(232,134,74,0.12)')

@@ -12,6 +12,8 @@
 <meta name="apple-mobile-web-app-title" content="Personal Training">
 <meta name="theme-color" content="#ede8d8" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#1a1608" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
 <title>Personal Training</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -7213,6 +7215,11 @@
   /* ══════════════════════════════════════
      INIT
   ══════════════════════════════════════ */
+  // Register service worker for PWA
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').then(() => log.ok('SW registered')).catch(e => log.warn('SW failed:', e.message));
+  }
+
   document.addEventListener('DOMContentLoaded', async () => {
     log.group('APP INIT');
     // Set theme button icon

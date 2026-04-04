@@ -4771,7 +4771,11 @@
   function renderSessionsList() {
     const EFFORT_LABELS = { easy:'😌 Helppo', good:'💪 Hyvä', hard:'😤 Raskas', exhausting:'🥵 Uuvuttava' };
     const MOOD_LABELS = { great:'🌟 Mahtava', energized:'⚡ Energinen', neutral:'😐 Neutraali', tired:'😴 Väsynyt', stressed:'😰 Stressaantunut' };
-    const sessions = [...cachedSessions].sort((a,b) => new Date(b.created_at||0) - new Date(a.created_at||0));
+    const sessions = [...cachedSessions].sort((a,b) => {
+      const dateDiff = new Date(b.date) - new Date(a.date);
+      if (dateDiff !== 0) return dateDiff;
+      return new Date(b.created_at||0) - new Date(a.created_at||0);
+    });
     const el = document.getElementById('sessionsList');
     if (!sessions.length) {
       el.innerHTML = `<div class="no-sessions">${t('cal.noHistory').replace('\n','<br>')}</div>`;

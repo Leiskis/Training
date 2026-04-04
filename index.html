@@ -1327,6 +1327,47 @@
   .mp-program-card.mp-inactive {
     opacity: 0.5;
   }
+  .mp-emoji-btn {
+    cursor: pointer;
+    transition: transform 0.15s;
+  }
+  .mp-emoji-btn:active {
+    transform: scale(1.2);
+  }
+  .emoji-picker-popup {
+    position: absolute;
+    top: 50px;
+    left: 0;
+    z-index: 100;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  }
+  .emoji-picker-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+  }
+  .emoji-pick-btn {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+    background: none;
+    border: 1.5px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .emoji-pick-btn:hover, .emoji-pick-btn:active {
+    background: var(--gold-dim);
+    border-color: var(--gold);
+  }
   .mp-active-toggle {
     background: none;
     border: 1.5px solid var(--border);
@@ -4031,7 +4072,7 @@
     if (!currentUser) return [];
     log.group('loadUserPrograms');
     const { data, error } = await supa.from('workout_programs')
-      .select('id, name, sort_order, created_at, is_active')
+      .select('id, name, sort_order, created_at, is_active, emoji')
       .eq('user_id', currentUser.id)
       .order('sort_order');
     if (error) { log.error('Failed to load programs:', error.message); log.end(); return []; }
@@ -4839,7 +4880,7 @@
         : (currentLang === 'en' ? '○ Hidden' : '○ Piilotettu');
       return `
         <div class="mp-program-card ${isActive ? '' : 'mp-inactive'}" data-prog-id="${esc(p.id)}" data-prog-name="${esc(p.name)}">
-          <div class="mp-program-icon">${getProgramEmoji(i)}</div>
+          <div class="mp-program-icon mp-emoji-btn" data-emoji-id="${esc(p.id)}">${p.emoji || getProgramEmoji(i)}</div>
           <div class="mp-program-info">
             <div class="mp-program-name">${esc(p.name)}</div>
             <div class="mp-program-meta">${meta}</div>
@@ -4852,7 +4893,7 @@
     // Wire program card clicks
     listEl.querySelectorAll('.mp-program-card').forEach(card => {
       card.addEventListener('click', (e) => {
-        if (e.target.closest('.mp-program-del') || e.target.closest('.mp-active-toggle')) return;
+        if (e.target.closest('.mp-program-del') || e.target.closest('.mp-active-toggle') || e.target.closest('.mp-emoji-btn')) return;
         openProgramDetail(card.dataset.progId, card.dataset.progName);
       });
     });
@@ -4883,6 +4924,67 @@
         renderProgramList();
       });
     });
+    listEl.querySelectorAll('.mp-emoji-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openEmojiPicker(btn.dataset.emojiId, btn);
+      });
+    });
+  }
+
+  const EMOJI_OPTIONS = ['💪','🔥','⚡','🏋️','🦵','🔙','🎯','🏃','⚽','🥊','🧘','🚴','🏊','🤸','💥','⭐','🦾','🫀','🧠','🏆'];
+
+  function openEmojiPicker(programId, anchorEl) {
+    // Remove existing picker
+    document.querySelector('.emoji-picker-popup')?.remove();
+
+    const popup = document.createElement('div');
+    popup.className = 'emoji-picker-popup';
+
+    const grid = document.createElement('div');
+    grid.className = 'emoji-picker-grid';
+
+    // "No emoji" option
+    const noneBtn = document.createElement('button');
+    noneBtn.className = 'emoji-pick-btn';
+    noneBtn.textContent = '✕';
+    noneBtn.title = currentLang === 'en' ? 'No emoji' : 'Ei emojia';
+    noneBtn.addEventListener('click', () => saveEmoji(programId, null, popup));
+    grid.appendChild(noneBtn);
+
+    EMOJI_OPTIONS.forEach(em => {
+      const btn = document.createElement('button');
+      btn.className = 'emoji-pick-btn';
+      btn.textContent = em;
+      btn.addEventListener('click', () => saveEmoji(programId, em, popup));
+      grid.appendChild(btn);
+    });
+
+    popup.appendChild(grid);
+
+    // Position near anchor
+    anchorEl.style.position = 'relative';
+    anchorEl.appendChild(popup);
+
+    // Close on backdrop click
+    const closeHandler = (e) => {
+      if (!popup.contains(e.target) && e.target !== anchorEl) {
+        popup.remove();
+        document.removeEventListener('click', closeHandler);
+      }
+    };
+    setTimeout(() => document.addEventListener('click', closeHandler), 0);
+  }
+
+  async function saveEmoji(programId, emoji, popup) {
+    popup.remove();
+    const { error } = await supa.from('workout_programs')
+      .update({ emoji: emoji }).eq('user_id', currentUser.id).eq('id', programId);
+    if (error) { log.error('Save emoji failed:', error.message); return; }
+    log.ok('Emoji saved:', programId, '→', emoji);
+    await loadUserPrograms();
+    updateProgTabs();
+    renderProgramList();
   }
 
   function openProgramDetail(id, name) {
@@ -5144,7 +5246,8 @@
         const prog = activeProgs[i];
         progPageIdMap[slot] = prog.id;
         tabBtn.style.display = '';
-        tabBtn.textContent = (getProgramEmoji(i) || '💪') + ' ' + prog.name;
+        const em = prog.emoji || getProgramEmoji(i);
+        tabBtn.textContent = em ? em + ' ' + prog.name : prog.name;
       } else {
         tabBtn.style.display = 'none';
         delete progPageIdMap[slot];
@@ -5725,7 +5828,10 @@
     typeRow.innerHTML = '';
     const activeProgs = userPrograms.filter(p => p.is_active !== false);
     const types = [
-      ...activeProgs.map((p, i) => ({ label: (getProgramEmoji(i) || '💪') + ' ' + p.name, type: p.name })),
+      ...activeProgs.map((p, i) => {
+        const em = p.emoji || getProgramEmoji(i);
+        return { label: (em ? em + ' ' : '') + p.name, type: p.name };
+      }),
       { label: '⚡ Muu', type: 'Muu' }
     ];
     const firstType = types[0]?.type || 'Muu';

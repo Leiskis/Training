@@ -6341,7 +6341,7 @@
     listEl.innerHTML = `<div class="hist-loading">${t('hist.loading')}</div>`;
 
     const { data, error } = await supa.from('workout_history')
-      .select('id, program_name, logged_date, effort_feeling, post_workout_mood, note, duration_seconds, created_at')
+      .select('id, program_name, logged_date, effort_feeling, post_workout_mood, note, duration_seconds, created_at, session_id')
       .eq('user_id', currentUser.id)
       .order('logged_date', { ascending: false });
 
@@ -6352,7 +6352,23 @@
       return;
     }
 
-    cachedHistory = data || [];
+    // Also load sessions that have no workout_history entry
+    const histSessionIds = new Set((data || []).map(h => h.session_id).filter(Boolean));
+    const orphanSessions = cachedSessions.filter(s => !histSessionIds.has(s.id));
+    const orphanHistory = orphanSessions.map(s => ({
+      id: 'session-' + s.id,
+      _isOrphan: true,
+      program_name: s.type || 'Muu',
+      logged_date: s.date,
+      effort_feeling: s.effort_feeling || null,
+      post_workout_mood: s.post_workout_mood || null,
+      note: s.note || null,
+      duration_seconds: null,
+      created_at: s.created_at
+    }));
+
+    cachedHistory = [...(data || []), ...orphanHistory]
+      .sort((a, b) => new Date(b.logged_date) - new Date(a.logged_date));
     log.ok('History loaded:', cachedHistory.length, 'sessions');
     renderHistoryList();
   }
@@ -6408,7 +6424,7 @@
   }
 
   async function openHistDetail(historyId) {
-    const entry = cachedHistory.find(h => h.id === historyId);
+    const entry = cachedHistory.find(h => String(h.id) === String(historyId));
     if (!entry) return;
 
     // Populate header

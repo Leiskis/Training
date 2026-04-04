@@ -58,8 +58,15 @@ Käy läpi jokainen UI-interaktio ja tunnista sudenkuopat:
 - Tarkista: luodaanko uudet event listenerit renderöinnin jälkeen?
 - Onko ketjutusriski: funktio A kutsuu renderXxx → se kutsuu loadData → data vanhentuu?
 
+**Cached data riippuvuudet:**
+- Sovelluksessa on cached-muuttujia jotka ladataan eri ajankohtina: `cachedSessions` (kalenteri), `cachedHistory` (historia), `userPrograms` (kirjautuminen), `exerciseLibrary` (tarvittaessa)
+- Jos funktio käyttää toisen näkymän cachea, tarkista: onko cache ladattu tässä vaiheessa? Jos ei, lataa se lazy load -patternilla.
+- `sessions` ja `workout_history` ovat ERI tauluja — merkintä voi olla vain toisessa. Historia yhdistää molemmat.
+- Nimen perusteella matching (`userPrograms.find(p => p.name === x)`) on hauras — suosi ID:tä.
+
 **Muuttujan lifecycle:**
 - Onko `const` jota yritetään uudelleenmäärittää?
+- Duplikaatti-deklaraatiot: tarkista ettei samassa funktiossa ole kahta `const x` — SyntaxError kaataa kaiken
 - Onko closure joka kaappaa muuttujan arvon luontihetkellä (stale closure)?
 - Null vs tyhjä string vs undefined: miten DB-sarake ja UI-logiikka käsittelevät näitä?
 

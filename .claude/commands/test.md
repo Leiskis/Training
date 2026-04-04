@@ -79,6 +79,23 @@ Tässä projektissa on touch-pohjainen drag & drop. Tarkista nämä yleiset sude
 - `buildPickerList()` rakentaa elementit `createElement`:llä (ei innerHTML)
 - Async `.then()` -ketjuissa on `.catch()` virheenkäsittely
 
+### Cached Data & Taulujen Synkronointi (KRIITTINEN)
+Sovelluksessa on useita cached-muuttujia jotka ladataan eri ajankohtina:
+- `cachedSessions` — ladataan kalenterin avautuessa (`loadAndRenderCalendar`)
+- `cachedHistory` — ladataan historian avautuessa (`loadAndRenderHistory`)
+- `userPrograms` — ladataan kirjautumisessa (`loadUserPrograms`)
+- `exerciseLibrary` — ladataan tarvittaessa (`loadExerciseLibrary`)
+
+**Taulujen väliset riippuvuudet:**
+- `sessions` (kalenteri) ja `workout_history` (historia) ovat ERI tauluja — merkintä voi olla vain toisessa
+- Historia yhdistää molemmat: workout_history + orphan-sessions (joilla ei ole workout_history-riviä)
+- Jos funktio käyttää toisen näkymän cachea (esim. historia käyttää cachedSessions:ia), tarkista: onko cache ladattu tässä vaiheessa?
+- **Ratkaisu**: Jos cache on tyhjä, lataa se DB:stä ennen käyttöä (lazy load pattern)
+
+**Nimen perusteella matching:**
+- `userPrograms.find(p => p.name === sheetSelectedType)` — hauras jos ohjelma nimetty uudelleen
+- Tarkista: käytetäänkö nimeä vai ID:tä matchaukseen? ID on turvallisempi.
+
 ### Käännökset
 - `t('key')` palauttaa aina stringin (ei undefined)
 - `currentLang` on 'fi' tai 'en'

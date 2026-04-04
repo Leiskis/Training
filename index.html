@@ -4932,7 +4932,7 @@
     });
   }
 
-  const EMOJI_OPTIONS = ['💪','🔥','⚡','🏋️','🦵','🔙','🎯','🏃','⚽','🥊','🧘','🚴','🏊','🤸','💥','⭐','🦾','🫀','🧠','🏆'];
+  const EMOJI_OPTIONS = ['💪','🔥','⚡','🏋️','🦵','🔙','🎯','🏃','⚽','🥊','🧘','🚴','🏊','🤸','💥','⭐','❤️','🏆','🌟','👊'];
 
   function openEmojiPicker(programId, anchorEl) {
     // Remove existing picker
@@ -4967,16 +4967,19 @@
     anchorEl.appendChild(popup);
 
     // Close on backdrop click
-    const closeHandler = (e) => {
+    let closeHandler;
+    closeHandler = (e) => {
       if (!popup.contains(e.target) && e.target !== anchorEl) {
         popup.remove();
         document.removeEventListener('click', closeHandler);
       }
     };
+    popup._closeHandler = closeHandler;
     setTimeout(() => document.addEventListener('click', closeHandler), 0);
   }
 
   async function saveEmoji(programId, emoji, popup) {
+    if (popup._closeHandler) document.removeEventListener('click', popup._closeHandler);
     popup.remove();
     const { error } = await supa.from('workout_programs')
       .update({ emoji: emoji }).eq('user_id', currentUser.id).eq('id', programId);

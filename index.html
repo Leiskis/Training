@@ -1758,6 +1758,26 @@
     letter-spacing: 0.5px;
     text-align: center;
   }
+  .prog-set-actions {
+    display: flex;
+    gap: 8px;
+    margin: 8px 0 10px;
+  }
+  .prog-set-add-btn, .prog-set-remove-btn {
+    flex: 1;
+    background: none;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 8px;
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--muted);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .prog-set-add-btn:active { border-color: #3dba6e; color: #3dba6e; }
+  .prog-set-remove-btn:active { border-color: #e05555; color: #e05555; }
+  .prog-set-remove-btn:disabled { opacity: 0.25; cursor: default; }
   .prog-sets-badge {
     font-size: 11px;
     color: #3dba6e;
@@ -5644,6 +5664,10 @@
               <span></span><span></span><span>${rLabel}</span><span>${wLabel}</span>
             </div>
             <div class="prog-set-rows">${setRows}</div>
+            <div class="prog-set-actions">
+              <button class="prog-set-add-btn" data-row-id="${esc(e.id)}">+ ${currentLang === 'en' ? 'Add set' : 'Lisää sarja'}</button>
+              <button class="prog-set-remove-btn" data-row-id="${esc(e.id)}" ${setCount <= 1 ? 'disabled' : ''}>− ${currentLang === 'en' ? 'Remove set' : 'Poista sarja'}</button>
+            </div>
             <button class="mp-ex-del prog-remove-btn" style="width:100%;border-radius:8px;padding:10px;font-size:13px;margin-top:6px">
               ${removeLabel}
             </button>
@@ -5719,6 +5743,27 @@
       card.querySelector('.prog-remove-btn')?.addEventListener('click', (e) => {
         e.stopPropagation();
         removeProgExercise(slot, rowId, exId);
+      });
+      // Add/remove set buttons
+      card.querySelector('.prog-set-add-btn')?.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const currentSets = parseInt(card.dataset.sets) || 3;
+        const newSets = currentSets + 1;
+        if (newSets > 20) return;
+        const { error } = await supa.from('workout_day_exercises')
+          .update({ sets: newSets }).eq('user_id', currentUser.id).eq('id', rowId);
+        if (error) log.error('Add set failed:', error.message);
+        else { log.ok('Set added, now:', newSets); renderProgPage(slot); }
+      });
+      card.querySelector('.prog-set-remove-btn')?.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const currentSets = parseInt(card.dataset.sets) || 3;
+        const newSets = currentSets - 1;
+        if (newSets < 1) return;
+        const { error } = await supa.from('workout_day_exercises')
+          .update({ sets: newSets }).eq('user_id', currentUser.id).eq('id', rowId);
+        if (error) log.error('Remove set failed:', error.message);
+        else { log.ok('Set removed, now:', newSets); renderProgPage(slot); }
       });
     });
     container.querySelector('.prog-add-btn')?.addEventListener('click', () => openProgPicker(slot));

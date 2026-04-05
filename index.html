@@ -370,8 +370,9 @@
     .tab-btn { padding: 7px 14px; font-size: 13px; }
     .theme-toggle { padding: 6px 11px; font-size: 15px; }
 
-    /* Progress bar closer to content */
-    .progress-bar-wrap { padding: 0 12px 0; }
+    /* Progress bar closer to content, adjust fixed top for smaller tab-bar */
+    .progress-bar-wrap { padding: 0 12px 0; top: 48px; }
+    .progress-bar-spacer { height: 54px; }
 
     /* Cards — bigger tap target, less padding */
     .card-header { padding: 14px 14px; }
@@ -461,16 +462,21 @@
     -webkit-touch-callout: none;
   }
 
-  /* Sticky progress bar with backdrop blur */
+  /* Fixed progress bar with backdrop blur — always visible when scrolling */
   .progress-bar-wrap {
-    position: sticky;
-    top: 53px;
+    position: fixed;
+    top: 62px;
+    left: 0;
+    right: 0;
     z-index: 99;
     background: var(--header-bg2);
     padding: 8px 16px 4px;
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     transition: background 0.25s;
+  }
+  .progress-bar-spacer {
+    height: 66px;
   }
 
   /* PHYSIO STYLES */
@@ -604,7 +610,9 @@
   .progress-bar-wrap {
     padding: 0 16px 2px;
     max-width: 600px;
-    margin: 0 auto;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
   }
   .progress-track {
     height: 4px;
@@ -1598,7 +1606,7 @@
     border-radius: 8px;
     padding: 8px 10px;
     font-family: 'DM Sans', sans-serif;
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 600;
     color: var(--text);
     outline: none;
@@ -1712,9 +1720,8 @@
     margin-bottom: 10px;
   }
   .prog-set-row {
-    display: grid;
-    grid-template-columns: 24px 32px 1fr 1fr;
-    gap: 10px;
+    display: flex;
+    gap: 8px;
     align-items: center;
     padding: 6px 0;
     border-bottom: 1px solid var(--border);
@@ -1725,13 +1732,15 @@
     color: var(--muted);
     font-weight: 600;
     text-align: center;
+    width: 24px;
+    flex-shrink: 0;
   }
   .set-checkbox {
     appearance: none;
     -webkit-appearance: none;
-    width: 28px;
-    height: 28px;
-    min-width: 28px;
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
     border: 2px solid var(--border);
     border-radius: 50%;
     background: var(--surface2);
@@ -1752,7 +1761,7 @@
     top: 50%; left: 50%;
     transform: translate(-50%, -50%);
     color: #fff;
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 700;
     line-height: 1;
   }
@@ -1766,8 +1775,26 @@
     font-family: 'DM Sans', sans-serif;
     text-align: center;
     -webkit-appearance: none;
+    min-width: 0;
+    max-width: 80px;
+    box-sizing: border-box;
+    flex-shrink: 1;
+  }
+  .prog-set-input[data-field="performed_weight"] {
+    max-width: 90px;
   }
   .prog-set-input:focus { border-color: var(--gold); outline: none; }
+  .set-elapsed-time {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--muted);
+    min-width: 32px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .set-elapsed-time.has-time { color: #3dba6e; }
   .prog-set-row.set-done {
     opacity: 0.5;
   }
@@ -1775,9 +1802,8 @@
     text-decoration: line-through;
   }
   .prog-set-header {
-    display: grid;
-    grid-template-columns: 24px 32px 1fr 1fr;
-    gap: 6px;
+    display: flex;
+    gap: 8px;
     padding: 0 0 4px;
   }
   .prog-set-header span {
@@ -1788,6 +1814,11 @@
     letter-spacing: 0.5px;
     text-align: center;
   }
+  .prog-set-header .sh-num { width: 24px; flex-shrink: 0; }
+  .prog-set-header .sh-cb { width: 36px; flex-shrink: 0; }
+  .prog-set-header .sh-elapsed { min-width: 32px; flex-shrink: 0; }
+  .prog-set-header .sh-reps { max-width: 80px; flex-shrink: 1; width: 80px; }
+  .prog-set-header .sh-weight { max-width: 90px; flex-shrink: 1; width: 90px; }
   .prog-set-actions {
     display: flex;
     gap: 8px;
@@ -1824,6 +1855,70 @@
     margin-bottom: 4px;
   }
   .prog-add-wrap { padding: 8px 0 4px; }
+  .prog-save-wrap { padding: 4px 0 16px; }
+  .prog-save-btn {
+    width: 100%;
+    background: #3dba6e;
+    border: none;
+    border-radius: var(--radius);
+    padding: 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+    cursor: pointer;
+    transition: opacity 0.2s, background 0.2s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .prog-save-btn:active { opacity: 0.85; }
+  .prog-save-btn:disabled { opacity: 0.5; cursor: default; }
+  .prog-save-section {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-top: 10px;
+  }
+  .prog-save-section .feeling-row { margin-bottom: 10px; }
+  .prog-save-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+  .prog-save-note {
+    width: 100%;
+    min-height: 44px;
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    color: var(--text);
+    resize: vertical;
+    margin-bottom: 12px;
+    box-sizing: border-box;
+  }
+  .prog-save-note:focus { border-color: var(--gold); outline: none; }
+  .prog-save-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .prog-save-actions .prog-save-btn { flex: 1; }
+  .prog-save-cancel {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 14px 16px;
+  }
   .prog-empty {
     text-align: center;
     padding: 32px 20px;
@@ -2197,8 +2292,7 @@
     margin: 8px 0 4px 32px;
   }
   .hist-sets-header {
-    display: grid;
-    grid-template-columns: 24px 1fr 1fr 40px;
+    display: flex;
     gap: 6px;
     padding-bottom: 4px;
     border-bottom: 1px solid var(--border);
@@ -2210,9 +2304,12 @@
     text-transform: uppercase;
     text-align: center;
   }
+  .hist-sets-header span:first-child { width: 24px; flex-shrink: 0; }
+  .hist-sets-header span:nth-child(2) { max-width: 80px; width: 80px; }
+  .hist-sets-header span:nth-child(3) { max-width: 90px; width: 90px; }
+  .hist-sets-header span:last-child { width: 44px; flex-shrink: 0; }
   .hist-set-detail-row {
-    display: grid;
-    grid-template-columns: 24px 1fr 1fr 40px;
+    display: flex;
     gap: 6px;
     align-items: center;
     padding: 6px 0;
@@ -2224,6 +2321,8 @@
     color: var(--muted);
     font-weight: 600;
     text-align: center;
+    width: 24px;
+    flex-shrink: 0;
   }
   .hist-set-input {
     font-size: 16px;
@@ -2235,13 +2334,19 @@
     text-align: center;
     font-family: 'DM Sans', sans-serif;
     -webkit-appearance: none;
+    min-width: 0;
+    box-sizing: border-box;
   }
+  .hist-set-input[data-field="performed_reps"] { max-width: 80px; }
+  .hist-set-input[data-field="performed_weight"] { max-width: 90px; }
   .hist-set-input:focus { border-color: var(--gold); outline: none; }
   .hist-set-time {
     font-size: 10px;
     color: #3dba6e;
     font-weight: 600;
     text-align: center;
+    width: 44px;
+    flex-shrink: 0;
   }
   .hist-performed-label {
     font-size: 11px;
@@ -2272,7 +2377,7 @@
     border-radius: 8px;
     padding: 8px 6px;
     font-family: 'DM Sans', sans-serif;
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 600;
     color: var(--text);
     outline: none;
@@ -2311,6 +2416,23 @@
     .mp-ex-fields { gap: 6px; }
     .mp-ex-input { padding: 10px 8px; font-size: 16px; } /* 16px prevents iOS zoom */
     .prog-ex-fields { gap: 6px; }
+
+    /* Prog set rows — tighter on mobile */
+    .prog-set-row { gap: 6px; padding: 4px 0; }
+    .prog-set-header { gap: 6px; }
+    .prog-set-num { width: 20px; }
+    .prog-set-header .sh-num { width: 20px; }
+    .set-elapsed-time { min-width: 28px; font-size: 9px; }
+    .prog-set-input { max-width: 72px; }
+    .prog-set-input[data-field="performed_weight"] { max-width: 80px; }
+    .prog-set-header .sh-reps { width: 72px; max-width: 72px; }
+    .prog-set-header .sh-weight { width: 80px; max-width: 80px; }
+    .set-checkbox:checked::after {
+      font-size: 16px;
+    }
+    .prog-set-add-btn, .prog-set-remove-btn {
+      padding: 12px 8px;
+    }
 
     /* History */
     .hist-card { padding: 12px 14px; gap: 12px; }
@@ -2805,6 +2927,7 @@
     </div>
   </div>
 </div>
+<div class="progress-bar-spacer" id="progressSpacer" style="display:none"></div>
 
 <!-- WARMUP PAGE -->
 <div id="warmup" class="page active">
@@ -4495,7 +4618,7 @@
       const open = ctr ? getOpenCardIds(ctr) : [];
       renderProgPage(id).then(() => {
         if (ctr) restoreOpenCards(ctr, open);
-      });
+      }).catch(err => log.error('renderProgPage failed:', err.message));
     }
     updateProgress(); // always — hides bar on calendar/history/myprograms, shows on workout tabs
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -4649,6 +4772,7 @@
     const noProgressTabs = ['myprograms', 'calendar', 'history'];
     if (noProgressTabs.includes(currentTab)) {
       document.getElementById('progressWrap').style.display = 'none';
+      document.getElementById('progressSpacer').style.display = 'none';
       return;
     }
     // Prefer set-checkboxes if available, fallback to exercise-checkboxes
@@ -4661,7 +4785,9 @@
     document.getElementById('progressFill').style.width = pct + '%';
     document.getElementById('progressDone').textContent = doneCount;
     document.getElementById('progressTotal').textContent = total;
-    document.getElementById('progressWrap').style.display = total === 0 ? 'none' : 'block';
+    const vis = total === 0 ? 'none' : 'block';
+    document.getElementById('progressWrap').style.display = vis;
+    document.getElementById('progressSpacer').style.display = vis;
   }
 
   async function resetProgress() {
@@ -5303,25 +5429,28 @@
 
     if (dropIdx !== _dragIdx && dropIdx >= 0) {
       _dragSaving = true;
-      if (_dragSaveCallback) {
-        await _dragSaveCallback(_dragIdx, dropIdx);
-      } else {
-        // Default: reorder userPrograms
-        const moved = userPrograms.splice(_dragIdx, 1)[0];
-        userPrograms.splice(dropIdx, 0, moved);
-        for (let i = 0; i < userPrograms.length; i++) {
-          if (userPrograms[i].sort_order !== i) {
-            userPrograms[i].sort_order = i;
-            const { error } = await supa.from('workout_programs')
-              .update({ sort_order: i }).eq('user_id', currentUser.id).eq('id', userPrograms[i].id);
-            if (error) log.error('Reorder save failed:', error.message);
+      try {
+        if (_dragSaveCallback) {
+          await _dragSaveCallback(_dragIdx, dropIdx);
+        } else {
+          // Default: reorder userPrograms
+          const moved = userPrograms.splice(_dragIdx, 1)[0];
+          userPrograms.splice(dropIdx, 0, moved);
+          for (let i = 0; i < userPrograms.length; i++) {
+            if (userPrograms[i].sort_order !== i) {
+              userPrograms[i].sort_order = i;
+              const { error } = await supa.from('workout_programs')
+                .update({ sort_order: i }).eq('user_id', currentUser.id).eq('id', userPrograms[i].id);
+              if (error) log.error('Reorder save failed:', error.message);
+            }
           }
+          log.ok('Programs reordered via drag');
+          updateProgTabs();
+          renderProgramList();
         }
-        log.ok('Programs reordered via drag');
-        updateProgTabs();
-        renderProgramList();
+      } finally {
+        _dragSaving = false;
       }
-      _dragSaving = false;
     }
     _dragIdx = -1;
   }
@@ -5525,7 +5654,11 @@
       log.ok('Exercises reordered via drag');
       if (activeProgramId) loadAndRenderProgramExercises(activeProgramId);
       const slot = Object.keys(progPageIdMap).find(k => progPageIdMap[k] === activeProgramId);
-      if (slot) renderProgPage(slot);
+      if (slot) {
+        const openIds = getOpenCardIds(slot);
+        await renderProgPage(slot);
+        restoreOpenCards(slot, openIds);
+      }
     });
   }
 
@@ -5742,6 +5875,7 @@
         <div class="prog-set-row" data-set-num="${s+1}" data-exercise-name="${esc(e.lib.name || '')}">
           <span class="prog-set-num">#${s+1}</span>
           <input type="checkbox" class="set-checkbox" data-set-num="${s+1}" data-tab="${slot}" data-exercise-name="${esc(e.lib.name || '')}" />
+          <span class="set-elapsed-time" data-set-num="${s+1}" data-exercise-name="${esc(e.lib.name || '')}"></span>
           <input type="text" class="prog-set-input" inputmode="numeric" value="${esc(e.reps)}" placeholder="${rLabel}" data-field="performed_reps" data-set-num="${s+1}" />
           <input type="number" class="prog-set-input" inputmode="decimal" value="${e.target_weight || ''}" placeholder="${wLabel}" step="0.5" data-field="performed_weight" data-set-num="${s+1}" />
         </div>`).join('');
@@ -5759,23 +5893,53 @@
           <div class="card-body">
             ${e.lib.instructions ? `<div class="prog-ex-instructions">▸ ${esc(e.lib.instructions)}</div>` : ''}
             <div class="prog-set-header">
-              <span></span><span></span><span>${rLabel}</span><span>${wLabel}</span>
+              <span class="sh-num"></span><span class="sh-cb"></span><span class="sh-elapsed">⏱</span><span class="sh-reps">${rLabel}</span><span class="sh-weight">${wLabel}</span>
             </div>
             <div class="prog-set-rows">${setRows}</div>
             <div class="prog-set-actions">
               <button class="prog-set-add-btn" data-row-id="${esc(e.id)}">+ ${currentLang === 'en' ? 'Add set' : 'Lisää sarja'}</button>
               <button class="prog-set-remove-btn" data-row-id="${esc(e.id)}" ${setCount <= 1 ? 'disabled' : ''}>− ${currentLang === 'en' ? 'Remove set' : 'Poista sarja'}</button>
             </div>
-            <button class="mp-ex-del prog-remove-btn" style="width:100%;border-radius:8px;padding:10px;font-size:13px;margin-top:6px">
+            <button class="mp-ex-del prog-remove-btn" style="width:auto;border-radius:8px;padding:6px 14px;font-size:12px;margin-top:8px">
               ${removeLabel}
             </button>
           </div>
         </div>`;
     }).join('');
 
+    const saveLabel = currentLang === 'en' ? 'Save workout' : 'Tallenna treeni';
+    const effortLabel = currentLang === 'en' ? 'How hard?' : 'Kuinka raskas?';
+    const moodLabel = currentLang === 'en' ? 'How do you feel?' : 'Fiilis?';
+    const notePh = currentLang === 'en' ? 'Note (optional)' : 'Muistiinpano (valinnainen)';
+    const cancelLabel = currentLang === 'en' ? 'Cancel' : 'Peruuta';
     container.innerHTML = html + `
       <div class="prog-add-wrap">
         <button class="add-exercise-btn prog-add-btn">+ ${currentLang === 'en' ? 'Add exercise' : 'Lisää liike'}</button>
+      </div>
+      <div class="prog-save-wrap">
+        <button class="prog-save-btn prog-save-toggle-btn">${saveLabel}</button>
+        <div class="prog-save-section" style="display:none">
+          <div class="prog-save-label">${effortLabel}</div>
+          <div class="feeling-row prog-effort-row">
+            <button class="feeling-btn" data-kind="effort" data-value="easy">😌 ${currentLang === 'en' ? 'Easy' : 'Helppo'}</button>
+            <button class="feeling-btn selected" data-kind="effort" data-value="good">💪 ${currentLang === 'en' ? 'Good' : 'Hyvä'}</button>
+            <button class="feeling-btn" data-kind="effort" data-value="hard">😤 ${currentLang === 'en' ? 'Hard' : 'Raskas'}</button>
+            <button class="feeling-btn" data-kind="effort" data-value="exhausting">🥵 ${currentLang === 'en' ? 'Exhausting' : 'Uuvuttava'}</button>
+          </div>
+          <div class="prog-save-label">${moodLabel}</div>
+          <div class="feeling-row prog-mood-row">
+            <button class="feeling-btn selected" data-kind="mood" data-value="great">🌟 ${currentLang === 'en' ? 'Great' : 'Mahtava'}</button>
+            <button class="feeling-btn" data-kind="mood" data-value="energized">⚡ ${currentLang === 'en' ? 'Energized' : 'Energinen'}</button>
+            <button class="feeling-btn" data-kind="mood" data-value="neutral">😐 ${currentLang === 'en' ? 'Neutral' : 'Neutraali'}</button>
+            <button class="feeling-btn" data-kind="mood" data-value="tired">😴 ${currentLang === 'en' ? 'Tired' : 'Väsynyt'}</button>
+            <button class="feeling-btn" data-kind="mood" data-value="stressed">😰 ${currentLang === 'en' ? 'Stressed' : 'Stressaantunut'}</button>
+          </div>
+          <textarea class="prog-save-note" placeholder="${notePh}" maxlength="200"></textarea>
+          <div class="prog-save-actions">
+            <button class="prog-save-btn prog-save-confirm-btn">${saveLabel}</button>
+            <button class="prog-save-cancel">${cancelLabel}</button>
+          </div>
+        </div>
       </div>`;
 
     // Wire up event listeners (no inline onclick)
@@ -5794,6 +5958,25 @@
           const setRow = cb.closest('.prog-set-row');
           setRow?.classList.toggle('set-done', done);
           const seconds = done && timerRunning ? getTimerSeconds() : null;
+          // Update elapsed time display
+          const elapsedSpan = setRow?.querySelector('.set-elapsed-time');
+          if (done && seconds != null) {
+            // Build map from all checked sets in this exercise
+            const checkedAtMap = {};
+            card.querySelectorAll('.set-checkbox:checked').forEach(c => {
+              const sn = parseInt(c.dataset.setNum);
+              const row = c.closest('.prog-set-row');
+              const span = row?.querySelector('.set-elapsed-time');
+              if (span?.dataset.checkedAt) checkedAtMap[sn] = parseInt(span.dataset.checkedAt);
+            });
+            checkedAtMap[setNum] = seconds;
+            if (elapsedSpan) elapsedSpan.dataset.checkedAt = seconds;
+            renderSetElapsed(container, exName, checkedAtMap);
+          } else if (!done && elapsedSpan) {
+            elapsedSpan.textContent = '';
+            elapsedSpan.classList.remove('has-time');
+            delete elapsedSpan.dataset.checkedAt;
+          }
           // Update badge
           updateSetsBadge(card);
           updateProgress();
@@ -5888,6 +6071,7 @@
         const newSets = currentSets - 1;
         if (newSets < 1) return;
         if (!confirm(currentLang === 'en' ? 'Remove last set?' : 'Poista viimeinen sarja?')) return;
+        await saveUnsavedSetInputs(card, slot);
         const exName = card.dataset.exerciseName;
         const { error } = await supa.from('workout_day_exercises')
           .update({ sets: newSets }).eq('user_id', currentUser.id).eq('id', rowId);
@@ -5905,6 +6089,35 @@
       });
     });
     container.querySelector('.prog-add-btn')?.addEventListener('click', () => openProgPicker(slot));
+
+    // Save workout section handlers
+    const saveSection = container.querySelector('.prog-save-section');
+    const saveToggleBtn = container.querySelector('.prog-save-toggle-btn');
+    saveToggleBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const open = saveSection.style.display !== 'none';
+      saveSection.style.display = open ? 'none' : 'block';
+      saveToggleBtn.style.display = open ? '' : 'none';
+    });
+    container.querySelector('.prog-save-cancel')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      saveSection.style.display = 'none';
+      saveToggleBtn.style.display = '';
+    });
+    // Effort/mood selection in save section
+    container.querySelectorAll('.prog-save-section .feeling-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const row = btn.closest('.feeling-row');
+        row.querySelectorAll('.feeling-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+      });
+    });
+    // Save confirm button
+    container.querySelector('.prog-save-confirm-btn')?.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      await saveWorkoutFromProg(slot, container);
+    });
 
     // Restore set checks from cloud
     await restoreSetChecks(slot, container);
@@ -5927,6 +6140,73 @@
       restoreOpenCards(container, openDrag);
       if (activeProgramId === programId) loadAndRenderProgramExercises(programId);
     });
+  }
+
+  async function saveWorkoutFromProg(slot, container) {
+    if (!currentUser) return;
+    const programId = progPageIdMap[slot];
+    if (!programId) { log.warn('saveWorkoutFromProg: no programId for slot', slot); return; }
+    const program = userPrograms.find(p => p.id === programId);
+    if (!program) { log.warn('saveWorkoutFromProg: program not found'); return; }
+
+    const btn = container.querySelector('.prog-save-confirm-btn');
+    if (btn) { btn.disabled = true; btn.textContent = currentLang === 'en' ? 'Saving...' : 'Tallennetaan...'; }
+
+    // Read effort/mood/note from save section
+    const effort = container.querySelector('.prog-effort-row .feeling-btn.selected')?.dataset.value || 'good';
+    const mood = container.querySelector('.prog-mood-row .feeling-btn.selected')?.dataset.value || 'great';
+    const note = container.querySelector('.prog-save-note')?.value.trim() || null;
+    const date = todayStr();
+    const duration = getTimerSeconds() || null;
+
+    // Save unsaved input values before snapshot
+    for (const card of container.querySelectorAll('.prog-ex-card')) {
+      await saveUnsavedSetInputs(card, slot);
+    }
+
+    try {
+      // 1. Insert session
+      const { error: sessErr } = await supa.from('sessions').insert({
+        user_id: currentUser.id, date, type: program.name, ts: Date.now(),
+        effort_feeling: effort, post_workout_mood: mood, note, duration_seconds: duration
+      });
+      if (sessErr) throw new Error('Session save failed: ' + sessErr.message);
+
+      // 2. Reload sessions to get new session ID
+      const { data: reloaded } = await supa.from('sessions')
+        .select('id,date,type,ts,created_at,effort_feeling,post_workout_mood,note')
+        .eq('user_id', currentUser.id).order('created_at', { ascending: false });
+      if (reloaded) cachedSessions = reloaded;
+      const newSession = cachedSessions[0];
+
+      // 3. Snapshot workout history
+      await logWorkoutWithSnapshot(programId, date, effort, mood, note, newSession?.id, duration);
+
+      // 4. Reset progress + timer
+      await resetProgress();
+      if (timerRunning) stopTimer();
+      resetTimer();
+
+      // 5. Invalidate history cache
+      cachedHistory = [];
+
+      // 6. Success feedback
+      if (btn) { btn.textContent = currentLang === 'en' ? 'Saved!' : 'Tallennettu!'; }
+      log.ok('Workout saved from prog page:', program.name);
+
+      setTimeout(() => {
+        const section = container.querySelector('.prog-save-section');
+        const toggleBtn = container.querySelector('.prog-save-toggle-btn');
+        if (section) section.style.display = 'none';
+        if (toggleBtn) toggleBtn.style.display = '';
+        if (btn) { btn.disabled = false; btn.textContent = currentLang === 'en' ? 'Save workout' : 'Tallenna treeni'; }
+      }, 1200);
+
+    } catch (err) {
+      log.error('saveWorkoutFromProg failed:', err.message);
+      if (btn) { btn.disabled = false; btn.textContent = currentLang === 'en' ? 'Save workout' : 'Tallenna treeni'; }
+      alert(currentLang === 'en' ? 'Save failed. Please try again.' : 'Tallennus epäonnistui. Yritä uudelleen.');
+    }
   }
 
   // initProgCheckboxes removed — prog pages now use set-level checkboxes (set_checks table)
@@ -5981,15 +6261,51 @@
     }
   }
 
+  function formatElapsed(seconds) {
+    if (seconds == null || seconds < 0) return '';
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return (m > 0 ? m + ':' + String(s).padStart(2, '0') : s + 's');
+  }
+
+  function renderSetElapsed(container, exerciseName, checkedAtMap) {
+    // checkedAtMap: { setNum: checkedAtSeconds }
+    const rows = Array.from(container.querySelectorAll(`.set-elapsed-time`)).filter(el =>
+      el.dataset.exerciseName === exerciseName
+    );
+    const sortedNums = Object.keys(checkedAtMap).map(Number).sort((a, b) => a - b);
+    rows.forEach(span => {
+      const setNum = parseInt(span.dataset.setNum);
+      const checkedAt = checkedAtMap[setNum];
+      if (checkedAt == null) {
+        span.textContent = '';
+        span.classList.remove('has-time');
+        return;
+      }
+      // Find previous set's checked_at in same exercise
+      const idx = sortedNums.indexOf(setNum);
+      const prevNum = idx > 0 ? sortedNums[idx - 1] : null;
+      const prevAt = prevNum != null ? checkedAtMap[prevNum] : null;
+      const delta = prevAt != null ? checkedAt - prevAt : checkedAt;
+      span.textContent = (prevAt != null ? '+' : '') + formatElapsed(delta);
+      span.classList.add('has-time');
+      span.dataset.checkedAt = checkedAt;
+    });
+  }
+
   async function restoreSetChecks(slot, container) {
     if (!currentUser) return;
     const { data } = await supa.from('set_checks')
-      .select('exercise_name, set_number, done, performed_reps, performed_weight')
+      .select('exercise_name, set_number, done, performed_reps, performed_weight, checked_at_seconds')
       .eq('user_id', currentUser.id)
       .eq('tab_id', slot);
     if (!data) return;
+    // Build checked_at map per exercise for elapsed time calculation
+    const checkedAtByExercise = {};
     data.forEach(row => {
-      const cb = container.querySelector(`.set-checkbox[data-set-num="${row.set_number}"][data-exercise-name="${row.exercise_name.replace(/"/g, '\\"')}"]`);
+      const cb = Array.from(container.querySelectorAll('.set-checkbox')).find(el =>
+        el.dataset.setNum === String(row.set_number) && el.dataset.exerciseName === row.exercise_name
+      );
       if (!cb) return;
       cb.checked = row.done;
       const setRow = cb.closest('.prog-set-row');
@@ -6002,7 +6318,16 @@
         const weightInput = setRow?.querySelector('[data-field="performed_weight"]');
         if (weightInput) weightInput.value = row.performed_weight;
       }
+      // Collect checked_at for elapsed display
+      if (row.done && row.checked_at_seconds != null) {
+        if (!checkedAtByExercise[row.exercise_name]) checkedAtByExercise[row.exercise_name] = {};
+        checkedAtByExercise[row.exercise_name][row.set_number] = row.checked_at_seconds;
+      }
     });
+    // Render elapsed times per exercise
+    for (const [exName, map] of Object.entries(checkedAtByExercise)) {
+      renderSetElapsed(container, exName, map);
+    }
     // Update all badges
     container.querySelectorAll('.prog-ex-card').forEach(updateSetsBadge);
   }
@@ -6093,7 +6418,7 @@
     loadExerciseLibrary().then(() => {
       buildPickerCategories();
       buildPickerList();
-    });
+    }).catch(err => log.error('loadExerciseLibrary failed:', err.message));
   }
 
   function closeExercisePicker() {
@@ -6783,7 +7108,7 @@
     });
 
     const html = Object.entries(grouped).map(([, group]) => `
-      <div class="hist-month-label">${group.label}</div>
+      <div class="hist-month-label">${esc(group.label)}</div>
       ${group.items.map(h => {
         const d = new Date(h.logged_date + 'T12:00:00');
         const dateStr = d.toLocaleDateString(currentLang === 'fi' ? 'fi-FI' : 'en-US', { weekday: 'short', day: 'numeric', month: 'short' });
@@ -6966,7 +7291,7 @@
             const rowId = input.dataset.id;
             let val = input.value || null;
             if (field === 'performed_sets') val = val ? parseInt(val) : null;
-            if (field === 'performed_reps') val = val ? parseInt(val) : null;
+            if (field === 'performed_reps') val = val || null;
             if (field === 'performed_weight') val = val ? parseFloat(val) : null;
             const { error: err } = await supa.from('workout_history_exercises')
               .update({ [field]: val }).eq('user_id', currentUser.id).eq('id', rowId);

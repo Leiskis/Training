@@ -146,7 +146,7 @@
     display: flex;
     overflow-x: auto;
     gap: 8px;
-    padding: 12px 16px;
+    padding: 10px 16px 4px;
     scrollbar-width: none;
     align-items: center;
   }
@@ -370,11 +370,12 @@
     .header-sub { font-size: 13px; margin-top: 6px; }
 
     /* Tighter nav */
-    .tab-bar { padding: 8px 12px; gap: 6px; }
+    .tab-bar { padding: 8px 12px 4px; gap: 6px; }
     .tab-btn { padding: 7px 14px; font-size: 13px; }
     .theme-toggle { padding: 6px 11px; font-size: 15px; }
 
-    .progress-bar-wrap { padding: 0 12px 0; }
+    /* Progress bar closer to content */
+    .progress-bar-wrap { padding: 2px 12px 0; }
 
     /* Cards — bigger tap target, less padding */
     .card-header { padding: 14px 14px; }
@@ -433,7 +434,6 @@
   /* Bottom safe area for iPhone home bar */
   @supports (padding-bottom: env(safe-area-inset-bottom)) {
     .page { padding-bottom: calc(80px + env(safe-area-inset-bottom)); }
-    .tab-bar { padding-bottom: calc(8px + env(safe-area-inset-bottom)); }
   }
 
   /* Active state feedback for touch */

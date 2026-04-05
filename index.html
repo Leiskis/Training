@@ -5747,6 +5747,8 @@
       // Add/remove set buttons
       card.querySelector('.prog-set-add-btn')?.addEventListener('click', async (e) => {
         e.stopPropagation();
+        // Save any unsaved input values before re-render
+        await saveUnsavedSetInputs(card, slot);
         const currentSets = parseInt(card.dataset.sets) || 3;
         const newSets = currentSets + 1;
         if (newSets > 20) return;
@@ -5760,10 +5762,18 @@
         const currentSets = parseInt(card.dataset.sets) || 3;
         const newSets = currentSets - 1;
         if (newSets < 1) return;
+        const exName = card.dataset.exerciseName;
         const { error } = await supa.from('workout_day_exercises')
           .update({ sets: newSets }).eq('user_id', currentUser.id).eq('id', rowId);
-        if (error) log.error('Remove set failed:', error.message);
-        else { log.ok('Set removed, now:', newSets); renderProgPage(slot); }
+        if (error) { log.error('Remove set failed:', error.message); return; }
+        // Clean up orphan set_checks for removed set numbers
+        for (let s = newSets + 1; s <= currentSets; s++) {
+          await supa.from('set_checks').delete()
+            .eq('user_id', currentUser.id).eq('tab_id', slot)
+            .eq('exercise_name', exName).eq('set_number', s);
+        }
+        log.ok('Set removed + orphans cleaned, now:', newSets);
+        renderProgPage(slot);
       });
     });
     container.querySelector('.prog-add-btn')?.addEventListener('click', () => openProgPicker(slot));
@@ -5855,6 +5865,24 @@
       if (doneSets.length === 0) badge.textContent = '';
       else if (doneSets.length === allSets.length) badge.textContent = '✓';
       else badge.textContent = `${doneSets.length}/${allSets.length}`;
+    }
+  }
+
+  async function saveUnsavedSetInputs(card, slot) {
+    if (!currentUser) return;
+    const exName = card.dataset.exerciseName;
+    for (const row of card.querySelectorAll('.prog-set-row')) {
+      const setNum = parseInt(row.dataset.setNum);
+      const repsInput = row.querySelector('[data-field="performed_reps"]');
+      const weightInput = row.querySelector('[data-field="performed_weight"]');
+      const reps = repsInput?.value || null;
+      const weight = weightInput?.value ? parseFloat(weightInput.value) : null;
+      if (!reps && !weight) continue;
+      await supa.from('set_checks').upsert({
+        user_id: currentUser.id, tab_id: slot, exercise_name: exName,
+        set_number: setNum, performed_reps: reps, performed_weight: weight,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'user_id,tab_id,exercise_name,set_number' });
     }
   }
 

@@ -44,17 +44,6 @@ struct ProgramListView: View {
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(program.name)
                                         .font(.system(size: 15, weight: .semibold))
-
-                                    if let prog = progress[program.id], prog.isActive {
-                                        HStack(spacing: 4) {
-                                            Image(systemName: "flame.fill")
-                                                .font(.system(size: 10))
-                                                .foregroundColor(.orange)
-                                            Text(prog.label)
-                                                .font(.system(size: 11, weight: .bold))
-                                                .foregroundColor(.green)
-                                        }
-                                    }
                                 }
                                 Spacer()
 

@@ -61,7 +61,7 @@ Käy läpi jokainen UI-interaktio ja tunnista sudenkuopat:
 - **Input-arvot**: Ennen re-renderiä tallenna muokatut mutta ei-tallennetut kentät `saveUnsavedSetInputs()`:lla.
 
 **Cached data riippuvuudet:**
-- Sovelluksessa on cached-muuttujia jotka ladataan eri ajankohtina: `cachedSessions` (kalenteri), `cachedHistory` (historia), `userPrograms` (kirjautuminen), `exerciseLibrary` (tarvittaessa)
+- Sovelluksessa on cached-muuttujia jotka ladataan eri ajankohtina: `cachedSessions` (kalenteri), `cachedHistory` (historia), `cachedAnalyticsData` (analytiikka), `userPrograms` (kirjautuminen), `exerciseLibrary` (tarvittaessa)
 - Jos funktio käyttää toisen näkymän cachea, tarkista: onko cache ladattu tässä vaiheessa? Jos ei, lataa se lazy load -patternilla.
 - `sessions` ja `workout_history` ovat ERI tauluja — merkintä voi olla vain toisessa. Historia yhdistää molemmat.
 - Nimen perusteella matching (`userPrograms.find(p => p.name === x)`) on hauras — suosi ID:tä.

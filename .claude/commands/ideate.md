@@ -1,9 +1,9 @@
 # Ideate — Feature-ideoinnin asiantuntijapaneeli
 
-Kokoa 5 asiantuntijaa yhteen arvioimaan ja kehittämään feature-ideaa: $ARGUMENTS
+Kokoa 7 asiantuntijaa yhteen arvioimaan ja kehittämään feature-ideaa: $ARGUMENTS
 
 ## Tärkeät säännöt
-- **Aja kaikki 5 asiantuntijaa rinnakkaisina agentteina** (Agent tool, subagent_type=Explore)
+- **Aja kaikki 7 asiantuntijaa rinnakkaisina agentteina** (Agent tool, subagent_type=Explore)
 - **Jokainen agentti lukee koodin** — ei arvailla, tarkistetaan index.html ja CLAUDE.md
 - **Ei duplikaatteja** — jokainen agentti vastaa omasta näkökulmastaan
 - **Lyhyt ja konkreettinen** — max 200 sanaa per agentti
@@ -25,6 +25,12 @@ Arvioi millaista dataa feature tuottaa tai tarvitsee. Mitä tauluja/sarakkeita t
 ### Agentti 5: Ravitsemusasiantuntija
 Arvioi liittyykö feature ravitsemukseen tai palautumiseen. Jos ei suoraan, ehdota miten ravitsemusnäkökulman voisi yhdistää. Jos ei relevantti, sano se lyhyesti ja ehdota sen sijaan mikä ravitsemus-feature olisi arvokas.
 
+### Agentti 6: UX Designer
+Arvioi featuren visuaalinen toteutus ja käyttöliittymä. Miten se istuu nykyiseen design-kieleen (dark/light mode, gold-aksentit, DM Sans/Bebas Neue)? Onko komponenttisuunnittelu yhtenäinen? Touch-targetit, animaatiot, spacing? Anna konkreettinen UI-ehdotus.
+
+### Agentti 7: Business / Monetisaatio
+Arvioi featuren vaikutus liiketoimintaan. Onko se free- vai premium-tier ominaisuus? Parantaako se retentiota (käyttäjä palaa)? Lisääkö se konversiota (free→paid)? Onko se markkinoitava USP (Unique Selling Point)? Anna 2–3 business-näkökulmaa.
+
 ## Vaihe 2: Synteesi
 
 Kun kaikki agentit ovat vastanneet, kokoa yhteenveto:
@@ -38,16 +44,20 @@ Kun kaikki agentit ovat vastanneet, kokoa yhteenveto:
 | Psykologi | 👍/👎/🤔 | ... |
 | Data-analyytikko | 👍/👎/🤔 | ... |
 | Ravitsemus | 👍/👎/🤔 | ... |
+| UX Designer | 👍/👎/🤔 | ... |
+| Business | 💰/⏳/❌ | ... |
 
 ### Konsensus
 - **Yhteinen suositus**: toteuta / muokkaa / myöhemmin / hylkää
 - **Tärkeimmät parannukset**: 2–3 ehdotusta jotka nousivat useammalta asiantuntijalta
 - **Riskit**: mitkä varoitukset toistuivat
+- **Monetisaatio**: free vai premium? Miten vaikuttaa konversioon?
 
 ### Lopullinen feature-ehdotus
 Jos konsensus on "toteuta" tai "muokkaa", kirjoita lopullinen feature-kuvaus joka huomioi kaikkien asiantuntijoiden palautteet:
 - Mitä toteutetaan (MVP)
 - Mitä jätetään pois ensimmäisestä versiosta
+- Free vai premium tier
 - Arvioitu koko: S / M / L / XL
 
 Kysy lopuksi: "Hyväksytkö? Aja `/spec [feature]` speksataksesi tai `/designer [feature]` tarkempaan arvioon."

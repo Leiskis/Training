@@ -5529,11 +5529,19 @@
   async function removeExerciseFromProgram(rowId, exerciseId) {
     if (!currentUser) { log.warn('removeExerciseFromProgram: no user'); return; }
     log.info('Removing exercise row:', rowId);
+    // Get exercise name for set_checks cleanup
+    const lib = exerciseLibrary.find(e => e.id === exerciseId);
+    const exName = lib?.name;
     const { error } = await supa.from('workout_day_exercises')
       .delete().eq('user_id', currentUser.id).eq('id', rowId);
     if (error) { log.error('Remove failed:', error.message); return; }
     pickerAddedIds.delete(exerciseId);
-    log.ok('Exercise removed');
+    // Clean up set_checks for this exercise across all tabs
+    if (exName) {
+      await supa.from('set_checks').delete()
+        .eq('user_id', currentUser.id).eq('exercise_name', exName);
+    }
+    log.ok('Exercise removed + set_checks cleaned');
     if (activeProgramId) loadAndRenderProgramExercises(activeProgramId);
   }
 
@@ -5851,58 +5859,14 @@
         if (error) log.error('Prog exercise reorder failed:', error.message);
       }
       log.ok('Prog exercises reordered via drag');
-      renderProgPage(slot);
+      const openDrag = getOpenCardIds(container);
+      await renderProgPage(slot);
+      restoreOpenCards(container, openDrag);
       if (activeProgramId === programId) loadAndRenderProgramExercises(programId);
     });
   }
 
-  function initProgCheckboxes(slot, container) {
-    container.querySelectorAll('.ex-checkbox').forEach(cb => {
-      const name = cb.dataset.name;
-      const card = cb.closest('.prog-ex-card');
-
-      // Restore from cloud cache if available
-      if (currentUser) {
-        supa.from('exercise_checks')
-          .select('done')
-          .eq('user_id', currentUser.id)
-          .eq('tab_id', slot)
-          .eq('exercise_name', name)
-          .then(({ data }) => {
-            if (data && data[0]) {
-              cb.checked = data[0].done;
-              card?.classList.toggle('done', data[0].done);
-              updateProgress();
-            }
-          }).catch(err => log.error('initProgCheckboxes restore failed:', err.message));
-      }
-
-      cb.addEventListener('change', async (e) => {
-        e.stopPropagation();
-        const done = cb.checked;
-        card?.classList.toggle('done', done);
-        // Show/hide timestamp
-        const seconds = done && timerRunning ? getTimerSeconds() : null;
-        let tsEl = card?.querySelector('.check-timestamp');
-        if (done && seconds) {
-          if (!tsEl) { tsEl = document.createElement('span'); tsEl.className = 'check-timestamp'; card?.querySelector('.card-header-left')?.appendChild(tsEl); }
-          tsEl.textContent = '⏱ ' + formatTimer(seconds);
-        } else if (tsEl) { tsEl.remove(); }
-        updateProgress();
-        if (!currentUser) return;
-        const { error } = await supa.from('exercise_checks').upsert({
-          user_id: currentUser.id,
-          tab_id: slot,
-          exercise_name: name,
-          done,
-          checked_at_seconds: seconds,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'user_id,tab_id,exercise_name' });
-        if (error) log.error('Prog checkbox save failed:', error.message);
-        else log.ok('Prog checkbox saved:', name, '=', done);
-      });
-    });
-  }
+  // initProgCheckboxes removed — prog pages now use set-level checkboxes (set_checks table)
 
   function updateBadge(rowId, fieldsEl) {
     const inputs = fieldsEl.querySelectorAll('.mp-ex-input');
@@ -5982,8 +5946,11 @@
 
 
   async function removeProgExercise(slot, rowId, exerciseId) {
+    const container = document.getElementById(`${slot}-content`);
+    const openCards = container ? getOpenCardIds(container) : [];
     await removeExerciseFromProgram(rowId, exerciseId);
-    renderProgPage(slot);
+    await renderProgPage(slot);
+    if (container) restoreOpenCards(container, openCards);
     if (activeProgramId === progPageIdMap[slot]) {
       loadAndRenderProgramExercises(activeProgramId);
     }
@@ -6268,7 +6235,12 @@
 
     loadAndRenderProgramExercises(pickerActiveDay);
     const slot = Object.keys(progPageIdMap).find(k => progPageIdMap[k] === pickerActiveDay);
-    if (slot) renderProgPage(slot);
+    if (slot) {
+      const pickerContainer = document.getElementById(`${slot}-content`);
+      const openPicker = pickerContainer ? getOpenCardIds(pickerContainer) : [];
+      await renderProgPage(slot);
+      if (pickerContainer) restoreOpenCards(pickerContainer, openPicker);
+    }
   }
 
   /* ══════════════════════════════════════

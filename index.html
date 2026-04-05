@@ -371,8 +371,7 @@
     .theme-toggle { padding: 6px 11px; font-size: 15px; }
 
     /* Progress bar closer to content, adjust fixed top for smaller tab-bar */
-    .progress-bar-wrap { padding: 0 12px 0; top: 48px; }
-    .progress-bar-spacer { height: 48px; }
+    .progress-bar-wrap { padding: 0 12px 0; top: 43px; }
 
     /* Cards — bigger tap target, less padding */
     .card-header { padding: 14px 14px; }
@@ -462,21 +461,16 @@
     -webkit-touch-callout: none;
   }
 
-  /* Fixed progress bar with backdrop blur — always visible when scrolling */
+  /* Sticky progress bar — attached below tab-bar */
   .progress-bar-wrap {
-    position: fixed;
-    top: 64px;
-    left: 0;
-    right: 0;
-    z-index: 101;
+    position: sticky;
+    top: 53px;
+    z-index: 99;
     background: var(--header-bg2);
     padding: 8px 16px 4px;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     transition: background 0.25s;
-  }
-  .progress-bar-spacer {
-    height: 60px;
   }
 
   /* PHYSIO STYLES */
@@ -610,9 +604,7 @@
   .progress-bar-wrap {
     padding: 0 16px 2px;
     max-width: 600px;
-    left: 50%;
-    right: auto;
-    transform: translateX(-50%);
+    margin: 0 auto;
   }
   .progress-track {
     height: 4px;
@@ -2927,7 +2919,7 @@
     </div>
   </div>
 </div>
-<div class="progress-bar-spacer" id="progressSpacer" style="display:none"></div>
+
 
 <!-- WARMUP PAGE -->
 <div id="warmup" class="page active">
@@ -4772,7 +4764,6 @@
     const noProgressTabs = ['myprograms', 'calendar', 'history'];
     if (noProgressTabs.includes(currentTab)) {
       document.getElementById('progressWrap').style.display = 'none';
-      document.getElementById('progressSpacer').style.display = 'none';
       return;
     }
     // Prefer set-checkboxes if available, fallback to exercise-checkboxes
@@ -4787,7 +4778,6 @@
     document.getElementById('progressTotal').textContent = total;
     const vis = total === 0 ? 'none' : 'block';
     document.getElementById('progressWrap').style.display = vis;
-    document.getElementById('progressSpacer').style.display = vis;
   }
 
   async function resetProgress() {

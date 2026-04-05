@@ -12,6 +12,7 @@ struct SetCheck: Codable {
 struct ProgramDetailView: View {
     @EnvironmentObject var auth: AuthManager
     let program: WorkoutProgram
+    let progIndex: Int
 
     @State private var exercises: [WorkoutExercise] = []
     @State private var setChecks: [String: [Int: SetCheck]] = [:] // exerciseName -> {setNum -> check}
@@ -23,7 +24,7 @@ struct ProgramDetailView: View {
 
     var tabId: String {
         let slots = ["prog1", "prog2", "prog3"]
-        return slots[min(program.sort_order ?? 0, 2)]
+        return slots[min(progIndex, 2)]
     }
 
     var body: some View {

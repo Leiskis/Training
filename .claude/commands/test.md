@@ -74,10 +74,41 @@ Tässä projektissa on touch-pohjainen drag & drop. Tarkista nämä yleiset sude
 - Piilotettuihin elementteihin ei pääse ohjelmallisesti
 
 ### Datavirta
-- `logWorkoutWithSnapshot()` tallentaa sekä `workout_history` että `workout_history_exercises`
-- `renderProgPage(slot)` hakee oikean ohjelman ja renderöi liikkeet
+- `logWorkoutWithSnapshot()` tallentaa `workout_history` + `workout_history_exercises` + `workout_history_sets`
+- `renderProgPage(slot)` hakee oikean ohjelman ja renderöi sarja-rivit (set-checkbox per sarja)
 - `buildPickerList()` rakentaa elementit `createElement`:llä (ei innerHTML)
 - Async `.then()` -ketjuissa on `.catch()` virheenkäsittely
+
+### Sarjatason Seuranta (KRIITTINEN)
+Sovelluksessa on sarja-tason checkkaus. Tarkista nämä:
+
+**Taulut:**
+- `set_checks` — reaaliaikainen sarja-tila (user_id, tab_id, exercise_name, set_number, done, performed_reps, performed_weight, checked_at_seconds)
+- `workout_history_sets` — historian sarja-snapshot (history_id, exercise_name, set_number, planned/performed reps/weight)
+- `exercise_checks` — vanha liike-tason tila (warmup/physio käyttää edelleen)
+
+**Re-render kortin tila:**
+- Kun `renderProgPage()` kutsutaan (esim. sarjan lisäys/poisto), KAIKKI kortit sulkeutuvat
+- Ratkaisu: `getOpenCardIds()` tallentaa avatut kortit ennen re-renderiä, `restoreOpenCards()` palauttaa ne jälkeen
+- Tarkista: kutsutaanko näitä JOKAISESSA paikassa joka kutsuu renderProgPage()?
+
+**Sarjan lisäys/poisto:**
+- "Lisää sarja" päivittää `workout_day_exercises.sets` ja kutsuu renderProgPage
+- "Poista sarja" myös siivoaa orphan set_checks -rivit poistetuille set_numbereille
+- `saveUnsavedSetInputs()` tallentaa muokatut kentät ennen re-renderiä
+
+**Selector-mismatch riski:**
+- `restoreSetChecks` hakee elementtejä `data-exercise-name` attribuutilla
+- HTML:ssä attribuutti kirjoitetaan `esc()`:lla, queryssa pitää käyttää samaa escapointia
+- ÄLÄ käytä `CSS.escape()` kun HTML käyttää `esc()` — ne eivät täsmää
+
+**Hybridimalli:**
+- Prog-sivuilla: `.set-checkbox` (sarja-taso, set_checks taulu)
+- Warmup/physio: `.ex-checkbox` (liike-taso, exercise_checks taulu)
+- `updateProgress()` käyttää set-checkboxeja prioriteetissa, fallback ex-checkboxeihin
+
+**iOS font-size:**
+- Kaikki input-kentät (myös `.prog-set-input`, `.hist-set-input`) PITÄÄ olla 16px+ (iOS zoom-esto)
 
 ### Cached Data & Taulujen Synkronointi (KRIITTINEN)
 Sovelluksessa on useita cached-muuttujia jotka ladataan eri ajankohtina:

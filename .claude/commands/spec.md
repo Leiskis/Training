@@ -57,6 +57,8 @@ Käy läpi jokainen UI-interaktio ja tunnista sudenkuopat:
 - Mitkä funktiot kutsuvat `renderXxx()` joka korvaa innerHTML:n? Tämä tuhoaa event listenerit.
 - Tarkista: luodaanko uudet event listenerit renderöinnin jälkeen?
 - Onko ketjutusriski: funktio A kutsuu renderXxx → se kutsuu loadData → data vanhentuu?
+- **Korttien auki-tila**: Kun `renderProgPage` kutsutaan, kaikki kortit sulkeutuvat. Käytä `getOpenCardIds()` + `restoreOpenCards()` -patternia säilyttääksesi tilan.
+- **Input-arvot**: Ennen re-renderiä tallenna muokatut mutta ei-tallennetut kentät `saveUnsavedSetInputs()`:lla.
 
 **Cached data riippuvuudet:**
 - Sovelluksessa on cached-muuttujia jotka ladataan eri ajankohtina: `cachedSessions` (kalenteri), `cachedHistory` (historia), `userPrograms` (kirjautuminen), `exerciseLibrary` (tarvittaessa)

@@ -18,9 +18,10 @@ private struct SetDoneOnly: Codable { let set_number: Int?; let done: Bool? }
 struct ProgramListView: View {
     @EnvironmentObject var auth: AuthManager
     @State private var programs: [WorkoutProgram] = []
-    @State private var progress: [String: ProgramProgress] = [:] // programId -> progress
+    @State private var progress: [String: ProgramProgress] = [:]
     @State private var isLoading = true
     @State private var error: String?
+    @State private var refreshId = UUID()
 
     var body: some View {
         NavigationStack {
@@ -93,7 +94,8 @@ struct ProgramListView: View {
             }
         }
         .task { await loadPrograms() }
-        .onAppear { Task { await refreshProgress() } }
+        .onAppear { refreshId = UUID() }
+        .task(id: refreshId) { await refreshProgress() }
     }
 
     func formatTime(_ seconds: Int) -> String {

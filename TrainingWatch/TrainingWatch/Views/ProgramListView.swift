@@ -11,6 +11,10 @@ struct ProgramProgress {
     }
 }
 
+// Lightweight models for progress queries
+private struct ExSetsOnly: Codable { let sets: Int? }
+private struct SetDoneOnly: Codable { let set_number: Int?; let done: Bool? }
+
 struct ProgramListView: View {
     @EnvironmentObject var auth: AuthManager
     @State private var programs: [WorkoutProgram] = []
@@ -100,13 +104,13 @@ struct ProgramListView: View {
                 let tabId = slots[i]
 
                 // Get exercise count (sets per exercise)
-                let exQuery = "select=exercise_id,sets&user_id=eq.\(auth.userId)&program_id=eq.\(prog.id)"
-                let exRows: [WorkoutExercise] = try await SupabaseClient.shared.fetch("workout_day_exercises", query: exQuery)
+                let exQuery = "select=sets&user_id=eq.\(auth.userId)&program_id=eq.\(prog.id)"
+                let exRows: [ExSetsOnly] = try await SupabaseClient.shared.fetch("workout_day_exercises", query: exQuery)
                 let totalSets = exRows.reduce(0) { $0 + ($1.sets ?? 3) }
 
                 // Get done count from set_checks
                 let checkQuery = "select=set_number,done&user_id=eq.\(auth.userId)&tab_id=eq.\(tabId)&done=eq.true"
-                let doneRows: [SetCheck] = try await SupabaseClient.shared.fetch("set_checks", query: checkQuery)
+                let doneRows: [SetDoneOnly] = try await SupabaseClient.shared.fetch("set_checks", query: checkQuery)
 
                 progMap[prog.id] = ProgramProgress(done: doneRows.count, total: totalSets)
             }

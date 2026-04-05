@@ -1711,7 +1711,7 @@
   .prog-set-row {
     display: grid;
     grid-template-columns: 24px 36px 1fr 1fr;
-    gap: 6px;
+    gap: 10px;
     align-items: center;
     padding: 6px 0;
     border-bottom: 1px solid var(--border);
@@ -5771,6 +5771,28 @@
           // Update badge
           updateSetsBadge(card);
           updateProgress();
+          // Auto-scroll to next set or auto-open next exercise
+          if (done) {
+            const nextRow = setRow?.nextElementSibling;
+            if (nextRow && nextRow.classList.contains('prog-set-row')) {
+              setTimeout(() => nextRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 200);
+            } else {
+              // All sets done — auto-open next exercise card
+              const allSets = card.querySelectorAll('.set-checkbox');
+              const allDone = [...allSets].every(c => c.checked);
+              if (allDone) {
+                const cards = [...container.querySelectorAll('.prog-ex-card')];
+                const idx = cards.indexOf(card);
+                const nextCard = cards[idx + 1];
+                if (nextCard && !nextCard.classList.contains('open')) {
+                  setTimeout(() => {
+                    nextCard.classList.add('open');
+                    nextCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }, 300);
+                }
+              }
+            }
+          }
           if (!currentUser) return;
           const body = {
             user_id: currentUser.id, tab_id: slot, exercise_name: exName,

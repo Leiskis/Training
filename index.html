@@ -5805,7 +5805,12 @@
         const { error } = await supa.from('workout_day_exercises')
           .update({ sets: newSets }).eq('user_id', currentUser.id).eq('id', rowId);
         if (error) log.error('Add set failed:', error.message);
-        else { log.ok('Set added, now:', newSets); renderProgPage(slot); }
+        else {
+          log.ok('Set added, now:', newSets);
+          const openCards = getOpenCardIds(container);
+          await renderProgPage(slot);
+          restoreOpenCards(container, openCards);
+        }
       });
       card.querySelector('.prog-set-remove-btn')?.addEventListener('click', async (e) => {
         e.stopPropagation();
@@ -5823,7 +5828,9 @@
             .eq('exercise_name', exName).eq('set_number', s);
         }
         log.ok('Set removed + orphans cleaned, now:', newSets);
-        renderProgPage(slot);
+        const openCards = getOpenCardIds(container);
+        await renderProgPage(slot);
+        restoreOpenCards(container, openCards);
       });
     });
     container.querySelector('.prog-add-btn')?.addEventListener('click', () => openProgPicker(slot));
@@ -5916,6 +5923,17 @@
       else if (doneSets.length === allSets.length) badge.textContent = '✓';
       else badge.textContent = `${doneSets.length}/${allSets.length}`;
     }
+  }
+
+  function getOpenCardIds(container) {
+    return [...container.querySelectorAll('.prog-ex-card.open')].map(c => c.dataset.rowId);
+  }
+
+  function restoreOpenCards(container, ids) {
+    ids.forEach(id => {
+      const card = container.querySelector(`.prog-ex-card[data-row-id="${id}"]`);
+      if (card) card.classList.add('open');
+    });
   }
 
   async function saveUnsavedSetInputs(card, slot) {

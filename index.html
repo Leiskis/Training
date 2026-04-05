@@ -158,7 +158,7 @@
     font-size: 13px;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
     white-space: nowrap;
     max-width: 140px;
     overflow: hidden;
@@ -186,7 +186,7 @@
     padding: 7px 14px;
     font-size: 16px;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: border-color 0.2s;
     line-height: 1;
   }
   .theme-toggle:hover { border-color: var(--gold); }
@@ -202,7 +202,7 @@
     font-family: 'DM Sans', sans-serif;
     color: var(--muted);
     cursor: pointer;
-    transition: all 0.2s;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
     letter-spacing: 0.5px;
   }
   .lang-toggle:hover { border-color: var(--gold); color: var(--gold); }
@@ -573,7 +573,7 @@
     border: 2px solid var(--border);
     border-radius: 6px;
     cursor: pointer;
-    transition: all 0.18s;
+    transition: background 0.18s, border-color 0.18s;
     background: var(--surface2);
     flex-shrink: 0;
     position: relative;
@@ -665,7 +665,7 @@
     align-items: center;
     justify-content: center;
     padding: 0;
-    transition: all 0.2s;
+    transition: border-color 0.2s, color 0.2s;
     line-height: 1;
     -webkit-tap-highlight-color: transparent;
   }
@@ -683,7 +683,7 @@
     font-size: 13px;
     cursor: pointer;
     font-family: 'DM Sans', sans-serif;
-    transition: all 0.2s;
+    transition: border-color 0.2s, color 0.2s;
   }
   .reset-btn:hover { border-color: #e05555; color: #e05555; }
 
@@ -763,7 +763,7 @@
     font-size: 13px;
     cursor: pointer;
     font-family: 'DM Sans', sans-serif;
-    transition: all 0.2s;
+    transition: border-color 0.2s, color 0.2s;
     flex-shrink: 0;
   }
   .sheet-existing-del:hover { border-color: #e05555; color: #e05555; }
@@ -801,7 +801,7 @@
     font-weight: 500;
     color: var(--muted);
     cursor: pointer;
-    transition: all 0.15s;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
     text-align: center;
     -webkit-tap-highlight-color: transparent;
   }
@@ -906,7 +906,7 @@
     font-weight: 600;
     color: var(--muted);
     cursor: pointer;
-    transition: all 0.2s;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
     -webkit-tap-highlight-color: transparent;
   }
   .add-exercise-btn:hover, .add-exercise-btn:active {
@@ -939,7 +939,7 @@
     color: var(--muted);
     cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    transition: all 0.2s;
+    transition: background 0.2s;
     font-family: 'DM Sans', sans-serif;
     flex-shrink: 0;
     -webkit-tap-highlight-color: transparent;
@@ -986,7 +986,7 @@
     font-weight: 500;
     color: var(--muted);
     cursor: pointer;
-    transition: all 0.15s;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
     white-space: nowrap;
     -webkit-tap-highlight-color: transparent;
   }
@@ -1017,7 +1017,7 @@
     cursor: pointer;
     text-align: center;
     -webkit-tap-highlight-color: transparent;
-    transition: all 0.15s;
+    transition: background 0.15s;
   }
   .picker-close-bottom:active { background: var(--border); }
   @supports (padding-bottom: env(safe-area-inset-bottom)) {
@@ -1042,7 +1042,7 @@
     border: 1px solid var(--border);
     border-radius: 10px;
     margin-bottom: 7px;
-    transition: all 0.15s;
+    transition: opacity 0.15s, border-color 0.15s;
     gap: 10px;
   }
   .picker-exercise-item.already-added {
@@ -1179,7 +1179,7 @@
     color: var(--muted);
     cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    transition: all 0.15s;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
     -webkit-tap-highlight-color: transparent;
   }
   .mp-ex-reorder-btn:active { background: var(--gold-dim); border-color: var(--gold); color: var(--gold); }
@@ -1200,7 +1200,7 @@
     font-size: 13px;
     color: var(--muted);
     cursor: pointer;
-    transition: all 0.15s;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
     font-family: 'DM Sans', sans-serif;
     -webkit-tap-highlight-color: transparent;
   }
@@ -1369,7 +1369,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.15s;
+    transition: background 0.15s, border-color 0.15s;
     -webkit-tap-highlight-color: transparent;
   }
   .emoji-pick-btn:hover, .emoji-pick-btn:active {
@@ -1496,7 +1496,7 @@
     font-size: 13px;
     cursor: pointer;
     font-family: 'DM Sans', sans-serif;
-    transition: all 0.2s;
+    transition: border-color 0.2s, color 0.2s;
     flex-shrink: 0;
   }
   .mp-program-del:hover { border-color: #e05555; color: #e05555; }
@@ -1517,7 +1517,7 @@
     font-size: 14px;
     color: var(--text);
     cursor: pointer;
-    transition: all 0.2s;
+    transition: border-color 0.2s, color 0.2s;
     white-space: nowrap;
     flex-shrink: 0;
   }
@@ -1573,7 +1573,7 @@
     cursor: pointer;
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
-    transition: all 0.2s;
+    transition: border-color 0.2s, color 0.2s;
     font-family: 'DM Sans', sans-serif;
   }
   .mp-ex-del:hover { border-color: #e05555; color: #e05555; }
@@ -1713,7 +1713,7 @@
   }
   .prog-set-row {
     display: grid;
-    grid-template-columns: 24px 36px 1fr 1fr;
+    grid-template-columns: 24px 32px 1fr 1fr;
     gap: 10px;
     align-items: center;
     padding: 6px 0;
@@ -1727,12 +1727,34 @@
     text-align: center;
   }
   .set-checkbox {
-    width: 32px;
-    height: 32px;
-    min-width: 32px;
-    accent-color: #3dba6e;
+    appearance: none;
+    -webkit-appearance: none;
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    border: 2px solid var(--border);
+    border-radius: 50%;
+    background: var(--surface2);
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
+    transition: background 0.18s, border-color 0.18s, box-shadow 0.18s;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .set-checkbox:checked {
+    background: #3dba6e;
+    border-color: #3dba6e;
+    box-shadow: 0 0 0 2px rgba(61,186,110,0.2);
+  }
+  .set-checkbox:checked::after {
+    content: '✓';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1;
   }
   .prog-set-input {
     font-size: 16px;
@@ -1754,7 +1776,7 @@
   }
   .prog-set-header {
     display: grid;
-    grid-template-columns: 24px 36px 1fr 1fr;
+    grid-template-columns: 24px 32px 1fr 1fr;
     gap: 6px;
     padding: 0 0 4px;
   }
@@ -1844,7 +1866,7 @@
     font-weight: 500;
     color: var(--muted);
     cursor: pointer;
-    transition: all 0.15s;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
     -webkit-tap-highlight-color: transparent;
   }
   .hist-tab-btn.active {
@@ -1944,7 +1966,7 @@
     font-weight: 500;
     color: var(--muted);
     cursor: pointer;
-    transition: all 0.15s;
+    transition: background 0.15s, color 0.15s, box-shadow 0.15s;
     -webkit-tap-highlight-color: transparent;
   }
   .chart-mode-btn.active {
@@ -2020,7 +2042,7 @@
     padding: 14px 16px;
     margin-bottom: 10px;
     cursor: pointer;
-    transition: all 0.15s;
+    transition: transform 0.15s, border-color 0.15s;
     display: flex;
     align-items: center;
     gap: 14px;
@@ -2373,7 +2395,7 @@
     font-weight: 500;
     color: var(--muted);
     cursor: pointer;
-    transition: all 0.2s;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
   }
   .auth-tab.active {
     background: var(--surface);
@@ -2455,7 +2477,7 @@
     font-size: 12px;
     color: var(--muted);
     cursor: pointer;
-    transition: all 0.2s;
+    transition: border-color 0.2s, color 0.2s;
     white-space: nowrap;
   }
   .user-pill:hover { border-color: #e05555; color: #e05555; }
@@ -2492,7 +2514,7 @@
     font-size: 16px;
     cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    transition: all 0.2s;
+    transition: border-color 0.2s, color 0.2s;
   }
   .cal-nav:hover { border-color: var(--gold); color: var(--gold); }
   .cal-grid {
@@ -2523,7 +2545,7 @@
     background: var(--surface);
     border: 1.5px solid var(--border);
     cursor: pointer;
-    transition: all 0.15s;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
     position: relative;
     gap: 2px;
     user-select: none;
@@ -2597,7 +2619,7 @@
     font-weight: 500;
     color: var(--muted);
     cursor: pointer;
-    transition: all 0.2s;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
     text-align: center;
   }
   .log-type-btn.selected { background: var(--gold); border-color: var(--gold); color: #fff; font-weight: 600; }
@@ -2651,7 +2673,7 @@
     padding: 4px 8px;
     font-size: 12px;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: border-color 0.2s, color 0.2s;
     flex-shrink: 0;
   }
   .session-del:hover { border-color: #e05555; color: #e05555; }
@@ -4471,8 +4493,9 @@
     else if (['prog1','prog2','prog3'].includes(id)) {
       const ctr = document.getElementById(`${id}-content`);
       const open = ctr ? getOpenCardIds(ctr) : [];
-      await renderProgPage(id);
-      if (ctr) restoreOpenCards(ctr, open);
+      renderProgPage(id).then(() => {
+        if (ctr) restoreOpenCards(ctr, open);
+      });
     }
     updateProgress(); // always — hides bar on calendar/history/myprograms, shows on workout tabs
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -5760,7 +5783,7 @@
       const rowId = card.dataset.rowId;
       const exId = card.dataset.exId;
       // Card toggle
-      card.querySelector('.card-header').addEventListener('click', (e) => toggleCard(card, e));
+      card.querySelector('.card-header')?.addEventListener('click', (e) => toggleCard(card, e));
       // Set checkbox + input handlers
       card.querySelectorAll('.set-checkbox').forEach(cb => {
         cb.addEventListener('click', (e) => e.stopPropagation());
@@ -6083,6 +6106,7 @@
   function buildPickerCategories() {
     const categories = ['Kaikki', ...new Set(exerciseLibrary.map(e => e.category))];
     const el = document.getElementById('pickerCategories');
+    if (!el) return;
     el.innerHTML = '';
     categories.forEach(cat => {
       const btn = document.createElement('button');
@@ -6092,7 +6116,8 @@
         pickerActiveCategory = cat;
         buildPickerCategories();
         buildPickerList();
-        document.getElementById('pickerList').scrollTop = 0;
+        const listEl = document.getElementById('pickerList');
+        if (listEl) listEl.scrollTop = 0;
       });
       el.appendChild(btn);
     });
@@ -6110,8 +6135,10 @@
   function renderPickerList() { buildPickerList(); }
 
   function buildPickerList() {
-    const query = document.getElementById('pickerSearch').value.toLowerCase().trim();
+    const searchEl = document.getElementById('pickerSearch');
     const el = document.getElementById('pickerList');
+    if (!searchEl || !el) return;
+    const query = searchEl.value.toLowerCase().trim();
     el.innerHTML = '';
 
     let filtered = exerciseLibrary.slice();

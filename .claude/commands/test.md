@@ -114,6 +114,7 @@ Sovelluksessa on sarja-tason checkkaus. Tarkista nämä:
 Sovelluksessa on useita cached-muuttujia jotka ladataan eri ajankohtina:
 - `cachedSessions` — ladataan kalenterin avautuessa (`loadAndRenderCalendar`)
 - `cachedHistory` — ladataan historian avautuessa (`loadAndRenderHistory`)
+- `cachedAnalyticsData` — ladataan analytiikan avautuessa (`loadAndRenderAnalytics`)
 - `userPrograms` — ladataan kirjautumisessa (`loadUserPrograms`)
 - `exerciseLibrary` — ladataan tarvittaessa (`loadExerciseLibrary`)
 

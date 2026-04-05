@@ -1,10 +1,39 @@
 import SwiftUI
+import Combine
 
 @MainActor
 class AuthManager: ObservableObject {
     @Published var isLoggedIn = false
     @Published var userId: String = ""
     @Published var error: String?
+
+    // Shared timer state (visible across views)
+    @Published var activeTimerProgramId: String?
+    @Published var timerSeconds: Int = 0
+    @Published var timerRunning: Bool = false
+    var timerTask: Task<Void, Never>?
+
+    func startTimer(programId: String) {
+        activeTimerProgramId = programId
+        timerRunning = true
+        timerTask = Task { @MainActor in
+            while !Task.isCancelled && timerRunning {
+                try? await Task.sleep(nanoseconds: 1_000_000_000)
+                if timerRunning { timerSeconds += 1 }
+            }
+        }
+    }
+
+    func stopTimer() {
+        timerRunning = false
+        timerTask?.cancel()
+    }
+
+    func resetTimer() {
+        stopTimer()
+        timerSeconds = 0
+        activeTimerProgramId = nil
+    }
 
     init() {
         // Check if we have a stored token

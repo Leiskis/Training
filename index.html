@@ -132,19 +132,23 @@
   }
 
   /* NAV TABS */
+  .sticky-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--header-bg2);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: background 0.25s;
+  }
   .tab-bar {
     display: flex;
     overflow-x: auto;
     gap: 8px;
     padding: 12px 16px;
-    background: var(--header-bg2);
-    position: sticky;
-    top: 0;
-    z-index: 100;
     border-bottom: 1px solid var(--tab-border);
     scrollbar-width: none;
     align-items: center;
-    transition: background 0.25s;
   }
   .tab-bar::-webkit-scrollbar { display: none; }
   .tab-btn {
@@ -370,8 +374,7 @@
     .tab-btn { padding: 7px 14px; font-size: 13px; }
     .theme-toggle { padding: 6px 11px; font-size: 15px; }
 
-    /* Progress bar closer to content, adjust fixed top for smaller tab-bar */
-    .progress-bar-wrap { padding: 0 12px 0; top: 43px; }
+    .progress-bar-wrap { padding: 0 12px 0; }
 
     /* Cards — bigger tap target, less padding */
     .card-header { padding: 14px 14px; }
@@ -461,16 +464,11 @@
     -webkit-touch-callout: none;
   }
 
-  /* Sticky progress bar — attached below tab-bar */
+  /* Progress bar inside sticky tab-bar */
   .progress-bar-wrap {
-    position: sticky;
-    top: 53px;
-    z-index: 99;
-    background: var(--header-bg2);
-    padding: 8px 16px 4px;
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    transition: background 0.25s;
+    width: 100%;
+    padding: 6px 16px 4px;
+    flex-shrink: 0;
   }
 
   /* PHYSIO STYLES */
@@ -2886,36 +2884,37 @@
   <div class="header-sub" id="headerSub">Voima · Liikkuvuus · Hyvinvointi</div>
 </header>
 
-<nav class="tab-bar">
-  <button class="tab-btn active" data-tab="warmup" data-i18n-tab="warmup">🔥 Alkulämmittely</button>
-  <button class="tab-btn" data-tab="prog1" id="tab-prog1">Ohjelma 1</button>
-  <button class="tab-btn" data-tab="prog2" id="tab-prog2">Ohjelma 2</button>
-  <button class="tab-btn" data-tab="prog3" id="tab-prog3">Ohjelma 3</button>
-  <button class="tab-btn" data-tab="physio" id="physio-tab" data-i18n-tab="physio">🏥 Fysioterapia</button>
-  <button class="tab-btn" data-tab="myprograms" data-i18n-tab="myprograms">✏️ Omat</button>
-  <button class="tab-btn" data-tab="calendar" data-i18n-tab="calendar">📅 Kalenteri</button>
-  <button class="tab-btn" data-tab="history" data-i18n-tab="history">📋 Historia</button>
-  <button class="theme-toggle" id="themeBtn" title="Toggle theme">🌙</button>
-  <button class="lang-toggle" id="langBtn" title="Change language">EN</button>
-  <button class="user-pill" id="userPill" style="display:none" title="Sign out">
-    <div class="user-avatar" id="userAvatar">?</div>
-    <span id="userEmail">...</span>
-    · <span data-i18n="signOut">Kirjaudu ulos</span>
-  </button>
-</nav>
-
-<div class="progress-bar-wrap" id="progressWrap" style="display:none">
-  <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
-  <div class="progress-label">
-    <span><span class="done-count" id="progressDone">0</span> / <span id="progressTotal">0</span> <span id="progressLabelText">tehty</span></span>
-    <div class="progress-right">
-      <span class="workout-timer" id="workoutTimer">
-        <span class="timer-display" id="timerDisplay">00:00</span>
-        <button class="timer-btn" id="timerStartBtn" title="Aloita ajastin">▶</button>
-        <button class="timer-btn timer-btn-stop" id="timerStopBtn" title="Pysäytä ajastin" style="display:none">⏸</button>
-        <button class="timer-btn timer-btn-reset" id="timerResetBtn" title="Nollaa ajastin" style="display:none">✕</button>
-      </span>
-      <button class="reset-btn" id="resetBtn">Nollaa</button>
+<div class="sticky-header">
+  <nav class="tab-bar">
+    <button class="tab-btn active" data-tab="warmup" data-i18n-tab="warmup">🔥 Alkulämmittely</button>
+    <button class="tab-btn" data-tab="prog1" id="tab-prog1">Ohjelma 1</button>
+    <button class="tab-btn" data-tab="prog2" id="tab-prog2">Ohjelma 2</button>
+    <button class="tab-btn" data-tab="prog3" id="tab-prog3">Ohjelma 3</button>
+    <button class="tab-btn" data-tab="physio" id="physio-tab" data-i18n-tab="physio">🏥 Fysioterapia</button>
+    <button class="tab-btn" data-tab="myprograms" data-i18n-tab="myprograms">✏️ Omat</button>
+    <button class="tab-btn" data-tab="calendar" data-i18n-tab="calendar">📅 Kalenteri</button>
+    <button class="tab-btn" data-tab="history" data-i18n-tab="history">📋 Historia</button>
+    <button class="theme-toggle" id="themeBtn" title="Toggle theme">🌙</button>
+    <button class="lang-toggle" id="langBtn" title="Change language">EN</button>
+    <button class="user-pill" id="userPill" style="display:none" title="Sign out">
+      <div class="user-avatar" id="userAvatar">?</div>
+      <span id="userEmail">...</span>
+      · <span data-i18n="signOut">Kirjaudu ulos</span>
+    </button>
+  </nav>
+  <div class="progress-bar-wrap" id="progressWrap" style="display:none">
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-label">
+      <span><span class="done-count" id="progressDone">0</span> / <span id="progressTotal">0</span> <span id="progressLabelText">tehty</span></span>
+      <div class="progress-right">
+        <span class="workout-timer" id="workoutTimer">
+          <span class="timer-display" id="timerDisplay">00:00</span>
+          <button class="timer-btn" id="timerStartBtn" title="Aloita ajastin">▶</button>
+          <button class="timer-btn timer-btn-stop" id="timerStopBtn" title="Pysäytä ajastin" style="display:none">⏸</button>
+          <button class="timer-btn timer-btn-reset" id="timerResetBtn" title="Nollaa ajastin" style="display:none">✕</button>
+        </span>
+        <button class="reset-btn" id="resetBtn">Nollaa</button>
+      </div>
     </div>
   </div>
 </div>

@@ -36,8 +36,8 @@ struct ProgramListView: View {
                 } else if programs.isEmpty {
                     Text("Ei aktiivisia ohjelmia").foregroundColor(.gray)
                 } else {
-                    List(programs) { program in
-                        NavigationLink(destination: ProgramDetailView(program: program)) {
+                    List(Array(programs.enumerated()), id: \.element.id) { index, program in
+                        NavigationLink(destination: ProgramDetailView(program: program, progIndex: index)) {
                             HStack(spacing: 8) {
                                 Text(program.displayEmoji)
                                     .font(.system(size: 20))

@@ -140,13 +140,13 @@
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     transition: background 0.25s;
+    border-bottom: 1px solid var(--tab-border);
   }
   .tab-bar {
     display: flex;
     overflow-x: auto;
     gap: 8px;
     padding: 12px 16px;
-    border-bottom: 1px solid var(--tab-border);
     scrollbar-width: none;
     align-items: center;
   }
@@ -464,11 +464,11 @@
     -webkit-touch-callout: none;
   }
 
-  /* Progress bar inside sticky tab-bar */
+  /* Progress bar inside sticky-header, below tab-bar */
   .progress-bar-wrap {
     width: 100%;
-    padding: 6px 16px 4px;
-    flex-shrink: 0;
+    padding: 4px 16px 4px;
+    border-top: 1px solid var(--tab-border);
   }
 
   /* PHYSIO STYLES */

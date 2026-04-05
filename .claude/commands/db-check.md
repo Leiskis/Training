@@ -3,7 +3,7 @@
 Tarkista että `index.html`:n koodi on synkronissa Supabase-tietokannan kanssa.
 
 ## Taulut
-Tunnetut taulut: `sessions`, `exercise_library`, `workout_programs`, `workout_day_exercises`, `workout_history`, `workout_history_exercises`, `exercise_checks`
+Tunnetut taulut: `sessions`, `exercise_library`, `workout_programs`, `workout_day_exercises`, `workout_history`, `workout_history_exercises`, `exercise_checks`, `set_checks`, `workout_history_sets`
 
 ## Tarkistukset
 

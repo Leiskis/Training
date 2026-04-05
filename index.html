@@ -4465,7 +4465,12 @@
     if (id === 'calendar') loadAndRenderCalendar();
     else if (id === 'myprograms') renderProgramList();
     else if (id === 'history') loadAndRenderHistory();
-    else if (['prog1','prog2','prog3'].includes(id)) renderProgPage(id);
+    else if (['prog1','prog2','prog3'].includes(id)) {
+      const ctr = document.getElementById(`${id}-content`);
+      const open = ctr ? getOpenCardIds(ctr) : [];
+      await renderProgPage(id);
+      if (ctr) restoreOpenCards(ctr, open);
+    }
     updateProgress(); // always — hides bar on calendar/history/myprograms, shows on workout tabs
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -5623,7 +5628,10 @@
     // Render whichever is currently visible
     for (const slot of ['prog1','prog2','prog3']) {
       if (document.getElementById(slot)?.classList.contains('active')) {
+        const ctr = document.getElementById(`${slot}-content`);
+        const open = ctr ? getOpenCardIds(ctr) : [];
         await renderProgPage(slot);
+        if (ctr) restoreOpenCards(ctr, open);
       }
     }
   }

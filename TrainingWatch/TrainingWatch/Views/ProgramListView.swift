@@ -36,7 +36,24 @@ struct ProgramListView: View {
                 } else if programs.isEmpty {
                     Text("Ei aktiivisia ohjelmia").foregroundColor(.gray)
                 } else {
-                    List(Array(programs.enumerated()), id: \.element.id) { index, program in
+                    List {
+                        // Show active timer at top
+                        if auth.timerRunning, let activeProg = programs.first(where: { $0.id == auth.activeTimerProgramId }) {
+                            Section {
+                                HStack {
+                                    Image(systemName: "timer")
+                                        .foregroundColor(.orange)
+                                    Text(activeProg.name)
+                                        .font(.system(size: 13))
+                                    Spacer()
+                                    Text(formatTime(auth.timerSeconds))
+                                        .font(.system(size: 15, weight: .bold, design: .monospaced))
+                                        .foregroundColor(.green)
+                                }
+                            }
+                        }
+
+                    ForEach(Array(programs.enumerated()), id: \.element.id) { index, program in
                         NavigationLink(destination: ProgramDetailView(program: program, progIndex: index)) {
                             HStack(spacing: 8) {
                                 Text(program.displayEmoji)
@@ -62,6 +79,7 @@ struct ProgramListView: View {
                             .padding(.vertical, 4)
                         }
                     }
+                    }
                 }
             }
             .navigationTitle("Treenit")
@@ -76,6 +94,10 @@ struct ProgramListView: View {
         }
         .task { await loadPrograms() }
         .onAppear { Task { await refreshProgress() } }
+    }
+
+    func formatTime(_ seconds: Int) -> String {
+        String(format: "%02d:%02d", seconds / 60, seconds % 60)
     }
 
     func refreshProgress() async {

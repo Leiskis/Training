@@ -18,9 +18,7 @@ struct ProgramDetailView: View {
     @State private var setChecks: [String: [Int: SetCheck]] = [:] // exerciseName -> {setNum -> check}
     @State private var isLoading = true
     @State private var error: String?
-    @State private var timerSeconds = 0
-    @State private var timerRunning = false
-    @State private var timerTask: Task<Void, Never>?
+    // Timer is shared via auth (visible on list screen)
 
     var tabId: String {
         let slots = ["prog1", "prog2", "prog3"]
@@ -43,20 +41,20 @@ struct ProgramDetailView: View {
                     // Timer
                     Section {
                         HStack {
-                            Text(formatTime(timerSeconds))
+                            Text(formatTime(auth.timerSeconds))
                                 .font(.system(size: 28, weight: .bold, design: .monospaced))
-                                .foregroundColor(timerRunning ? .green : .white)
+                                .foregroundColor(auth.timerRunning ? .green : .white)
                             Spacer()
-                            if timerRunning {
-                                Button(action: stopTimer) {
+                            if auth.timerRunning {
+                                Button(action: { auth.stopTimer() }) {
                                     Image(systemName: "pause.fill").font(.system(size: 18)).foregroundColor(.orange)
                                 }.buttonStyle(.plain)
                             } else {
-                                Button(action: startTimer) {
+                                Button(action: { auth.startTimer(programId: program.id) }) {
                                     Image(systemName: "play.fill").font(.system(size: 18)).foregroundColor(.green)
                                 }.buttonStyle(.plain)
-                                if timerSeconds > 0 {
-                                    Button(action: resetTimer) {
+                                if auth.timerSeconds > 0 {
+                                    Button(action: { auth.resetTimer() }) {
                                         Image(systemName: "xmark").font(.system(size: 14)).foregroundColor(.gray)
                                     }.buttonStyle(.plain)
                                 }
@@ -116,7 +114,6 @@ struct ProgramDetailView: View {
         }
         .navigationTitle(program.displayName)
         .task { await loadExercises() }
-        .onDisappear { timerTask?.cancel() }
     }
 
     // MARK: - Helpers
@@ -176,7 +173,7 @@ struct ProgramDetailView: View {
         WKInterfaceDevice.current().play(done ? .success : .click)
 
         Task {
-            let seconds = done && timerRunning ? timerSeconds : nil
+            let seconds = done && auth.timerRunning ? auth.timerSeconds : nil
             var body: [String: Any] = [
                 "user_id": auth.userId,
                 "tab_id": tabId,
@@ -191,21 +188,6 @@ struct ProgramDetailView: View {
             try? await SupabaseClient.shared.upsert("set_checks", body: body, onConflict: "user_id,tab_id,exercise_name,set_number")
         }
     }
-
-    // MARK: - Timer
-
-    func startTimer() {
-        timerRunning = true
-        timerTask = Task {
-            while !Task.isCancelled && timerRunning {
-                try? await Task.sleep(nanoseconds: 1_000_000_000)
-                if timerRunning { timerSeconds += 1 }
-            }
-        }
-    }
-
-    func stopTimer() { timerRunning = false; timerTask?.cancel() }
-    func resetTimer() { stopTimer(); timerSeconds = 0 }
 
     func formatTime(_ seconds: Int) -> String {
         String(format: "%02d:%02d", seconds / 60, seconds % 60)

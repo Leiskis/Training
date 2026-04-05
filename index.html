@@ -5616,8 +5616,6 @@
 
     let prevCat = null;
     const html = enriched.map((e, i) => {
-      const isFirst = i === 0;
-      const isLast = i === enriched.length - 1;
       const cat = e.lib.category || '';
       const catHeader = cat && cat !== prevCat ? `<div class="prog-category-title">${esc(cat)}</div>` : '';
       prevCat = cat;
@@ -5823,7 +5821,7 @@
       .eq('tab_id', slot);
     if (!data) return;
     data.forEach(row => {
-      const cb = container.querySelector(`.set-checkbox[data-exercise-name="${CSS.escape(row.exercise_name)}"][data-set-num="${row.set_number}"]`);
+      const cb = container.querySelector(`.set-checkbox[data-set-num="${row.set_number}"][data-exercise-name="${row.exercise_name.replace(/"/g, '\\"')}"]`);
       if (!cb) return;
       cb.checked = row.done;
       const setRow = cb.closest('.prog-set-row');

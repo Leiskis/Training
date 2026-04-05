@@ -75,6 +75,23 @@ struct ProgramListView: View {
             }
         }
         .task { await loadPrograms() }
+        .onAppear { Task { await refreshProgress() } }
+    }
+
+    func refreshProgress() async {
+        guard !programs.isEmpty else { return }
+        let slots = ["prog1", "prog2", "prog3"]
+        var progMap: [String: ProgramProgress] = [:]
+        for (i, prog) in programs.prefix(3).enumerated() {
+            let tabId = slots[i]
+            let exQuery = "select=sets&user_id=eq.\(auth.userId)&program_id=eq.\(prog.id)"
+            let exRows: [ExSetsOnly] = (try? await SupabaseClient.shared.fetch("workout_day_exercises", query: exQuery)) ?? []
+            let totalSets = exRows.reduce(0) { $0 + ($1.sets ?? 3) }
+            let checkQuery = "select=set_number,done&user_id=eq.\(auth.userId)&tab_id=eq.\(tabId)&done=eq.true"
+            let doneRows: [SetDoneOnly] = (try? await SupabaseClient.shared.fetch("set_checks", query: checkQuery)) ?? []
+            progMap[prog.id] = ProgramProgress(done: doneRows.count, total: totalSets)
+        }
+        progress = progMap
     }
 
     func loadPrograms() async {

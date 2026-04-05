@@ -2163,6 +2163,56 @@
   }
   .hist-ex-sets-label { font-size: 10px; color: var(--muted); margin-top: 1px; }
   .hist-ex-timestamp { font-size: 10px; color: #3dba6e; margin-top: 2px; font-weight: 600; }
+  .hist-sets-detail {
+    margin: 8px 0 4px 32px;
+  }
+  .hist-sets-header {
+    display: grid;
+    grid-template-columns: 24px 1fr 1fr 40px;
+    gap: 6px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--border);
+  }
+  .hist-sets-header span {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    text-align: center;
+  }
+  .hist-set-detail-row {
+    display: grid;
+    grid-template-columns: 24px 1fr 1fr 40px;
+    gap: 6px;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .hist-set-detail-row:last-child { border-bottom: none; }
+  .hist-set-num {
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 600;
+    text-align: center;
+  }
+  .hist-set-input {
+    font-size: 14px;
+    padding: 6px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface2);
+    color: var(--text);
+    text-align: center;
+    font-family: 'DM Sans', sans-serif;
+    -webkit-appearance: none;
+  }
+  .hist-set-input:focus { border-color: var(--gold); outline: none; }
+  .hist-set-time {
+    font-size: 10px;
+    color: #3dba6e;
+    font-weight: 600;
+    text-align: center;
+  }
   .hist-performed-label {
     font-size: 11px;
     color: var(--gold);
@@ -6742,11 +6792,17 @@
     document.getElementById('histDetailSheet').classList.add('active');
     document.body.style.overflow = 'hidden';
 
-    // Load exercises with performed fields
+    // Load exercises
     const { data: exercises, error } = await supa.from('workout_history_exercises')
-      .select('id, exercise_name, muscle_group, sort_order, planned_sets, planned_reps, planned_weight, performed_sets, performed_reps, performed_weight, checked_at_seconds')
+      .select('id, exercise_name, muscle_group, sort_order, planned_sets, planned_reps, planned_weight, performed_sets, performed_reps, performed_weight')
       .eq('history_id', historyId)
       .order('sort_order');
+
+    // Load set-level data
+    const { data: histSets } = await supa.from('workout_history_sets')
+      .select('id, exercise_name, set_number, planned_reps, performed_reps, planned_weight, performed_weight, checked_at_seconds')
+      .eq('history_id', historyId)
+      .order('set_number');
 
     const exEl = document.getElementById('histDetailExercises');
     if (error || !exercises || exercises.length === 0) {
@@ -6754,11 +6810,25 @@
       return;
     }
 
+    // Group sets by exercise_name
+    const setsByExercise = {};
+    (histSets || []).forEach(s => {
+      if (!setsByExercise[s.exercise_name]) setsByExercise[s.exercise_name] = [];
+      setsByExercise[s.exercise_name].push(s);
+    });
+
+    const rLabel = currentLang === 'en' ? 'Reps' : 'Toistot';
+    const wLabel = currentLang === 'en' ? 'Weight' : 'Paino';
+
     exEl.innerHTML = '';
     exercises.forEach((e, i) => {
       const weight = e.planned_weight ? ` · ${e.planned_weight} kg` : '';
       const row = document.createElement('div');
       row.className = 'hist-ex-row';
+
+      const exSets = setsByExercise[e.exercise_name] || [];
+      const hasSets = exSets.length > 0;
+
       row.innerHTML = `
         <div class="hist-ex-top">
           <div class="hist-ex-num">${i + 1}</div>
@@ -6769,49 +6839,88 @@
           <div class="hist-ex-sets">
             <div class="hist-ex-sets-val">${e.planned_sets || '—'} × ${e.planned_reps || '—'}${weight}</div>
             <div class="hist-ex-sets-label">${currentLang === 'en' ? 'planned' : 'suunniteltu'}</div>
-            ${e.checked_at_seconds ? `<div class="hist-ex-timestamp">⏱ ${formatTimer(e.checked_at_seconds)}</div>` : ''}
-          </div>
-        </div>
-        <div class="hist-performed-label">✏️ ${currentLang === 'en' ? 'Performed' : 'Toteutunut'}</div>
-        <div class="hist-ex-performed">
-          <div class="hist-ex-field">
-            <label>${currentLang === 'en' ? 'Sets' : 'Sarjat'}</label>
-            <input type="number" class="hist-ex-input" inputmode="numeric"
-              value="${e.performed_sets || ''}" placeholder="${e.planned_sets || '—'}"
-              min="1" max="20" data-field="performed_sets" data-id="${e.id}" />
-          </div>
-          <div class="hist-ex-field">
-            <label>${currentLang === 'en' ? 'Reps' : 'Toistot'}</label>
-            <input type="text" class="hist-ex-input"
-              value="${e.performed_reps || ''}" placeholder="${e.planned_reps || '—'}"
-              maxlength="10" data-field="performed_reps" data-id="${e.id}" />
-          </div>
-          <div class="hist-ex-field">
-            <label>${currentLang === 'en' ? 'Weight (kg)' : 'Paino (kg)'}</label>
-            <input type="number" class="hist-ex-input" inputmode="decimal"
-              value="${e.performed_weight || ''}" placeholder="${e.planned_weight || '—'}"
-              min="0" step="0.5" data-field="performed_weight" data-id="${e.id}" />
           </div>
         </div>`;
-      // Wire save on change
-      row.querySelectorAll('.hist-ex-input').forEach(input => {
-        input.addEventListener('change', async () => {
-          const field = input.dataset.field;
-          const rowId = input.dataset.id;
-          let val = input.value || null;
-          if (field === 'performed_sets') val = val ? parseInt(val) : null;
-          if (field === 'performed_reps') val = val ? parseInt(val) : null;
-          if (field === 'performed_weight') val = val ? parseFloat(val) : null;
-          const update = {};
-          update[field] = val;
-          const { error } = await supa.from('workout_history_exercises')
-            .update(update).eq('user_id', currentUser.id).eq('id', rowId);
-          if (error) log.error('Performed update failed:', error.message);
-          else log.ok('Performed field saved:', field, '=', val);
-          // Invalidate analytics cache
-          cachedAnalyticsData = null;
+
+      if (hasSets) {
+        // Set-level view
+        const setsDiv = document.createElement('div');
+        setsDiv.className = 'hist-sets-detail';
+        setsDiv.innerHTML = `
+          <div class="hist-sets-header">
+            <span>#</span><span>${rLabel}</span><span>${wLabel}</span><span>⏱</span>
+          </div>`;
+
+        exSets.forEach(s => {
+          const setRow = document.createElement('div');
+          setRow.className = 'hist-set-detail-row';
+          setRow.innerHTML = `
+            <span class="hist-set-num">${s.set_number}</span>
+            <input type="text" class="hist-set-input" value="${s.performed_reps || ''}" placeholder="${s.planned_reps || '—'}" data-field="performed_reps" data-id="${s.id}" />
+            <input type="number" class="hist-set-input" inputmode="decimal" value="${s.performed_weight || ''}" placeholder="${s.planned_weight || '—'}" step="0.5" data-field="performed_weight" data-id="${s.id}" />
+            <span class="hist-set-time">${s.checked_at_seconds ? formatTimer(s.checked_at_seconds) : '—'}</span>`;
+
+          setRow.querySelectorAll('.hist-set-input').forEach(input => {
+            input.addEventListener('change', async () => {
+              const field = input.dataset.field;
+              const setId = input.dataset.id;
+              let val = input.value || null;
+              if (field === 'performed_weight' && val) val = parseFloat(val);
+              const { error: err } = await supa.from('workout_history_sets')
+                .update({ [field]: val }).eq('user_id', currentUser.id).eq('id', setId);
+              if (err) log.error('Set update failed:', err.message);
+              else log.ok('History set saved:', field, '=', val);
+              cachedAnalyticsData = null;
+            });
+          });
+
+          setsDiv.appendChild(setRow);
         });
-      });
+        row.appendChild(setsDiv);
+      } else {
+        // Fallback: old exercise-level performed fields
+        const perfDiv = document.createElement('div');
+        perfDiv.innerHTML = `
+          <div class="hist-performed-label">✏️ ${currentLang === 'en' ? 'Performed' : 'Toteutunut'}</div>
+          <div class="hist-ex-performed">
+            <div class="hist-ex-field">
+              <label>${currentLang === 'en' ? 'Sets' : 'Sarjat'}</label>
+              <input type="number" class="hist-ex-input" inputmode="numeric"
+                value="${e.performed_sets || ''}" placeholder="${e.planned_sets || '—'}"
+                min="1" max="20" data-field="performed_sets" data-id="${e.id}" />
+            </div>
+            <div class="hist-ex-field">
+              <label>${rLabel}</label>
+              <input type="text" class="hist-ex-input"
+                value="${e.performed_reps || ''}" placeholder="${e.planned_reps || '—'}"
+                maxlength="10" data-field="performed_reps" data-id="${e.id}" />
+            </div>
+            <div class="hist-ex-field">
+              <label>${wLabel} (kg)</label>
+              <input type="number" class="hist-ex-input" inputmode="decimal"
+                value="${e.performed_weight || ''}" placeholder="${e.planned_weight || '—'}"
+                min="0" step="0.5" data-field="performed_weight" data-id="${e.id}" />
+            </div>
+          </div>`;
+
+        perfDiv.querySelectorAll('.hist-ex-input').forEach(input => {
+          input.addEventListener('change', async () => {
+            const field = input.dataset.field;
+            const rowId = input.dataset.id;
+            let val = input.value || null;
+            if (field === 'performed_sets') val = val ? parseInt(val) : null;
+            if (field === 'performed_reps') val = val ? parseInt(val) : null;
+            if (field === 'performed_weight') val = val ? parseFloat(val) : null;
+            const { error: err } = await supa.from('workout_history_exercises')
+              .update({ [field]: val }).eq('user_id', currentUser.id).eq('id', rowId);
+            if (err) log.error('Performed update failed:', err.message);
+            else log.ok('Performed field saved:', field, '=', val);
+            cachedAnalyticsData = null;
+          });
+        });
+        row.appendChild(perfDiv);
+      }
+
       exEl.appendChild(row);
     });
   }

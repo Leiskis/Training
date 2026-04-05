@@ -5531,20 +5531,21 @@
     input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); save(); } });
   }
 
-  async function removeExerciseFromProgram(rowId, exerciseId) {
+  async function removeExerciseFromProgram(rowId, exerciseId, tabId) {
     if (!currentUser) { log.warn('removeExerciseFromProgram: no user'); return; }
     log.info('Removing exercise row:', rowId);
-    // Get exercise name for set_checks cleanup
     const lib = exerciseLibrary.find(e => e.id === exerciseId);
     const exName = lib?.name;
     const { error } = await supa.from('workout_day_exercises')
       .delete().eq('user_id', currentUser.id).eq('id', rowId);
     if (error) { log.error('Remove failed:', error.message); return; }
     pickerAddedIds.delete(exerciseId);
-    // Clean up set_checks for this exercise across all tabs
+    // Clean up set_checks for this exercise
     if (exName) {
-      await supa.from('set_checks').delete()
+      let deleteQuery = supa.from('set_checks').delete()
         .eq('user_id', currentUser.id).eq('exercise_name', exName);
+      if (tabId) deleteQuery = deleteQuery.eq('tab_id', tabId);
+      await deleteQuery;
     }
     log.ok('Exercise removed + set_checks cleaned');
     if (activeProgramId) loadAndRenderProgramExercises(activeProgramId);
@@ -5954,7 +5955,7 @@
   async function removeProgExercise(slot, rowId, exerciseId) {
     const container = document.getElementById(`${slot}-content`);
     const openCards = container ? getOpenCardIds(container) : [];
-    await removeExerciseFromProgram(rowId, exerciseId);
+    await removeExerciseFromProgram(rowId, exerciseId, slot);
     await renderProgPage(slot);
     if (container) restoreOpenCards(container, openCards);
     if (activeProgramId === progPageIdMap[slot]) {

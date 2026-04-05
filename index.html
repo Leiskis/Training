@@ -1698,6 +1698,72 @@
     gap: 8px;
     margin-bottom: 10px;
   }
+  .prog-set-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 10px;
+  }
+  .prog-set-row {
+    display: grid;
+    grid-template-columns: 24px 28px 1fr 1fr;
+    gap: 6px;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .prog-set-row:last-child { border-bottom: none; }
+  .prog-set-num {
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 600;
+    text-align: center;
+  }
+  .set-checkbox {
+    width: 24px;
+    height: 24px;
+    accent-color: #3dba6e;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .prog-set-input {
+    font-size: 14px;
+    padding: 6px 8px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface2);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    text-align: center;
+    -webkit-appearance: none;
+  }
+  .prog-set-input:focus { border-color: var(--gold); outline: none; }
+  .prog-set-row.set-done {
+    opacity: 0.5;
+  }
+  .prog-set-row.set-done .prog-set-input {
+    text-decoration: line-through;
+  }
+  .prog-set-header {
+    display: grid;
+    grid-template-columns: 24px 28px 1fr 1fr;
+    gap: 6px;
+    padding: 0 0 4px;
+  }
+  .prog-set-header span {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-align: center;
+  }
+  .prog-sets-badge {
+    font-size: 11px;
+    color: #3dba6e;
+    font-weight: 600;
+    margin-left: 6px;
+  }
   .prog-ex-field label {
     display: block;
     font-size: 11px;
@@ -4479,8 +4545,11 @@
       document.getElementById('progressWrap').style.display = 'none';
       return;
     }
-    const all = page.querySelectorAll('.ex-checkbox');
-    const doneEls = page.querySelectorAll('.ex-checkbox:checked');
+    // Prefer set-checkboxes if available, fallback to exercise-checkboxes
+    const setAll = page.querySelectorAll('.set-checkbox');
+    const exAll = page.querySelectorAll('.ex-checkbox');
+    const all = setAll.length > 0 ? setAll : exAll;
+    const doneEls = setAll.length > 0 ? page.querySelectorAll('.set-checkbox:checked') : page.querySelectorAll('.ex-checkbox:checked');
     const total = all.length, doneCount = doneEls.length;
     const pct = total > 0 ? Math.round((doneCount / total) * 100) : 0;
     document.getElementById('progressFill').style.width = pct + '%';
@@ -4493,6 +4562,7 @@
     const page = document.getElementById(currentTab);
     if (!page) return;
     const names = [];
+    // Reset exercise-level checkboxes (warmup/physio)
     page.querySelectorAll('.ex-checkbox').forEach(cb => {
       cb.checked = false;
       const card = cb.closest('.exercise-card, .physio-card, .prog-ex-card');
@@ -4501,13 +4571,26 @@
       const name = nameEl ? nameEl.textContent.trim() : '';
       if (name) names.push(name);
     });
+    // Reset set-level checkboxes (prog pages)
+    page.querySelectorAll('.set-checkbox').forEach(cb => {
+      cb.checked = false;
+      cb.closest('.prog-set-row')?.classList.remove('set-done');
+    });
+    page.querySelectorAll('.prog-sets-badge').forEach(b => { b.textContent = ''; });
     updateProgress();
-    if (!currentUser || !names.length) return;
-    const { error: resetErr } = await supa.from('exercise_checks')
-      .update({ done: false, checked_at_seconds: null, updated_at: new Date().toISOString() })
-      .eq('user_id', currentUser.id).eq('tab_id', currentTab).in('exercise_name', names);
-    if (resetErr) log.error('Reset progress failed:', resetErr.message);
-    else log.ok('Progress reset in cloud for tab:', currentTab);
+    if (!currentUser) return;
+    if (names.length) {
+      const { error: resetErr } = await supa.from('exercise_checks')
+        .update({ done: false, checked_at_seconds: null, updated_at: new Date().toISOString() })
+        .eq('user_id', currentUser.id).eq('tab_id', currentTab).in('exercise_name', names);
+      if (resetErr) log.error('Reset exercise checks failed:', resetErr.message);
+    }
+    // Reset set_checks for this tab
+    const { error: setResetErr } = await supa.from('set_checks')
+      .update({ done: false, performed_reps: null, performed_weight: null, checked_at_seconds: null, updated_at: new Date().toISOString() })
+      .eq('user_id', currentUser.id).eq('tab_id', currentTab);
+    if (setResetErr) log.error('Reset set checks failed:', setResetErr.message);
+    else log.ok('Progress reset for tab:', currentTab);
   }
 
   /* ══════════════════════════════════════
@@ -5527,9 +5610,8 @@
       lib: exerciseLibrary.find(e => e.id === r.exercise_id) || {}
     }));
 
-    const sLabel = currentLang === 'en' ? 'Sets' : 'Sarjat';
     const rLabel = currentLang === 'en' ? 'Reps' : 'Toistot';
-    const wLabel = currentLang === 'en' ? 'Weight (kg)' : 'Paino (kg)';
+    const wLabel = currentLang === 'en' ? 'Weight' : 'Paino';
     const removeLabel = currentLang === 'en' ? 'Remove exercise' : 'Poista liike';
 
     let prevCat = null;
@@ -5539,35 +5621,31 @@
       const cat = e.lib.category || '';
       const catHeader = cat && cat !== prevCat ? `<div class="prog-category-title">${esc(cat)}</div>` : '';
       prevCat = cat;
+      const setCount = parseInt(e.sets) || 3;
+      const setRows = Array.from({length: setCount}, (_, s) => `
+        <div class="prog-set-row" data-set-num="${s+1}" data-exercise-name="${esc(e.lib.name || '')}">
+          <span class="prog-set-num">#${s+1}</span>
+          <input type="checkbox" class="set-checkbox" data-set-num="${s+1}" data-tab="${slot}" data-exercise-name="${esc(e.lib.name || '')}" />
+          <input type="text" class="prog-set-input" inputmode="numeric" value="${esc(e.reps)}" placeholder="${rLabel}" data-field="performed_reps" data-set-num="${s+1}" />
+          <input type="number" class="prog-set-input" inputmode="decimal" value="${e.target_weight || ''}" placeholder="${wLabel}" step="0.5" data-field="performed_weight" data-set-num="${s+1}" />
+        </div>`).join('');
       return `${catHeader}
-        <div class="prog-ex-card" data-row-id="${esc(e.id)}" data-ex-id="${esc(e.exercise_id)}">
+        <div class="prog-ex-card" data-row-id="${esc(e.id)}" data-ex-id="${esc(e.exercise_id)}" data-exercise-name="${esc(e.lib.name || '')}" data-sets="${setCount}">
           <div class="card-header">
             <div class="mp-drag-handle prog-ex-drag-handle"></div>
             <div class="card-header-left" style="flex:1">
               <div class="exercise-name">${esc(e.lib.name || 'Tuntematon')}</div>
-              <span class="prog-ex-sets" id="badge-${esc(e.id)}">${e.sets} × ${esc(e.reps)}${e.target_weight ? ' · ' + e.target_weight + ' kg' : ''}</span>
+              <span class="prog-ex-sets" id="badge-${esc(e.id)}">${setCount} × ${esc(e.reps)}${e.target_weight ? ' · ' + e.target_weight + ' kg' : ''}</span>
+              <span class="prog-sets-badge" data-badge-for="${esc(e.lib.name || '')}"></span>
             </div>
             <div class="chevron">⌄</div>
-            <div class="cb-wrap">
-              <input type="checkbox" class="ex-checkbox" data-tab="${slot}" data-name="${esc(e.lib.name || '')}" />
-            </div>
           </div>
           <div class="card-body">
             ${e.lib.instructions ? `<div class="prog-ex-instructions">▸ ${esc(e.lib.instructions)}</div>` : ''}
-            <div class="prog-ex-fields">
-              <div class="prog-ex-field">
-                <label>${sLabel}</label>
-                <input type="number" class="mp-ex-input" inputmode="numeric" value="${e.sets}" min="1" max="20" data-field="sets" />
-              </div>
-              <div class="prog-ex-field">
-                <label>${rLabel}</label>
-                <input type="text" class="mp-ex-input" value="${esc(e.reps)}" maxlength="10" data-field="reps" />
-              </div>
-              <div class="prog-ex-field">
-                <label>${wLabel}</label>
-                <input type="number" class="mp-ex-input" inputmode="decimal" value="${e.target_weight || ''}" placeholder="—" min="0" step="0.5" data-field="target_weight" />
-              </div>
+            <div class="prog-set-header">
+              <span></span><span></span><span>${rLabel}</span><span>${wLabel}</span>
             </div>
+            <div class="prog-set-rows">${setRows}</div>
             <button class="mp-ex-del prog-remove-btn" style="width:100%;border-radius:8px;padding:10px;font-size:13px;margin-top:6px">
               ${removeLabel}
             </button>
@@ -5586,31 +5664,69 @@
       const exId = card.dataset.exId;
       // Card toggle
       card.querySelector('.card-header').addEventListener('click', (e) => toggleCard(card, e));
-      // Input fields
-      card.querySelectorAll('.mp-ex-input').forEach(input => {
-        input.addEventListener('click', (e) => e.stopPropagation());
-        input.addEventListener('change', () => {
-          const field = input.dataset.field;
-          const val = field === 'target_weight' ? (input.value || null) : input.value;
-          updateExerciseField(rowId, field, val);
-          updateBadge(rowId, input.closest('.prog-ex-fields'));
+      // Set checkbox + input handlers
+      card.querySelectorAll('.set-checkbox').forEach(cb => {
+        cb.addEventListener('click', (e) => e.stopPropagation());
+        cb.addEventListener('change', async () => {
+          const done = cb.checked;
+          const setNum = parseInt(cb.dataset.setNum);
+          const exName = cb.dataset.exerciseName;
+          const setRow = cb.closest('.prog-set-row');
+          setRow?.classList.toggle('set-done', done);
+          const seconds = done && timerRunning ? getTimerSeconds() : null;
+          // Update badge
+          updateSetsBadge(card);
+          updateProgress();
+          if (!currentUser) return;
+          const body = {
+            user_id: currentUser.id, tab_id: slot, exercise_name: exName,
+            set_number: setNum, done,
+            checked_at_seconds: done ? seconds : null,
+            updated_at: new Date().toISOString()
+          };
+          // Also save performed values from inputs
+          const repsInput = setRow?.querySelector('[data-field="performed_reps"]');
+          const weightInput = setRow?.querySelector('[data-field="performed_weight"]');
+          if (repsInput?.value) body.performed_reps = repsInput.value;
+          if (weightInput?.value) body.performed_weight = parseFloat(weightInput.value);
+          const { error } = await supa.from('set_checks').upsert(body, { onConflict: 'user_id,tab_id,exercise_name,set_number' });
+          if (error) log.error('Set check failed:', error.message);
+          else log.ok('Set checked:', exName, '#' + setNum, done);
         });
       });
-      // Drag handle — stopPropagation to prevent card toggle
+      card.querySelectorAll('.prog-set-input').forEach(input => {
+        input.addEventListener('click', (e) => e.stopPropagation());
+        input.addEventListener('change', async () => {
+          if (!currentUser) return;
+          const setNum = parseInt(input.dataset.setNum);
+          const exName = input.closest('.prog-set-row')?.querySelector('.set-checkbox')?.dataset.exerciseName;
+          if (!exName) return;
+          const field = input.dataset.field;
+          let val = input.value || null;
+          if (field === 'performed_weight' && val) val = parseFloat(val);
+          const body = {
+            user_id: currentUser.id, tab_id: slot, exercise_name: exName,
+            set_number: setNum, [field]: val,
+            updated_at: new Date().toISOString()
+          };
+          const { error } = await supa.from('set_checks').upsert(body, { onConflict: 'user_id,tab_id,exercise_name,set_number' });
+          if (error) log.error('Set input save failed:', error.message);
+          else log.ok('Set input saved:', exName, '#' + setNum, field, val);
+        });
+      });
+      // Drag handle + remove
       card.querySelectorAll('.prog-ex-drag-handle').forEach(h => {
         h.addEventListener('click', (e) => e.stopPropagation());
       });
-      // Remove button
       card.querySelector('.prog-remove-btn')?.addEventListener('click', (e) => {
         e.stopPropagation();
         removeProgExercise(slot, rowId, exId);
       });
     });
-    // Add exercise button
     container.querySelector('.prog-add-btn')?.addEventListener('click', () => openProgPicker(slot));
 
-    // Wire up checkboxes for this prog page
-    initProgCheckboxes(slot, container);
+    // Restore set checks from cloud
+    await restoreSetChecks(slot, container);
     updateProgress();
 
     // Init drag for prog exercise cards
@@ -5685,6 +5801,44 @@
     const weight = inputs[2]?.value;
     const badge = document.getElementById('badge-' + rowId);
     if (badge) badge.textContent = `${sets} × ${reps}${weight ? ' · ' + weight + ' kg' : ''}`;
+  }
+
+  function updateSetsBadge(card) {
+    const allSets = card.querySelectorAll('.set-checkbox');
+    const doneSets = card.querySelectorAll('.set-checkbox:checked');
+    const exName = card.dataset.exerciseName;
+    const badge = card.querySelector('.prog-sets-badge');
+    if (badge) {
+      if (doneSets.length === 0) badge.textContent = '';
+      else if (doneSets.length === allSets.length) badge.textContent = '✓';
+      else badge.textContent = `${doneSets.length}/${allSets.length}`;
+    }
+  }
+
+  async function restoreSetChecks(slot, container) {
+    if (!currentUser) return;
+    const { data } = await supa.from('set_checks')
+      .select('exercise_name, set_number, done, performed_reps, performed_weight')
+      .eq('user_id', currentUser.id)
+      .eq('tab_id', slot);
+    if (!data) return;
+    data.forEach(row => {
+      const cb = container.querySelector(`.set-checkbox[data-exercise-name="${CSS.escape(row.exercise_name)}"][data-set-num="${row.set_number}"]`);
+      if (!cb) return;
+      cb.checked = row.done;
+      const setRow = cb.closest('.prog-set-row');
+      if (row.done) setRow?.classList.add('set-done');
+      if (row.performed_reps) {
+        const repsInput = setRow?.querySelector('[data-field="performed_reps"]');
+        if (repsInput) repsInput.value = row.performed_reps;
+      }
+      if (row.performed_weight) {
+        const weightInput = setRow?.querySelector('[data-field="performed_weight"]');
+        if (weightInput) weightInput.value = row.performed_weight;
+      }
+    });
+    // Update all badges
+    container.querySelectorAll('.prog-ex-card').forEach(updateSetsBadge);
   }
 
 
@@ -6173,19 +6327,33 @@
     const historyId = histRows?.[0]?.id;
     if (!historyId) { log.error('Could not find newly created history row'); log.end(); return null; }
 
-    // 4. Fetch exercise check timestamps for this program's tab
+    // 4. Fetch set_checks for this program's tab
     const progSlot = Object.keys(progPageIdMap).find(k => progPageIdMap[k] === programId);
-    const { data: checks } = progSlot ? await supa.from('exercise_checks')
-      .select('exercise_name, checked_at_seconds')
+    const { data: setChecks } = progSlot ? await supa.from('set_checks')
+      .select('exercise_name, set_number, done, performed_reps, performed_weight, checked_at_seconds')
       .eq('user_id', currentUser.id)
       .eq('tab_id', progSlot) : { data: [] };
-    const checkMap = {};
-    (checks || []).forEach(c => { checkMap[c.exercise_name] = c.checked_at_seconds; });
+    const setCheckMap = {};
+    (setChecks || []).forEach(c => {
+      if (!setCheckMap[c.exercise_name]) setCheckMap[c.exercise_name] = {};
+      setCheckMap[c.exercise_name][c.set_number] = c;
+    });
 
-    // 5. Insert snapshot exercises one by one (bulk insert not supported in custom client)
+    // 5. Insert snapshot exercises + sets
     let snapshotOk = 0;
+    let setsOk = 0;
     for (const e of enriched) {
       const exName = e.lib.name || 'Unknown';
+      const exSetData = setCheckMap[exName] || {};
+      const setCount = parseInt(e.sets) || 3;
+
+      // Aggregate performed values from set data
+      const perfSets = Object.values(exSetData).filter(s => s.done).length || null;
+      const perfWeights = Object.values(exSetData).map(s => s.performed_weight).filter(Boolean);
+      const perfWeight = perfWeights.length > 0 ? Math.max(...perfWeights) : null;
+      const perfReps = Object.values(exSetData).map(s => s.performed_reps).filter(Boolean);
+      const perfRep = perfReps.length > 0 ? perfReps[perfReps.length - 1] : null;
+
       const { error: eiErr } = await supa.from('workout_history_exercises').insert({
         history_id: historyId,
         user_id: currentUser.id,
@@ -6196,16 +6364,33 @@
         planned_sets: e.sets,
         planned_reps: e.reps,
         planned_weight: e.target_weight || null,
-        performed_sets: null,
-        performed_reps: null,
-        performed_weight: null,
-        checked_at_seconds: checkMap[exName] || null
+        performed_sets: perfSets,
+        performed_reps: perfRep,
+        performed_weight: perfWeight,
+        checked_at_seconds: null
       });
-      if (eiErr) log.error('Failed to snapshot exercise:', e.lib.name, eiErr.message);
-      else snapshotOk++;
+      if (eiErr) { log.error('Failed to snapshot exercise:', exName, eiErr.message); continue; }
+      snapshotOk++;
+
+      // Insert individual sets to workout_history_sets
+      for (let setNum = 1; setNum <= setCount; setNum++) {
+        const sc = exSetData[setNum];
+        const { error: setErr } = await supa.from('workout_history_sets').insert({
+          history_id: historyId,
+          user_id: currentUser.id,
+          exercise_name: exName,
+          set_number: setNum,
+          planned_reps: e.reps,
+          performed_reps: sc?.performed_reps || null,
+          planned_weight: e.target_weight || null,
+          performed_weight: sc?.performed_weight || null,
+          checked_at_seconds: sc?.checked_at_seconds || null
+        });
+        if (!setErr) setsOk++;
+      }
     }
 
-    log.ok('Snapshot complete — history id:', historyId, '| exercises:', snapshotOk + '/' + enriched.length);
+    log.ok('Snapshot complete — history:', historyId, '| exercises:', snapshotOk, '| sets:', setsOk);
     log.end();
     return historyId;
   }
